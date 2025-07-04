@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Discourse Security Scanner - Yardımcı Fonksiyonlar
+Discourse Security Scanner - Utility Functions
 
-Genel amaçlı yardımcı fonksiyonlar ve utilities
+General purpose utility and helper functions
 """
 
 import re
@@ -17,7 +17,7 @@ import json
 
 
 def validate_url(url):
-    """URL formatını doğrula"""
+    """Validate URL format"""
     url_pattern = re.compile(
         r'^https?://'  # http:// or https://
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'  # domain
@@ -30,11 +30,11 @@ def validate_url(url):
     return bool(url_pattern.match(url))
 
 def normalize_url(url):
-    """URL'yi normalize et"""
+    """Normalize URL"""
     if not url.startswith(('http://', 'https://')):
         url = 'https://' + url
     
-    # Sondaki slash'i kaldır
+    # Remove trailing slash
     url = url.rstrip('/')
     
     return url
@@ -42,7 +42,7 @@ def normalize_url(url):
 def make_request(url, method='GET', headers=None, data=None, params=None, 
                 timeout=10, verify_ssl=True, proxies=None, allow_redirects=True,
                 cookies=None):
-    """HTTP isteği gönder"""
+    """Send HTTP request"""
     try:
         default_headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -75,16 +75,16 @@ def make_request(url, method='GET', headers=None, data=None, params=None,
         return None
 
 def extract_csrf_token(html_content):
-    """HTML içeriğinden CSRF token'ı çıkar"""
+    """Extract CSRF token from HTML content"""
     try:
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        # Meta tag'den CSRF token ara
+        # Search for CSRF token in meta tag
         csrf_meta = soup.find('meta', {'name': 'csrf-token'})
         if csrf_meta:
             return csrf_meta.get('content')
         
-        # Form input'undan CSRF token ara
+        # Search for CSRF token in form input
         csrf_input = soup.find('input', {'name': 'authenticity_token'})
         if csrf_input:
             return csrf_input.get('value')
@@ -100,12 +100,11 @@ def extract_csrf_token(html_content):
         return None
 
 def extract_discourse_version(html_content):
-    """HTML içeriğinden Discourse versiyonunu çıkar"""
+    """Extract Discourse version from HTML content"""
     try:
-        # Meta tag'den versiyon bilgisi
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        # Generator meta tag
+        # Check meta generator tag
         generator = soup.find('meta', {'name': 'generator'})
         if generator and 'discourse' in generator.get('content', '').lower():
             content = generator.get('content')
@@ -113,11 +112,13 @@ def extract_discourse_version(html_content):
             if version_match:
                 return version_match.group(1)
         
-        # JavaScript'ten versiyon bilgisi
+        # Check JavaScript for version
         scripts = soup.find_all('script')
         for script in scripts:
-            if script.string:
-                version_match = re.search(r'Discourse\.VERSION\s*=\s*["\']([^"\']*)["\'']', script.string)
+            if script.string and 'Discourse.VERSION' in script.string:
+                # Use a simple regex pattern
+                pattern = r'Discourse\.VERSION\s*=\s*["\']([0-9.]+)["\']'
+                version_match = re.search(pattern, script.string)
                 if version_match:
                     return version_match.group(1)
         
@@ -127,7 +128,7 @@ def extract_discourse_version(html_content):
         return None
 
 def generate_payloads(payload_type):
-    """Farklı türde payload'lar üret"""
+    """Generate different types of payloads"""
     payloads = {
         'sql_injection': [
             "'",
@@ -187,7 +188,7 @@ def generate_payloads(payload_type):
     return payloads.get(payload_type, [])
 
 def random_user_agent():
-    """Rastgele User-Agent döndür"""
+    """Return random User-Agent"""
     user_agents = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -198,20 +199,20 @@ def random_user_agent():
     return random.choice(user_agents)
 
 def format_time(seconds):
-    """Saniyeyi okunabilir formata çevir"""
+    """Convert seconds to readable format"""
     if seconds < 60:
-        return f"{seconds:.1f} saniye"
+        return f"{seconds:.1f} seconds"
     elif seconds < 3600:
         minutes = seconds // 60
         secs = seconds % 60
-        return f"{int(minutes)} dakika {int(secs)} saniye"
+        return f"{int(minutes)} minutes {int(secs)} seconds"
     else:
         hours = seconds // 3600
         minutes = (seconds % 3600) // 60
-        return f"{int(hours)} saat {int(minutes)} dakika"
+        return f"{int(hours)} hours {int(minutes)} minutes"
 
 def print_progress(current, total, prefix='', suffix='', length=50):
-    """Progress bar göster"""
+    """Show progress bar"""
     percent = (current / total) * 100
     filled_length = int(length * current // total)
     bar = '█' * filled_length + '-' * (length - filled_length)
@@ -219,10 +220,10 @@ def print_progress(current, total, prefix='', suffix='', length=50):
     print(f'\r{prefix} |{bar}| {percent:.1f}% {suffix}', end='', flush=True)
     
     if current == total:
-        print()  # Yeni satır
+        print()  # New line
 
 def save_json(data, filename):
-    """Veriyi JSON dosyasına kaydet"""
+    """Save data to JSON file"""
     try:
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
@@ -231,7 +232,7 @@ def save_json(data, filename):
         return False
 
 def load_json(filename):
-    """JSON dosyasından veri yükle"""
+    """Load data from JSON file"""
     try:
         with open(filename, 'r', encoding='utf-8') as f:
             return json.load(f)

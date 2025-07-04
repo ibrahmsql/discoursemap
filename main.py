@@ -21,30 +21,7 @@ from modules.utils import validate_url
 
 init(autoreset=True)
 
-def print_legal_disclaimer():
-    """Display legal warning message"""
-    disclaimer = f"""
-{Fore.RED}{'='*60}
-{Fore.YELLOW}                 LEGAL WARNING
-{Fore.RED}{'='*60}
-{Fore.WHITE}
-This tool is developed for security research and authorized
-penetration testing only.
 
-• Use only on systems you own or have written permission to test
-• Unauthorized access attempts are illegal
-• User accepts all legal responsibility
-• Developers are not responsible for any damages
-
-{Fore.RED}{'='*60}
-{Style.RESET_ALL}
-    """
-    print(disclaimer)
-    
-    response = input(f"{Fore.CYAN}Type 'ACCEPT' to continue: {Style.RESET_ALL}")
-    if response.upper() != 'ACCEPT':
-        print(f"{Fore.RED}Operation cancelled.{Style.RESET_ALL}")
-        sys.exit(0)
 
 def parse_arguments():
     """Parse command line arguments"""
@@ -95,9 +72,6 @@ def parse_arguments():
 def main():
     """Main function"""
     try:
-        # Legal warning
-        print_legal_disclaimer()
-        
         # Parse arguments
         args = parse_arguments()
         

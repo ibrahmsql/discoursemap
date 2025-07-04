@@ -8,14 +8,22 @@ This package contains Discourse security scanning modules.
 __version__ = "1.0.0"
 __author__ = "ibrahimsql"
 
+from .utils import (
+    validate_url, normalize_url, make_request, extract_csrf_token,
+    extract_discourse_version, generate_payloads, random_user_agent,
+    format_time, print_progress, save_json, load_json, is_discourse_site, clean_url
+)
 from .scanner import DiscourseScanner
 from .reporter import Reporter
-from .utils import *
+from .info_module import InfoModule
+from .vulnerability_module import VulnerabilityModule
+from .endpoint_module import EndpointModule
+from .user_module import UserModule
 
 __all__ = [
-    'DiscourseScanner',
-    'Reporter',
-    'validate_url',
-    'make_request',
-    'extract_csrf_token'
+    'validate_url', 'normalize_url', 'make_request', 'extract_csrf_token',
+    'extract_discourse_version', 'generate_payloads', 'random_user_agent',
+    'format_time', 'print_progress', 'save_json', 'load_json', 'is_discourse_site',
+    'clean_url', 'DiscourseScanner', 'Reporter', 'InfoModule', 'VulnerabilityModule',
+    'EndpointModule', 'UserModule'
 ]

@@ -14,12 +14,13 @@ from colorama import Fore, Style
 from .utils import (
     make_request, extract_csrf_token, extract_discourse_version,
     generate_payloads, random_user_agent, print_progress,
-    is_discourse_site, clean_url
+    is_discourse_site, clean_url, validate_url
 )
 from .info_module import InfoModule
-from .vuln_module import VulnModule
+from .vulnerability_module import VulnerabilityModule
 from .endpoint_module import EndpointModule
 from .user_module import UserModule
+from .reporter import Reporter
 
 class DiscourseScanner:
     """Main Discourse security scanner class"""
@@ -69,10 +70,13 @@ class DiscourseScanner:
         # Initialize modules
         self.modules = {
             'info': InfoModule(self),
-            'vuln': VulnModule(self),
+            'vuln': VulnerabilityModule(self),
             'endpoint': EndpointModule(self),
             'user': UserModule(self)
         }
+        
+        # Initialize reporter
+        self.reporter = Reporter(self.target_url)
     
     def _setup_session(self):
         """Setup HTTP session with configuration"""
@@ -192,6 +196,7 @@ class DiscourseScanner:
                 try:
                     module_results = self.modules[module_name].run()
                     self.results['modules'][module_name] = module_results
+                    self.reporter.add_module_results(module_name, module_results)
                     
                     # Log module completion
                     if module_results.get('vulnerabilities'):
@@ -215,6 +220,9 @@ class DiscourseScanner:
             
             self.log(f"Scan completed in {duration:.2f} seconds", 'success')
             
+            # Finalize scan and generate reports
+            self.reporter.finalize_scan()
+            
             # Print summary
             self._print_summary()
             
@@ -229,37 +237,29 @@ class DiscourseScanner:
             if self.session:
                 self.session.close()
     
+    def generate_json_report(self, output_file=None):
+        """Generate JSON report"""
+        try:
+            report_file = self.reporter.generate_json_report(output_file)
+            self.log(f"JSON report generated: {report_file}", 'success')
+            return report_file
+        except Exception as e:
+            self.log(f"Failed to generate JSON report: {e}", 'error')
+            return None
+    
+    def generate_html_report(self, output_file=None):
+        """Generate HTML report"""
+        try:
+            report_file = self.reporter.generate_html_report(output_file)
+            self.log(f"HTML report generated: {report_file}", 'success')
+            return report_file
+        except Exception as e:
+            self.log(f"Failed to generate HTML report: {e}", 'error')
+            return None
+    
     def _print_summary(self):
         """Print scan summary"""
-        if self.quiet:
-            return
-        
-        self.log("\n" + "="*60, 'info')
-        self.log("SCAN SUMMARY", 'info')
-        self.log("="*60, 'info')
-        
-        total_vulns = 0
-        for module_name, module_results in self.results['modules'].items():
-            if 'vulnerabilities' in module_results:
-                vuln_count = len(module_results['vulnerabilities'])
-                total_vulns += vuln_count
-                
-                if vuln_count > 0:
-                    self.log(f"{module_name.upper()}: {vuln_count} vulnerabilities found", 'warning')
-                else:
-                    self.log(f"{module_name.upper()}: No vulnerabilities found", 'success')
-        
-        self.log(f"\nTotal vulnerabilities found: {total_vulns}", 'info')
-        
-        if total_vulns > 0:
-            self.log("\nHigh-priority issues:", 'warning')
-            for module_name, module_results in self.results['modules'].items():
-                if 'vulnerabilities' in module_results:
-                    for vuln in module_results['vulnerabilities']:
-                        if vuln.get('severity') in ['high', 'critical']:
-                            self.log(f"  - {vuln.get('title', 'Unknown')}", 'error')
-        
-        self.log("="*60, 'info')
+        self.reporter.print_summary()
     
     def get_base_url(self):
         """Get base URL for the target"""
