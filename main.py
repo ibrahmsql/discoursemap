@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+"""
+Discourse Security Scanner
+Comprehensive Discourse forum security assessment tool
+
+Author: ibrahimsql
+Version: 1.0.0
+License: MIT
+
+WARNING: This tool should only be used on authorized systems.
+Unauthorized use is prohibited and may have legal consequences.
+"""
+
+import argparse
+import sys
+import os
+from colorama import init, Fore, Style
+from modules.scanner import DiscourseScanner
+from modules.reporter import Reporter
+from modules.utils import validate_url
+
+init(autoreset=True)
+
+def print_legal_disclaimer():
+    """Display legal warning message"""
+    disclaimer = f"""
+{Fore.RED}{'='*60}
+{Fore.YELLOW}                 LEGAL WARNING
+{Fore.RED}{'='*60}
+{Fore.WHITE}
+This tool is developed for security research and authorized
+penetration testing only.
+
+• Use only on systems you own or have written permission to test
+• Unauthorized access attempts are illegal
+• User accepts all legal responsibility
+• Developers are not responsible for any damages
+
+{Fore.RED}{'='*60}
+{Style.RESET_ALL}
+    """
+    print(disclaimer)
+    
+    response = input(f"{Fore.CYAN}Type 'ACCEPT' to continue: {Style.RESET_ALL}")
+    if response.upper() != 'ACCEPT':
+        print(f"{Fore.RED}Operation cancelled.{Style.RESET_ALL}")
+        sys.exit(0)
+
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(
+        description='Discourse Security Scanner - Comprehensive security assessment tool',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+        """
+    )
+    
+    # Required arguments
+    parser.add_argument('-u', '--url', required=True,
+                       help='Target Discourse forum URL')
+    
+    # Optional arguments
+    parser.add_argument('-t', '--threads', type=int, default=5,
+                       help='Number of threads (default: 5)')
+    parser.add_argument('--timeout', type=int, default=10,
+                       help='HTTP timeout duration (default: 10)')
+    parser.add_argument('--proxy', type=str,
+                       help='Proxy server (e.g: http://127.0.0.1:8080)')
+    parser.add_argument('--user-agent', type=str,
+                       help='Custom User-Agent string')
+    parser.add_argument('--delay', type=float, default=0.5,
+                       help='Delay between requests (seconds, default: 0.5)')
+    
+    # Scanning options
+    parser.add_argument('--skip-ssl-verify', action='store_true',
+                       help='Skip SSL certificate verification')
+    parser.add_argument('--verbose', '-v', action='store_true',
+                       help='Show detailed output')
+    parser.add_argument('--quiet', '-q', action='store_true',
+                       help='Show only results')
+    
+    # Module options
+    parser.add_argument('--modules', nargs='+', 
+                       choices=['info', 'vuln', 'endpoint', 'user'],
+                       help='Modules to run (default: all)')
+    
+    # Output options
+    parser.add_argument('-o', '--output', choices=['json', 'html', 'csv'],
+                       help='Report format')
+    parser.add_argument('--output-file', type=str,
+                       help='Output file name')
+    
+    return parser.parse_args()
+
+def main():
+    """Main function"""
+    try:
+        # Legal warning
+        print_legal_disclaimer()
+        
+        # Parse arguments
+        args = parse_arguments()
+        
+        # URL validation
+        if not validate_url(args.url):
+            print(f"{Fore.RED}Error: Invalid URL format!{Style.RESET_ALL}")
+            sys.exit(1)
+        
+        # Initialize scanner
+        scanner = DiscourseScanner(
+            target_url=args.url,
+            threads=args.threads,
+            timeout=args.timeout,
+            proxy=args.proxy,
+            user_agent=args.user_agent,
+            delay=args.delay,
+            verify_ssl=not args.skip_ssl_verify,
+            verbose=args.verbose,
+            quiet=args.quiet
+        )
+        
+        print(f"{Fore.GREEN}[+] Starting scan: {args.url}{Style.RESET_ALL}")
+        
+        # Determine modules
+        modules_to_run = args.modules if args.modules else ['info', 'vuln', 'endpoint', 'user']
+        
+        # Start scan
+        results = scanner.run_scan(modules_to_run)
+        
+        # Generate report
+        if args.output:
+            reporter = Reporter(results)
+            output_file = args.output_file or f"discourse_scan_report.{args.output}"
+            
+            if args.output == 'json':
+                reporter.generate_json_report(output_file)
+            elif args.output == 'html':
+                reporter.generate_html_report(output_file)
+            elif args.output == 'csv':
+                reporter.generate_csv_report(output_file)
+            
+            print(f"{Fore.GREEN}[+] Report saved: {output_file}{Style.RESET_ALL}")
+        
+        print(f"{Fore.GREEN}[+] Scan completed!{Style.RESET_ALL}")
+        
+    except KeyboardInterrupt:
+        print(f"\n{Fore.YELLOW}[!] Cancelled by user.{Style.RESET_ALL}")
+        sys.exit(0)
+    except Exception as e:
+        print(f"{Fore.RED}[!] Error: {str(e)}{Style.RESET_ALL}")
+        if args.verbose if 'args' in locals() else False:
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
