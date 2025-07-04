@@ -188,9 +188,9 @@ This tool is provided "as is" without warranty of any kind. The authors are not 
 
 ## Contact
 
-- Author: ibrahimsql
-- GitHub: https://github.com/ibrahimsql
-- Email: contact@ibrahimsql.com
+- Author: ibrahimsql 
+- GitHub: https://github.com/ibrahmsql
+- Email: coibrahimsql@proton.me
 
 ## Acknowledgments
 
