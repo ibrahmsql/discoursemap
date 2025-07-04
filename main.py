@@ -18,6 +18,7 @@ from colorama import init, Fore, Style
 from modules.scanner import DiscourseScanner
 from modules.reporter import Reporter
 from modules.utils import validate_url
+from modules.banner import banner
 
 init(autoreset=True)
 
@@ -128,4 +129,5 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
+    print(banner)
     main()
