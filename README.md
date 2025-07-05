@@ -31,11 +31,11 @@ A comprehensive security scanning tool for Discourse forum platforms, designed t
 - Authorization flaws
 - Path traversal testing
 - Command injection detection
-- Information disclosure checks
 
 #### Endpoint Discovery
 - Common endpoint enumeration
 - API endpoint discovery
+- Information disclosure checks
 - Admin panel detection
 - Backup file discovery
 - Configuration file detection
@@ -190,7 +190,7 @@ This tool is provided "as is" without warranty of any kind. The authors are not 
 
 - Author: ibrahimsql 
 - GitHub: https://github.com/ibrahmsql
-- Email: coibrahimsql@proton.me
+- Email: ibrahimsql@proton.me
 
 ## Acknowledgments
 
