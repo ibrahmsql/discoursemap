@@ -20,6 +20,7 @@ from .info_module import InfoModule
 from .vulnerability_module import VulnerabilityModule
 from .endpoint_module import EndpointModule
 from .user_module import UserModule
+from .cve_exploit_module import CVEExploitModule
 from .reporter import Reporter
 
 class DiscourseScanner:
@@ -72,7 +73,8 @@ class DiscourseScanner:
             'info': InfoModule(self),
             'vuln': VulnerabilityModule(self),
             'endpoint': EndpointModule(self),
-            'user': UserModule(self)
+            'user': UserModule(self),
+            'cve': CVEExploitModule(self)
         }
         
         # Initialize reporter
@@ -170,7 +172,7 @@ class DiscourseScanner:
     def run_scan(self, modules_to_run=None):
         """Run the security scan"""
         if modules_to_run is None:
-            modules_to_run = ['info', 'vuln', 'endpoint', 'user']
+            modules_to_run = ['info', 'vuln', 'endpoint', 'user', 'cve']
         
         self.log("Starting Discourse Security Scan", 'success')
         self.log(f"Target: {self.target_url}")

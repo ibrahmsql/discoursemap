@@ -18,7 +18,6 @@ from colorama import init, Fore, Style
 from modules.scanner import DiscourseScanner
 from modules.reporter import Reporter
 from modules.utils import validate_url
-from modules.banner import banner
 
 init(autoreset=True)
 
@@ -59,7 +58,7 @@ def parse_arguments():
     
     # Module options
     parser.add_argument('--modules', nargs='+', 
-                       choices=['info', 'vuln', 'endpoint', 'user'],
+                       choices=['info', 'vuln', 'endpoint', 'user', 'cve'],
                        help='Modules to run (default: all)')
     
     # Output options
@@ -97,7 +96,7 @@ def main():
         print(f"{Fore.GREEN}[+] Starting scan: {args.url}{Style.RESET_ALL}")
         
         # Determine modules
-        modules_to_run = args.modules if args.modules else ['info', 'vuln', 'endpoint', 'user']
+        modules_to_run = args.modules if args.modules else ['info', 'vuln', 'endpoint', 'user', 'cve']
         
         # Start scan
         results = scanner.run_scan(modules_to_run)
@@ -129,5 +128,4 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    print(banner)
     main()

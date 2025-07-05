@@ -19,11 +19,12 @@ from .info_module import InfoModule
 from .vulnerability_module import VulnerabilityModule
 from .endpoint_module import EndpointModule
 from .user_module import UserModule
+from .cve_exploit_module import CVEExploitModule
 
 __all__ = [
     'validate_url', 'normalize_url', 'make_request', 'extract_csrf_token',
     'extract_discourse_version', 'generate_payloads', 'random_user_agent',
     'format_time', 'print_progress', 'save_json', 'load_json', 'is_discourse_site',
     'clean_url', 'DiscourseScanner', 'Reporter', 'InfoModule', 'VulnerabilityModule',
-    'EndpointModule', 'UserModule'
+    'EndpointModule', 'UserModule', 'CVEExploitModule'
 ]
