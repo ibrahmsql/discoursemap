@@ -33,7 +33,7 @@ class PluginModule:
         
     def run_scan(self):
         """Run complete plugin security scan"""
-        print(f"\n{self.scanner.colors['info']}[*] Plugin güvenlik taraması başlatılıyor...{self.scanner.colors['reset']}")
+        print(f"\n{self.scanner.colors['info']}[*] Starting plugin security scan...{self.scanner.colors['reset']}")
         
         # Plugin keşfi
         self._discover_plugins()
@@ -41,13 +41,13 @@ class PluginModule:
         # Theme keşfi
         self._discover_themes()
         
-        # Plugin güvenlik açıkları
-        self._test_plugin_vulnerabilities()
+        # Plugin vulnerabilities
+        self._check_plugin_vulnerabilities()
         
-        # Theme güvenlik açıkları
-        self._test_theme_vulnerabilities()
+        # Theme vulnerabilities
+        self._check_theme_vulnerabilities()
         
-        # Güncel olmayan plugin kontrolü
+        # Outdated plugin check
         self._check_outdated_plugins()
         
         # Tehlikeli izinler
@@ -63,7 +63,7 @@ class PluginModule:
     
     def _discover_plugins(self):
         """Discover installed plugins"""
-        print(f"{self.scanner.colors['info']}[*] Yüklü plugin'ler taranıyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Scanning installed plugins...{self.scanner.colors['reset']}")
         
         # Admin plugins sayfası
         admin_plugins_url = urljoin(self.scanner.target_url, '/admin/plugins')
@@ -131,7 +131,7 @@ class PluginModule:
     
     def _discover_themes(self):
         """Discover installed themes"""
-        print(f"{self.scanner.colors['info']}[*] Yüklü tema'lar taranıyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Scanning installed themes...{self.scanner.colors['reset']}")
         
         # Admin themes sayfası
         admin_themes_url = urljoin(self.scanner.target_url, '/admin/customize/themes')
@@ -169,7 +169,7 @@ class PluginModule:
     
     def _test_plugin_vulnerabilities(self):
         """Test for plugin-specific vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Plugin güvenlik açıkları test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing plugin vulnerabilities...{self.scanner.colors['reset']}")
         
         for plugin in self.results['plugins_found']:
             plugin_name = plugin.get('name', '')
@@ -197,7 +197,7 @@ class PluginModule:
     
     def _test_theme_vulnerabilities(self):
         """Test for theme-specific vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Tema güvenlik açıkları test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing theme vulnerabilities...{self.scanner.colors['reset']}")
         
         for theme in self.results['themes_found']:
             theme_id = theme.get('id', 0)

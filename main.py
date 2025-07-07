@@ -99,11 +99,8 @@ def main():
             quiet=args.quiet
         )
         
-        # Print beautiful header
-        print(f"{Fore.CYAN}🛡️  DiscourseMap v2.0{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}🎯 Target: `{args.url}`{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}⏰ Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
-        print()
+        # Header will be shown by reporter
+        pass
         
         # Determine modules
         modules_to_run = args.modules if args.modules else ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 

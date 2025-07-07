@@ -36,7 +36,7 @@ class AuthModule:
         
     def run_scan(self):
         """Run complete authentication and authorization scan"""
-        print(f"\n{self.scanner.colors['info']}[*] Kimlik doğrulama ve yetkilendirme taraması başlatılıyor...{self.scanner.colors['reset']}")
+        print(f"\n{self.scanner.colors['info']}[*] Starting authentication and authorization scan...{self.scanner.colors['reset']}")
         
         # Authentication bypass tests
         self._test_auth_bypass()
@@ -72,7 +72,7 @@ class AuthModule:
     
     def _test_auth_bypass(self):
         """Test for authentication bypass vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Kimlik doğrulama bypass test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing authentication bypass...{self.scanner.colors['reset']}")
         
         # Test direct access to protected endpoints
         protected_endpoints = [
@@ -721,7 +721,7 @@ class AuthModule:
     
     def _test_oauth_vulnerabilities(self):
         """Test OAuth implementation vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] OAuth güvenlik açıkları test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing OAuth vulnerabilities...{self.scanner.colors['reset']}")
         
         # Look for OAuth endpoints
         oauth_endpoints = [
@@ -827,7 +827,7 @@ class AuthModule:
     
     def _test_sso_issues(self):
         """Test Single Sign-On implementation issues"""
-        print(f"{self.scanner.colors['info']}[*] SSO güvenlik açıkları test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing SSO vulnerabilities...{self.scanner.colors['reset']}")
         
         # Look for SSO endpoints
         sso_endpoints = [
@@ -929,7 +929,7 @@ class AuthModule:
     
     def _test_api_authentication(self):
         """Test API authentication mechanisms"""
-        print(f"{self.scanner.colors['info']}[*] API kimlik doğrulama test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing API authentication...{self.scanner.colors['reset']}")
         
         # Test API endpoints without authentication
         api_endpoints = [

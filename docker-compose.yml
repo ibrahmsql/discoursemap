@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  discoursemap:
+    build: .
+    container_name: discoursemap-scanner
+    volumes:
+      - ./reports:/app/reports
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - scanner-network
+    # Example usage:
+    # docker-compose run --rm discoursemap python3 main.py -u https://forum.example.com --modules info
+    
+  # Optional: Web interface (future enhancement)
+  # web:
+  #   build: .
+  #   container_name: discoursemap-web
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - ./reports:/app/reports
+  #   command: python3 -m http.server 8080
+  #   networks:
+  #     - scanner-network
+
+networks:
+  scanner-network:
+    driver: bridge
+
+volumes:
+  reports:
+  data:

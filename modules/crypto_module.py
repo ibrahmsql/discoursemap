@@ -37,43 +37,43 @@ class CryptoModule:
         
     def run_scan(self):
         """Run complete cryptographic security scan"""
-        print(f"\n{self.scanner.colors['info']}[*] Kriptografik güvenlik taraması başlatılıyor...{self.scanner.colors['reset']}")
+        print(f"\n{self.scanner.colors['info']}[*] Starting cryptographic security scan...{self.scanner.colors['reset']}")
         
-        # Zayıf hash algoritmaları
+        # Weak hash algorithms
         self._test_weak_hashing()
         
-        # Zayıf şifreleme
+        # Weak encryption
         self._test_weak_encryption()
         
-        # JWT güvenlik açıkları
+        # JWT vulnerabilities
         self._test_jwt_vulnerabilities()
         
-        # Session güvenliği
+        # Session security
         self._test_session_security()
         
-        # CSRF analizi
+        # CSRF analysis
         self._analyze_csrf_protection()
         
-        # Kripto yanlış yapılandırması
+        # Crypto misconfiguration
         self._test_crypto_misconfig()
         
-        # Anahtar sızıntısı
+        # Key exposure
         self._test_key_exposure()
         
-        # Rastgelelik analizi
+        # Randomness analysis
         self._test_randomness()
         
-        # İmza bypass
+        # Signature bypass
         self._test_signature_bypass()
         
-        # Timing saldırıları
+        # Timing attacks
         self._test_timing_attacks()
         
         return self.results
     
     def _test_weak_hashing(self):
         """Test for weak hashing algorithms"""
-        print(f"{self.scanner.colors['info']}[*] Zayıf hash algoritmaları test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing weak hash algorithms...{self.scanner.colors['reset']}")
         
         # Test password reset functionality
         reset_url = urljoin(self.scanner.target_url, '/password-reset')
@@ -125,7 +125,7 @@ class CryptoModule:
     
     def _test_weak_encryption(self):
         """Test for weak encryption implementations"""
-        print(f"{self.scanner.colors['info']}[*] Zayıf şifreleme test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing weak encryption...{self.scanner.colors['reset']}")
         
         # Test for weak cookie encryption
         response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
@@ -224,7 +224,7 @@ class CryptoModule:
     
     def _test_jwt_vulnerabilities(self):
         """Test for JWT vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] JWT güvenlik açıkları test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing JWT vulnerabilities...{self.scanner.colors['reset']}")
         
         # Look for JWT tokens in responses
         response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
@@ -367,7 +367,7 @@ class CryptoModule:
     
     def _test_session_security(self):
         """Test session security implementation"""
-        print(f"{self.scanner.colors['info']}[*] Session güvenliği test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing session security...{self.scanner.colors['reset']}")
         
         # Get initial session
         response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
@@ -538,7 +538,7 @@ class CryptoModule:
     
     def _analyze_csrf_protection(self):
         """Analyze CSRF protection implementation"""
-        print(f"{self.scanner.colors['info']}[*] CSRF koruması analiz ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Analyzing CSRF protection...{self.scanner.colors['reset']}")
         
         # Get CSRF token
         csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
@@ -642,7 +642,7 @@ class CryptoModule:
     
     def _test_crypto_misconfig(self):
         """Test for cryptographic misconfigurations"""
-        print(f"{self.scanner.colors['info']}[*] Kripto yanlış yapılandırması test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing crypto misconfiguration...{self.scanner.colors['reset']}")
         
         # Test SSL/TLS configuration
         response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
@@ -690,7 +690,7 @@ class CryptoModule:
     
     def _test_key_exposure(self):
         """Test for cryptographic key exposure"""
-        print(f"{self.scanner.colors['info']}[*] Anahtar sızıntısı test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing key exposure...{self.scanner.colors['reset']}")
         
         # Common paths where keys might be exposed
         key_paths = [
@@ -753,7 +753,7 @@ class CryptoModule:
     
     def _test_randomness(self):
         """Test randomness quality"""
-        print(f"{self.scanner.colors['info']}[*] Rastgelelik kalitesi test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing randomness quality...{self.scanner.colors['reset']}")
         
         # Collect multiple CSRF tokens to analyze randomness
         tokens = []
@@ -834,7 +834,7 @@ class CryptoModule:
     
     def _test_signature_bypass(self):
         """Test for signature bypass vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] İmza bypass test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing signature bypass...{self.scanner.colors['reset']}")
         
         # Test API endpoints that might use signatures
         api_endpoints = [
@@ -876,7 +876,7 @@ class CryptoModule:
     
     def _test_timing_attacks(self):
         """Test for timing attack vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Timing saldırıları test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing timing attacks...{self.scanner.colors['reset']}")
         
         # Test login endpoint for timing differences
         login_url = urljoin(self.scanner.target_url, '/session')

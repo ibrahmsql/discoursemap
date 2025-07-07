@@ -33,48 +33,54 @@ class ConfigModule:
             'default_credentials': []
         }
         
+    def run(self):
+        """Run complete configuration security scan (main entry point)"""
+        return self.run_scan()
+    
     def run_scan(self):
         """Run complete configuration security scan"""
-        print(f"\n{self.scanner.colors['info']}[*] Yapılandırma güvenlik taraması başlatılıyor...{self.scanner.colors['reset']}")
+        from colorama import Fore, Style
+        print(f"\n{Fore.CYAN}[*] Starting configuration security scan...{Style.RESET_ALL}")
         
-        # Yapılandırma dosyaları
+        # Configuration files
         self._discover_config_files()
         
-        # Hassas yapılandırmalar
+        # Sensitive configurations
         self._check_sensitive_configs()
         
-        # Debug bilgileri
+        # Debug information
         self._check_debug_info()
         
-        # Yedek dosyalar
+        # Backup files
         self._discover_backup_files()
         
-        # Environment bilgi sızıntısı
+        # Environment information disclosure
         self._check_environment_disclosure()
         
-        # SSL/TLS yapılandırması
+        # SSL/TLS configuration
         self._check_ssl_config()
         
-        # Güvenlik başlıkları
+        # Security headers
         self._check_security_headers()
         
-        # CORS yanlış yapılandırması
+        # CORS misconfiguration
         self._check_cors_misconfig()
         
-        # Admin erişim kontrolü
+        # Admin access control
         self._check_admin_access()
         
-        # Varsayılan kimlik bilgileri
+        # Default credentials
         self._check_default_credentials()
         
         return self.results
     
     def _discover_config_files(self):
         """Discover configuration files"""
-        print(f"{self.scanner.colors['info']}[*] Yapılandırma dosyaları taranıyor...{self.scanner.colors['reset']}")
+        from colorama import Fore, Style
+        print(f"{Fore.CYAN}[*] Scanning configuration files...{Style.RESET_ALL}")
         
         config_files = [
-            # Discourse specific
+            # Discourse specific configuration files
             '/config/discourse.conf',
             '/config/database.yml',
             '/config/redis.yml',
@@ -83,12 +89,82 @@ class ConfigModule:
             '/config/environments/development.rb',
             '/config/initializers/discourse.rb',
             '/config/site_settings.yml',
+            '/config/secrets.yml',
+            '/config/application.rb',
+            '/config/boot.rb',
+            '/config/environment.rb',
+            '/config/routes.rb',
+            '/config/puma.rb',
+            '/config/schedule.rb',
+            '/config/unicorn.rb',
+            '/config/thin.yml',
+            '/config/sidekiq.yml',
+            '/config/nginx.conf',
+            '/config/multisite.yml',
+            '/config/locales/server.en.yml',
+            '/config/locales/client.en.yml',
             
-            # General config files
+            # Discourse Ruby on Rails specific
+            '/Rakefile',
+            '/config.ru',
+            '/Capfile',
+            '/Guardfile',
+            '/Procfile',
+            '/app/models/discourse.rb',
+            '/lib/discourse.rb',
+            '/lib/version.rb',
+            '/lib/tasks/discourse.rake',
+            
+            # Discourse backup and log files
+            '/backup.sql',
+            '/discourse_backup.tar.gz',
+            '/backups/default.tar.gz',
+            '/tmp/backups/discourse.tar.gz',
+            '/var/discourse/shared/standalone/backups/default.tar.gz',
+            '/logs/production.log',
+            '/logs/unicorn.stderr.log',
+            '/logs/unicorn.stdout.log',
+            '/logs/nginx.access.log',
+            '/logs/nginx.error.log',
+            '/log/production.log',
+            '/log/development.log',
+            '/log/test.log',
+            '/log/sidekiq.log',
+            '/var/log/discourse/rails/production.log',
+            '/var/log/nginx/access.log',
+            '/var/log/nginx/error.log',
+            
+            # Discourse sensitive system files
+            '/etc/passwd',
+            '/etc/shadow',
+            '/etc/hosts',
+            '/etc/hostname',
+            '/etc/issue',
+            '/proc/version',
+            '/proc/self/environ',
+            '/home/discourse/.ssh/id_rsa',
+            '/home/discourse/.ssh/id_rsa.pub',
+            '/home/discourse/.ssh/authorized_keys',
+            '/root/.ssh/id_rsa',
+            '/var/discourse/shared/standalone/ssl/ssl.crt',
+            '/var/discourse/shared/standalone/ssl/ssl.key',
+            
+            # Windows specific (for Windows Discourse installations)
+            '/windows/system32/drivers/etc/hosts',
+            '/windows/win.ini',
+            '/boot.ini',
+            '/windows/system32/config/sam',
+            '/windows/repair/sam',
+            '/windows/system32/config/system',
+            '/inetpub/wwwroot/web.config',
+            
+            # General environment and config files
             '/.env',
             '/.env.local',
             '/.env.production',
             '/.env.development',
+            '/.env.staging',
+            '/.env.test',
             '/config.json',
             '/config.yml',
             '/config.yaml',
@@ -98,23 +174,48 @@ class ConfigModule:
             '/web.config',
             '/nginx.conf',
             '/apache.conf',
+            '/apache2.conf',
             '/.htaccess',
             '/robots.txt',
             '/sitemap.xml',
             '/crossdomain.xml',
             '/clientaccesspolicy.xml',
+            '/humans.txt',
+            '/security.txt',
+            '/.well-known/security.txt',
             
-            # Docker configs
+            # Docker and containerization
             '/docker-compose.yml',
+            '/docker-compose.yaml',
+            '/docker-compose.override.yml',
             '/Dockerfile',
+            '/Dockerfile.production',
             '/.dockerignore',
+            '/.docker/config.json',
+            '/kubernetes.yml',
+            '/k8s.yml',
             
-            # Git configs
+            # Version control systems
             '/.git/config',
+            '/.git/HEAD',
+            '/.git/index',
+            '/.git/logs/HEAD',
+            '/.git/refs/heads/master',
+            '/.git/refs/heads/main',
+            '/.git/objects/',
+            '/.git/description',
+            '/.git/hooks/',
+            '/.git/info/refs',
+            '/.git/packed-refs',
             '/.gitignore',
             '/.gitmodules',
+            '/.gitattributes',
+            '/.svn/',
+            '/.svn/entries',
+            '/.hg/',
+            '/.bzr/',
             
-            # Package managers
+            # Package managers and dependencies
             '/package.json',
             '/package-lock.json',
             '/yarn.lock',
@@ -122,12 +223,41 @@ class ConfigModule:
             '/Gemfile.lock',
             '/requirements.txt',
             '/composer.json',
-            '/composer.lock'
+            '/composer.lock',
+            '/bower.json',
+            '/npm-shrinkwrap.json',
+            '/pnpm-lock.yaml',
+            '/poetry.lock',
+            '/Pipfile',
+            '/Pipfile.lock',
+            
+            # Documentation and info files
+            '/README.md',
+            '/README.txt',
+            '/CHANGELOG.md',
+            '/CHANGELOG.txt',
+            '/LICENSE',
+            '/LICENSE.txt',
+            '/VERSION',
+            '/INSTALL',
+            '/INSTALL.txt',
+            '/TODO',
+            '/TODO.txt',
+            '/CONTRIBUTING.md',
+            '/SECURITY.md',
+            
+            # Development and debug files
+            '/phpinfo.php',
+            '/info.php',
+            '/test.php',
+            '/debug.php',
+            '/status.php',
+            '/health.php'
         ]
         
         for config_file in config_files:
             url = urljoin(self.scanner.target_url, config_file)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = make_request(url, 'GET')
             
             if response and response.status_code == 200:
                 content_type = response.headers.get('content-type', '').lower()
@@ -176,11 +306,12 @@ class ConfigModule:
     
     def _check_sensitive_configs(self):
         """Check for sensitive configuration exposures"""
-        print(f"{self.scanner.colors['info']}[*] Hassas yapılandırmalar kontrol ediliyor...{self.scanner.colors['reset']}")
+        from colorama import Fore, Style
+        print(f"{Fore.CYAN}[*] Checking sensitive configurations...{Style.RESET_ALL}")
         
         # Admin site settings
         admin_settings_url = urljoin(self.scanner.target_url, '/admin/site_settings')
-        response = make_request(self.scanner.session, 'GET', admin_settings_url)
+        response = make_request(admin_settings_url, 'GET')
         
         if response and response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -209,22 +340,103 @@ class ConfigModule:
         
         # API endpoints that might expose config
         config_endpoints = [
+            # Core configuration endpoints
             '/admin/site_settings.json',
             '/admin/config.json',
             '/site.json',
             '/srv/status',
-            '/admin/dashboard.json'
+            '/admin/dashboard.json',
+            '/admin/dashboard/general.json',
+            '/admin/dashboard/moderation.json',
+            '/admin/dashboard/security.json',
+            '/admin/dashboard/reports.json',
+            '/admin/dashboard/problems.json',
+            '/admin/dashboard/version_check.json',
+            '/settings.json',
+            '/site_settings.json',
+            
+            # System and version information
+            '/admin/system.json',
+            '/admin/upgrade.json',
+            '/admin/docker.json',
+            '/health.json',
+            '/status.json',
+            '/about.json',
+            '/srv/status',
+            
+            # User and admin information
+            '/users.json',
+            '/admin/users.json',
+            '/admin/users/list.json',
+            '/admin/users/list/active.json',
+            '/admin/users/list/staff.json',
+            '/admin/users/list/suspended.json',
+            '/admin/users/list/new.json',
+            '/admin/users/list/admins.json',
+            '/admin/users/list/moderators.json',
+            '/directory_items.json',
+            '/groups.json',
+            '/admin/groups.json',
+            
+            # API and authentication
+            '/admin/api.json',
+            '/admin/api/keys.json',
+            
+            # Email configuration
+            '/admin/email.json',
+            '/admin/email/sent.json',
+            '/admin/email/skipped.json',
+            '/admin/email/bounced.json',
+            '/admin/email/received.json',
+            '/admin/email/rejected.json',
+            '/admin/customize/email_templates.json',
+            
+            # Backup and database information
+            '/admin/backups.json',
+            '/admin/export_csv.json',
+            '/admin/import.json',
+            
+            # Logs and monitoring
+            '/admin/logs.json',
+            '/admin/logs/staff_action_logs.json',
+            '/admin/logs/screened_emails.json',
+            '/admin/logs/screened_ip_addresses.json',
+            '/logs.json',
+            
+            # Customization and plugins
+            '/admin/customize.json',
+            '/admin/customize/themes.json',
+            '/admin/plugins.json',
+            '/admin/themes.json',
+            
+            # Search and categories
+            '/admin/search_logs.json',
+            '/categories.json',
+            '/admin/categories.json',
+            
+            # Reports and analytics
+            '/admin/reports.json',
+            '/admin/reports/signups.json',
+            '/admin/reports/posts.json',
+            '/admin/reports/topics.json',
+            '/admin/reports/users_by_trust_level.json',
+            
+            # Webhooks and integrations
+            '/admin/web_hooks.json',
+            '/admin/webhooks.json',
+            '/admin/api/web_hooks.json'
         ]
         
         for endpoint in config_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = make_request(url, 'GET')
             
             if response and response.status_code == 200:
                 try:
                     data = response.json()
                     self._analyze_json_config(endpoint, data)
-                except json.JSONDecodeError:
+                except (json.JSONDecodeError, ValueError):
+                    # Skip non-JSON responses
                     pass
     
     def _analyze_json_config(self, endpoint, data):
@@ -258,27 +470,93 @@ class ConfigModule:
     
     def _check_debug_info(self):
         """Check for debug information disclosure"""
-        print(f"{self.scanner.colors['info']}[*] Debug bilgi sızıntıları kontrol ediliyor...{self.scanner.colors['reset']}")
+        from colorama import Fore, Style
+        print(f"{Fore.CYAN}[*] Checking debug information disclosure...{Style.RESET_ALL}")
         
         debug_endpoints = [
+            # Core debug endpoints
             '/debug',
+            '/debug.json',
             '/debug/routes',
             '/debug/pry',
-            '/rails/info',
-            '/rails/info/routes',
-            '/rails/info/properties',
             '/__debug__',
             '/server-info',
             '/server-status',
+            
+            # Rails specific debug endpoints
+            '/rails/info',
+            '/rails/info/routes',
+            '/rails/info/properties',
+            '/rails/mailers',
+            '/rails/info/environment',
+            '/rails/info/database',
+            
+            # Admin debug and logs
+            '/admin/logs',
+            '/admin/logs.json',
+            '/admin/logs/staff_action_logs',
+            '/admin/logs/staff_action_logs.json',
+            '/admin/logs/screened_emails',
+            '/admin/logs/screened_ip_addresses',
+            '/admin/system',
+            '/admin/system.json',
+            '/admin/upgrade',
+            '/admin/upgrade.json',
+            '/admin/docker',
+            '/admin/docker.json',
+            
+            # General logs and monitoring
+            '/logs',
+            '/logs.json',
+            '/error_log',
+            '/access_log',
+            '/health',
+            '/health.json',
+            '/status',
+            '/status.json',
+            '/srv/status',
+            '/monitor',
+            '/monitoring',
+            
+            # Development and test files
             '/info.php',
             '/phpinfo.php',
             '/test.php',
-            '/debug.php'
+            '/debug.php',
+            '/status.php',
+            '/health.php',
+            '/version.php',
+            '/config.php',
+            
+            # Environment and configuration debug
+            '/env',
+            '/environment',
+            '/config/environment',
+            '/admin/environment',
+            '/debug/environment',
+            '/server/environment',
+            
+            # Error pages and stack traces
+            '/500.html',
+            '/404.html',
+            '/error',
+            '/errors',
+            '/exception',
+            '/exceptions',
+            '/trace',
+            '/backtrace',
+            
+            # Development tools
+            '/console',
+            '/irb',
+            '/pry',
+            '/shell',
+            '/terminal'
         ]
         
         for endpoint in debug_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = make_request(url, 'GET')
             
             if response and response.status_code == 200:
                 debug_indicators = [
@@ -307,7 +585,8 @@ class ConfigModule:
     
     def _discover_backup_files(self):
         """Discover backup files"""
-        print(f"{self.scanner.colors['info']}[*] Yedek dosyalar taranıyor...{self.scanner.colors['reset']}")
+        from colorama import Fore, Style
+        print(f"{Fore.CYAN}[*] Scanning backup files...{Style.RESET_ALL}")
         
         backup_extensions = ['.bak', '.backup', '.old', '.orig', '.copy', '.tmp', '.save']
         backup_patterns = [
@@ -322,27 +601,107 @@ class ConfigModule:
         
         # Common backup file locations
         backup_files = [
+            # SQL dumps and database backups
             '/backup.sql',
             '/database.sql',
             '/db.sql',
             '/dump.sql',
+            '/discourse.sql',
+            '/production.sql',
+            '/development.sql',
+            '/test.sql',
+            '/mysql.sql',
+            '/postgresql.sql',
+            '/postgres.sql',
+            '/db_backup.sql',
+            '/database_backup.sql',
+            '/site_backup.sql',
+            
+            # Compressed backups
             '/backup.tar.gz',
             '/backup.zip',
+            '/backup.tar',
+            '/backup.rar',
             '/site_backup.tar.gz',
             '/discourse_backup.tar.gz',
+            '/database_backup.tar.gz',
+            '/full_backup.tar.gz',
+            '/complete_backup.zip',
+            '/export.tar.gz',
+            '/dump.tar.gz',
+            
+            # Discourse specific backups
+            '/backups/default.tar.gz',
+            '/tmp/backups/discourse.tar.gz',
+            '/var/discourse/shared/standalone/backups/default.tar.gz',
+            '/var/discourse/backups/default.tar.gz',
+            '/shared/backups/default.tar.gz',
+            '/discourse/backups/default.tar.gz',
+            
+            # Configuration file backups
             '/config.bak',
             '/database.yml.bak',
             '/application.yml.old',
+            '/discourse.conf.bak',
+            '/secrets.yml.backup',
+            '/site_settings.yml.old',
             '/.env.backup',
+            '/.env.bak',
+            '/.env.old',
+            '/config/database.yml.backup',
+            '/config/application.yml.bak',
+            '/config/secrets.yml.old',
+            
+            # Log file backups
+            '/logs/production.log.1',
+            '/logs/production.log.old',
+            '/log/production.log.backup',
+            '/var/log/discourse/rails/production.log.1',
+            '/var/log/nginx/access.log.1',
+            '/var/log/nginx/error.log.old',
+            
+            # Directory listings
             '/backup/',
             '/backups/',
             '/dumps/',
-            '/exports/'
+            '/exports/',
+            '/archive/',
+            '/archives/',
+            '/old/',
+            '/tmp/',
+            '/temp/',
+            '/bak/',
+            '/backup_files/',
+            '/database_backups/',
+            '/site_backups/',
+            '/discourse_backups/',
+            
+            # System backups
+            '/etc/passwd.bak',
+            '/etc/shadow.backup',
+            '/etc/hosts.old',
+            '/home/discourse/.ssh/id_rsa.backup',
+            '/root/.ssh/id_rsa.old',
+            
+            # Application backups
+            '/app.tar.gz',
+            '/application.zip',
+            '/site.tar.gz',
+            '/website.zip',
+            '/forum.tar.gz',
+            '/discourse.zip',
+            '/rails_app.tar.gz',
+            
+            # Docker and container backups
+            '/docker-compose.yml.bak',
+            '/Dockerfile.backup',
+            '/containers.tar.gz',
+            '/volumes.tar.gz'
         ]
         
         for backup_file in backup_files:
             url = urljoin(self.scanner.target_url, backup_file)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = make_request(url, 'GET')
             
             if response and response.status_code == 200:
                 self.results['backup_files'].append({
@@ -359,7 +718,7 @@ class ConfigModule:
             for ext in backup_extensions:
                 backup_file = f'/{file_base}{ext}'
                 url = urljoin(self.scanner.target_url, backup_file)
-                response = make_request(self.scanner.session, 'GET', url)
+                response = make_request(url, 'GET')
                 
                 if response and response.status_code == 200:
                     self.results['backup_files'].append({
@@ -371,7 +730,8 @@ class ConfigModule:
     
     def _check_environment_disclosure(self):
         """Check for environment variable disclosure"""
-        print(f"{self.scanner.colors['info']}[*] Environment bilgi sızıntısı kontrol ediliyor...{self.scanner.colors['reset']}")
+        from colorama import Fore, Style
+        print(f"{Fore.CYAN}[*] Checking environment information disclosure...{Style.RESET_ALL}")
         
         env_endpoints = [
             '/env',
@@ -385,7 +745,7 @@ class ConfigModule:
         
         for endpoint in env_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = make_request(url, 'GET')
             
             if response and response.status_code == 200:
                 env_indicators = [
@@ -411,11 +771,12 @@ class ConfigModule:
     
     def _check_ssl_config(self):
         """Check SSL/TLS configuration"""
-        print(f"{self.scanner.colors['info']}[*] SSL/TLS yapılandırması kontrol ediliyor...{self.scanner.colors['reset']}")
+        from colorama import Fore, Style
+        print(f"{Fore.CYAN}[*] Checking SSL/TLS configuration...{Style.RESET_ALL}")
         
         # Check if HTTPS is enforced
         http_url = self.scanner.target_url.replace('https://', 'http://')
-        response = make_request(self.scanner.session, 'GET', http_url, allow_redirects=False)
+        response = make_request(http_url, 'GET', allow_redirects=False)
         
         if response:
             if response.status_code not in [301, 302, 308]:
@@ -474,9 +835,10 @@ class ConfigModule:
     
     def _check_security_headers(self):
         """Check security headers"""
-        print(f"{self.scanner.colors['info']}[*] Güvenlik başlıkları kontrol ediliyor...{self.scanner.colors['reset']}")
+        from colorama import Fore, Style
+        print(f"{Fore.CYAN}[*] Checking security headers...{Style.RESET_ALL}")
         
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = make_request(self.scanner.target_url, 'GET')
         
         if response:
             headers = response.headers
@@ -533,7 +895,8 @@ class ConfigModule:
     
     def _check_cors_misconfig(self):
         """Check for CORS misconfigurations"""
-        print(f"{self.scanner.colors['info']}[*] CORS yanlış yapılandırması kontrol ediliyor...{self.scanner.colors['reset']}")
+        from colorama import Fore, Style
+        print(f"{Fore.CYAN}[*] Checking CORS misconfiguration...{Style.RESET_ALL}")
         
         # Test CORS with various origins
         test_origins = [
@@ -546,7 +909,7 @@ class ConfigModule:
         
         for origin in test_origins:
             headers = {'Origin': origin}
-            response = make_request(self.scanner.session, 'GET', self.scanner.target_url, headers=headers)
+            response = make_request(self.scanner.target_url, 'GET', headers=headers)
             
             if response:
                 cors_headers = {
@@ -576,7 +939,8 @@ class ConfigModule:
     
     def _check_admin_access(self):
         """Check admin access controls"""
-        print(f"{self.scanner.colors['info']}[*] Admin erişim kontrolü test ediliyor...{self.scanner.colors['reset']}")
+        from colorama import Fore, Style
+        print(f"{Fore.CYAN}[*] Testing admin access control...{Style.RESET_ALL}")
         
         admin_endpoints = [
             '/admin',
@@ -594,7 +958,7 @@ class ConfigModule:
         
         for endpoint in admin_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = make_request(url, 'GET')
             
             if response:
                 if response.status_code == 200:
@@ -620,7 +984,8 @@ class ConfigModule:
     
     def _check_default_credentials(self):
         """Check for default credentials"""
-        print(f"{self.scanner.colors['info']}[*] Varsayılan kimlik bilgileri test ediliyor...{self.scanner.colors['reset']}")
+        from colorama import Fore, Style
+        print(f"{Fore.CYAN}[*] Testing default credentials...{Style.RESET_ALL}")
         
         default_creds = [
             ('admin', 'admin'),
@@ -637,7 +1002,8 @@ class ConfigModule:
         
         for username, password in default_creds:
             # Get CSRF token first
-            csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+            response = make_request(self.scanner.target_url, 'GET')
+            csrf_token = extract_csrf_token(response.text) if response else None
             
             login_data = {
                 'login': username,
@@ -645,13 +1011,13 @@ class ConfigModule:
                 'authenticity_token': csrf_token
             }
             
-            response = make_request(self.scanner.session, 'POST', login_url, data=login_data)
+            response = make_request(login_url, 'POST', data=login_data)
             
             if response:
                 if response.status_code == 200 and 'error' not in response.text.lower():
                     # Check if login was successful
                     dashboard_url = urljoin(self.scanner.target_url, '/admin')
-                    dashboard_response = make_request(self.scanner.session, 'GET', dashboard_url)
+                    dashboard_response = make_request(dashboard_url, 'GET')
                     
                     if dashboard_response and dashboard_response.status_code == 200:
                         self.results['default_credentials'].append({

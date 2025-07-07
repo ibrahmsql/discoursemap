@@ -482,6 +482,11 @@ class Reporter:
         from colorama import Fore, Style
         import time
         
+        # Debug: Check if this method is called multiple times
+        if hasattr(self, '_summary_printed'):
+            return  # Prevent duplicate printing
+        self._summary_printed = True
+        
         summary = self._generate_summary()
         
         # Calculate scan duration
@@ -492,17 +497,20 @@ class Reporter:
             seconds = duration_seconds % 60
             scan_duration = f"{minutes}m {seconds}s"
         
+        # Create complete output as a single string to prevent duplication
+        output_lines = []
+        
         # Header
-        print(f"\n{Fore.CYAN}🛡️  DiscourseMap v2.0{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}🎯 Target: `{self.target_url}`{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}⏰ Started: {self.scan_time.strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
-        print()
-        print(f"{Fore.CYAN}[INFO] Starting comprehensive security scan...{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}[INFO] Modules loaded: {', '.join(self.results.keys()) if self.results else 'none'}{Style.RESET_ALL}")
-        print()
+        output_lines.append(f"\n{Fore.CYAN}🛡️  DiscourseMap v2.0{Style.RESET_ALL}")
+        output_lines.append(f"{Fore.CYAN}🎯 Target: {self.target_url}{Style.RESET_ALL}")
+        output_lines.append(f"{Fore.CYAN}⏰ Started: {self.scan_time.strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
+        output_lines.append("")
+        output_lines.append(f"{Fore.CYAN}[INFO] Starting comprehensive security scan...{Style.RESET_ALL}")
+        output_lines.append(f"{Fore.CYAN}[INFO] Modules loaded: {', '.join(self.results.keys()) if self.results else 'none'}{Style.RESET_ALL}")
+        output_lines.append("")
         
         # Information Gathering
-        print(f"{Fore.BLUE}📋 Information Gathering{Style.RESET_ALL}")
+        output_lines.append(f"{Fore.BLUE}📋 Information Gathering{Style.RESET_ALL}")
         info_results = self.results.get('info', {})
         if info_results:
             discourse_info = info_results.get('discourse_info', {})
@@ -510,13 +518,13 @@ class Reporter:
             users = info_results.get('users', [])
             
             version = discourse_info.get('version', 'Unknown')
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Server: Discourse {version}")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Plugins: {len(plugins)} installed")
-            print(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Users: {len(users)} discovered")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Server: Discourse {version}")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Plugins: {len(plugins)} installed")
+            output_lines.append(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Users: {len(users)} discovered")
             
             # Show user details if found
             if users:
-                print(f"│   └── Discovered users ({len(users)} total):")
+                output_lines.append(f"│   └── Discovered users ({len(users)} total):")
                 # Show more users (up to 10) with detailed information
                 display_count = min(len(users), 10)
                 for i, user in enumerate(users[:display_count]):
@@ -545,72 +553,72 @@ class Reporter:
                     }.get(trust_level, f"Level {trust_level}")
                     
                     prefix = "├──" if i < display_count - 1 else "└──"
-                    print(f"│       {prefix} {display_name}")
-                    print(f"│           │ ID: {user_id} | Trust: {trust_desc} ({trust_level})")
+                    output_lines.append(f"│       {prefix} {display_name}")
+                    output_lines.append(f"│           │ ID: {user_id} | Trust: {trust_desc} ({trust_level})")
                     if avatar_template:
-                        print(f"│           │ Avatar: {avatar_template[:50]}{'...' if len(avatar_template) > 50 else ''}")
+                        output_lines.append(f"│           │ Avatar: {avatar_template[:50]}{'...' if len(avatar_template) > 50 else ''}")
                 
                 # Show if there are more users
                 if len(users) > display_count:
                     remaining = len(users) - display_count
-                    print(f"│           └── ... and {remaining} more users")
+                    output_lines.append(f"│           └── ... and {remaining} more users")
             
-            print(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Information gathering completed")
+            output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Information gathering completed")
         else:
-            print(f"└── {Fore.RED}[❌]{Style.RESET_ALL} Information gathering failed")
-        print()
+            output_lines.append(f"└── {Fore.RED}[❌]{Style.RESET_ALL} Information gathering failed")
+        output_lines.append("")
         
         # Endpoint Discovery
-        print(f"{Fore.BLUE}🔍 Endpoint Discovery{Style.RESET_ALL}")
+        output_lines.append(f"{Fore.BLUE}🔍 Endpoint Discovery{Style.RESET_ALL}")
         endpoint_results = self.results.get('endpoint', {})
         if endpoint_results:
             endpoints = endpoint_results.get('discovered_endpoints', [])
             admin_found = any('/admin' in ep.get('path', '') for ep in endpoints)
             api_count = len([ep for ep in endpoints if 'api' in ep.get('path', '')])
             
-            print(f"├── {Fore.GREEN if admin_found else Fore.YELLOW}[{'✓' if admin_found else '⚠️'}]{Style.RESET_ALL} Admin panel: {'Found' if admin_found else 'Not found'}")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} API endpoints: {api_count} discovered")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Total endpoints: {len(endpoints)} found")
-            print(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Endpoint discovery completed")
+            output_lines.append(f"├── {Fore.GREEN if admin_found else Fore.YELLOW}[{'✓' if admin_found else '⚠️'}]{Style.RESET_ALL} Admin panel: {'Found' if admin_found else 'Not found'}")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} API endpoints: {api_count} discovered")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Total endpoints: {len(endpoints)} found")
+            output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Endpoint discovery completed")
         else:
-            print(f"└── {Fore.RED}[❌]{Style.RESET_ALL} Endpoint discovery failed")
-        print()
+            output_lines.append(f"└── {Fore.RED}[❌]{Style.RESET_ALL} Endpoint discovery failed")
+        output_lines.append("")
         
         # Vulnerability Assessment
-        print(f"{Fore.BLUE}🛡️ Vulnerability Assessment{Style.RESET_ALL}")
+        output_lines.append(f"{Fore.BLUE}🛡️ Vulnerability Assessment{Style.RESET_ALL}")
         vuln_results = self.results.get('vuln', {})
         if summary['critical_count'] > 0 or summary['high_count'] > 0:
-            print(f"├── {Fore.RED}[❌]{Style.RESET_ALL} Critical vulnerabilities: {summary['critical_count']} found")
-            print(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} High vulnerabilities: {summary['high_count']} found")
-            print(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Medium vulnerabilities: {summary['medium_count']} found")
-            print(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Low vulnerabilities: {summary['low_count']} found")
+            output_lines.append(f"├── {Fore.RED}[❌]{Style.RESET_ALL} Critical vulnerabilities: {summary['critical_count']} found")
+            output_lines.append(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} High vulnerabilities: {summary['high_count']} found")
+            output_lines.append(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Medium vulnerabilities: {summary['medium_count']} found")
+            output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Low vulnerabilities: {summary['low_count']} found")
         else:
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} SQL Injection: No vulnerabilities found")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} XSS: No vulnerabilities found")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} CSRF: Properly protected")
-            print(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} File upload: Properly restricted")
-        print()
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} SQL Injection: No vulnerabilities found")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} XSS: No vulnerabilities found")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} CSRF: Properly protected")
+            output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} File upload: Properly restricted")
+        output_lines.append("")
         
         # Authentication & Authorization
-        print(f"{Fore.BLUE}🔐 Authentication & Authorization{Style.RESET_ALL}")
+        output_lines.append(f"{Fore.BLUE}🔐 Authentication & Authorization{Style.RESET_ALL}")
         user_results = self.results.get('user', {})
         user_enum = user_results.get('user_enumeration', [])
         weak_passwords = user_results.get('weak_passwords', [])
         
         if len(weak_passwords) > 0:
-            print(f"├── {Fore.RED}[❌]{Style.RESET_ALL} Weak passwords: {len(weak_passwords)} found")
-            print(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} User enumeration: {len(user_enum)} users")
-            print(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Session management: Needs review")
-            print(f"└── {Fore.RED}[❌]{Style.RESET_ALL} Authentication issues detected")
+            output_lines.append(f"├── {Fore.RED}[❌]{Style.RESET_ALL} Weak passwords: {len(weak_passwords)} found")
+            output_lines.append(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} User enumeration: {len(user_enum)} users")
+            output_lines.append(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Session management: Needs review")
+            output_lines.append(f"└── {Fore.RED}[❌]{Style.RESET_ALL} Authentication issues detected")
         else:
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Default credentials: Not found")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Session management: Properly configured")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Password policy: Strong requirements")
-            print(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Authentication properly secured")
-        print()
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Default credentials: Not found")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Session management: Properly configured")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Password policy: Strong requirements")
+            output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Authentication properly secured")
+        output_lines.append("")
         
         # Plugin Detection
-        print(f"{Fore.BLUE}🔍 Plugin Detection{Style.RESET_ALL}")
+        output_lines.append(f"{Fore.BLUE}🔍 Plugin Detection{Style.RESET_ALL}")
         detection_results = self.results.get('plugin_detection', {})
         detected_plugins = detection_results.get('detected_plugins', [])
         detected_themes = detection_results.get('detected_themes', [])
@@ -618,71 +626,73 @@ class Reporter:
         js_libraries = detection_results.get('javascript_libraries', [])
         
         if len(detected_plugins) > 0 or len(tech_stack) > 0:
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Plugins detected: {len(detected_plugins)} found")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Themes detected: {len(detected_themes)} found")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Technology stack: {len(tech_stack)} identified")
-            print(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} JS libraries: {len(js_libraries)} detected")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Plugins detected: {len(detected_plugins)} found")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Themes detected: {len(detected_themes)} found")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Technology stack: {len(tech_stack)} identified")
+            output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} JS libraries: {len(js_libraries)} detected")
         else:
-            print(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Plugin detection: Limited results")
-            print(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Theme detection: Limited results")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Technology fingerprinting: Completed")
-            print(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Detection scan completed")
-        print()
+            output_lines.append(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Plugin detection: Limited results")
+            output_lines.append(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Theme detection: Limited results")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Technology fingerprinting: Completed")
+            output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Detection scan completed")
+        output_lines.append("")
         
         # Plugin Bruteforce
-        print(f"{Fore.BLUE}⚔️ Plugin Bruteforce Attacks{Style.RESET_ALL}")
+        output_lines.append(f"{Fore.BLUE}⚔️ Plugin Bruteforce Attacks{Style.RESET_ALL}")
         plugin_results = self.results.get('plugin_bruteforce', {})
         endpoint_attacks = plugin_results.get('endpoint_attacks', [])
         injection_tests = plugin_results.get('injection_tests', [])
         auth_bypasses = plugin_results.get('authentication_bypasses', [])
         
         if len(endpoint_attacks) > 0 or len(injection_tests) > 0 or len(auth_bypasses) > 0:
-            print(f"├── {Fore.RED if len(endpoint_attacks) > 0 else Fore.GREEN}[{'❌' if len(endpoint_attacks) > 0 else '✓'}]{Style.RESET_ALL} Endpoint attacks: {len(endpoint_attacks)} successful")
-            print(f"├── {Fore.RED if len(injection_tests) > 0 else Fore.GREEN}[{'❌' if len(injection_tests) > 0 else '✓'}]{Style.RESET_ALL} Injection attacks: {len(injection_tests)} vulnerabilities")
-            print(f"├── {Fore.RED if len(auth_bypasses) > 0 else Fore.GREEN}[{'❌' if len(auth_bypasses) > 0 else '✓'}]{Style.RESET_ALL} Auth bypasses: {len(auth_bypasses)} successful")
-            print(f"└── {Fore.RED if any([endpoint_attacks, injection_tests, auth_bypasses]) else Fore.GREEN}[{'❌' if any([endpoint_attacks, injection_tests, auth_bypasses]) else '✓'}]{Style.RESET_ALL} Bruteforce attacks completed")
+            output_lines.append(f"├── {Fore.RED if len(endpoint_attacks) > 0 else Fore.GREEN}[{'❌' if len(endpoint_attacks) > 0 else '✓'}]{Style.RESET_ALL} Endpoint attacks: {len(endpoint_attacks)} successful")
+            output_lines.append(f"├── {Fore.RED if len(injection_tests) > 0 else Fore.GREEN}[{'❌' if len(injection_tests) > 0 else '✓'}]{Style.RESET_ALL} Injection attacks: {len(injection_tests)} vulnerabilities")
+            output_lines.append(f"├── {Fore.RED if len(auth_bypasses) > 0 else Fore.GREEN}[{'❌' if len(auth_bypasses) > 0 else '✓'}]{Style.RESET_ALL} Auth bypasses: {len(auth_bypasses)} successful")
+            output_lines.append(f"└── {Fore.RED if any([endpoint_attacks, injection_tests, auth_bypasses]) else Fore.GREEN}[{'❌' if any([endpoint_attacks, injection_tests, auth_bypasses]) else '✓'}]{Style.RESET_ALL} Bruteforce attacks completed")
         else:
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Endpoint attacks: No vulnerabilities")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Injection attacks: No vulnerabilities")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Auth bypasses: No vulnerabilities")
-            print(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Bruteforce attacks completed")
-        print()
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Endpoint attacks: No vulnerabilities")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Injection attacks: No vulnerabilities")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Auth bypasses: No vulnerabilities")
+            output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Bruteforce attacks completed")
+        output_lines.append("")
         
         # CVE Exploits
-        print(f"{Fore.BLUE}🔒 CVE Exploits{Style.RESET_ALL}")
+        output_lines.append(f"{Fore.BLUE}🔒 CVE Exploits{Style.RESET_ALL}")
         cve_results = self.results.get('cve', {})
         cve_vulns = cve_results.get('cve_results', [])
         
         if len(cve_vulns) > 0:
             critical_cves = [c for c in cve_vulns if c.get('severity', '').lower() == 'critical']
             high_cves = [c for c in cve_vulns if c.get('severity', '').lower() == 'high']
-            print(f"├── {Fore.RED}[❌]{Style.RESET_ALL} Critical CVEs: {len(critical_cves)} found")
-            print(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} High CVEs: {len(high_cves)} found")
-            print(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Total CVEs: {len(cve_vulns)} tested")
-            print(f"└── {Fore.RED}[❌]{Style.RESET_ALL} CVE vulnerabilities detected")
+            output_lines.append(f"├── {Fore.RED}[❌]{Style.RESET_ALL} Critical CVEs: {len(critical_cves)} found")
+            output_lines.append(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} High CVEs: {len(high_cves)} found")
+            output_lines.append(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Total CVEs: {len(cve_vulns)} tested")
+            output_lines.append(f"└── {Fore.RED}[❌]{Style.RESET_ALL} CVE vulnerabilities detected")
         else:
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Known CVEs: No vulnerabilities found")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Security patches: Up to date")
-            print(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} CVE database: Checked")
-            print(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} No known CVE exploits")
-        print()
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Known CVEs: No vulnerabilities found")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Security patches: Up to date")
+            output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} CVE database: Checked")
+            output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} No known CVE exploits")
+        output_lines.append("")
         
         # Scan Summary
-        print(f"{Fore.BLUE}📈 Scan Summary{Style.RESET_ALL}")
-        print(f"├── 🔴 Critical: {summary['critical_count']} vulnerabilities")
-        print(f"├── 🟡 High: {summary['high_count']} vulnerabilities")
-        print(f"├── 🟠 Medium: {summary['medium_count']} vulnerabilities")
-        print(f"└── 🟢 Low: {summary['low_count']} vulnerabilities")
-        print()
+        output_lines.append(f"{Fore.BLUE}📈 Scan Summary{Style.RESET_ALL}")
+        output_lines.append(f"├── 🔴 Critical: {summary['critical_count']} vulnerabilities")
+        output_lines.append(f"├── 🟡 High: {summary['high_count']} vulnerabilities")
+        output_lines.append(f"├── 🟠 Medium: {summary['medium_count']} vulnerabilities")
+        output_lines.append(f"└── 🟢 Low: {summary['low_count']} vulnerabilities")
+        output_lines.append("")
         
         # Footer
         timestamp = self.scan_time.strftime('%Y%m%d_%H%M%S')
-        print(f"{Fore.GREEN}💾 Report saved: discourse_scan_{timestamp}.json{Style.RESET_ALL}")
-        print(f"{Fore.GREEN}⏱️  Scan completed in {scan_duration}{Style.RESET_ALL}")
-        print()
+        output_lines.append(f"{Fore.GREEN}💾 Report saved: discourse_scan_{timestamp}.json{Style.RESET_ALL}")
+        output_lines.append(f"{Fore.GREEN}⏱️  Scan completed in {scan_duration}{Style.RESET_ALL}")
+        output_lines.append("")
+        
+        # Print all output at once to prevent duplication
+        print("\n".join(output_lines))
     
     def finalize_scan(self):
-        """Finalize the scan - placeholder for any cleanup operations"""
-        # This method can be used for any final operations after scan completion
-        # Currently just a placeholder
-        pass
+        """Finalize the scan and print summary"""
+        # Print summary at the end of scan
+        self.print_summary()

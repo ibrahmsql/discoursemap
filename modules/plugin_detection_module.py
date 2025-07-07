@@ -137,7 +137,7 @@ class PluginDetectionModule:
     
     def run(self):
         """Run complete plugin detection scan"""
-        print(f"\n{Fore.CYAN}[*] Plugin ve teknoloji tespiti başlatılıyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         # Ana sayfa analizi
         self._analyze_main_page()
@@ -154,23 +154,23 @@ class PluginDetectionModule:
         # JavaScript kütüphaneleri
         self._detect_javascript_libraries()
         
-        # CSS framework'leri
+        # CSS frameworks
         self._detect_css_frameworks()
         
-        # Server bilgileri
+        # Server information
         self._gather_server_info()
         
-        # Meta bilgiler
+        # Meta information
         self._extract_meta_information()
         
-        # Fingerprint oluşturma
+        # Fingerprint generation
         self._generate_fingerprints()
         
         return self.results
     
     def _analyze_main_page(self):
         """Analyze main page for technology detection"""
-        print(f"{Fore.CYAN}[*] Ana sayfa analiz ediliyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
         if not response or response.status_code != 200:
@@ -184,7 +184,7 @@ class PluginDetectionModule:
     
     def _detect_plugins(self):
         """Detect installed plugins using various techniques"""
-        print(f"{Fore.CYAN}[*] Plugin'ler tespit ediliyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         for plugin_name, signatures in self.plugin_signatures.items():
             detection_methods = []
@@ -230,13 +230,13 @@ class PluginDetectionModule:
                     'status': 'detected'
                 }
                 self.results['detected_plugins'].append(plugin_info)
-                print(f"{Fore.GREEN}[+] Plugin tespit edildi: {plugin_name} (güven: {confidence}%){Style.RESET_ALL}")
+                print(f"{Fore.GREEN}[+] Plugin detected: {plugin_name} (confidence: {confidence}%){Style.RESET_ALL}")
     
     def _detect_themes(self):
         """Detect installed themes"""
-        print(f"{Fore.CYAN}[*] Tema'lar tespit ediliyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
-        # CSS dosyalarından tema tespiti
+        # Theme detection from CSS files
         css_links = self.soup.find_all('link', {'rel': 'stylesheet'}) if hasattr(self, 'soup') else []
         
         for link in css_links:
@@ -250,7 +250,7 @@ class PluginDetectionModule:
                         'detection_method': 'css_analysis'
                     })
         
-        # Meta tag'lerden tema bilgisi
+        # Theme information from meta tags
         meta_tags = self.soup.find_all('meta') if hasattr(self, 'soup') else []
         for meta in meta_tags:
             if meta.get('name') == 'theme-color' or 'theme' in str(meta):
@@ -262,7 +262,7 @@ class PluginDetectionModule:
     
     def _detect_technology_stack(self):
         """Detect technology stack"""
-        print(f"{Fore.CYAN}[*] Teknoloji stack tespit ediliyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         # Server headers
         if hasattr(self, 'main_page_headers'):
@@ -304,7 +304,7 @@ class PluginDetectionModule:
     
     def _detect_javascript_libraries(self):
         """Detect JavaScript libraries"""
-        print(f"{Fore.CYAN}[*] JavaScript kütüphaneleri tespit ediliyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         if not hasattr(self, 'main_page_content'):
             return
@@ -323,7 +323,7 @@ class PluginDetectionModule:
     
     def _detect_css_frameworks(self):
         """Detect CSS frameworks"""
-        print(f"{Fore.CYAN}[*] CSS framework'leri tespit ediliyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         if not hasattr(self, 'main_page_content'):
             return
@@ -340,7 +340,7 @@ class PluginDetectionModule:
     
     def _gather_server_info(self):
         """Gather server information"""
-        print(f"{Fore.CYAN}[*] Server bilgileri toplanıyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         if hasattr(self, 'main_page_headers'):
             self.results['server_info'] = {
@@ -355,7 +355,7 @@ class PluginDetectionModule:
     
     def _extract_meta_information(self):
         """Extract meta information from HTML"""
-        print(f"{Fore.CYAN}[*] Meta bilgiler çıkarılıyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         if not hasattr(self, 'soup'):
             return
@@ -375,7 +375,7 @@ class PluginDetectionModule:
     
     def _generate_fingerprints(self):
         """Generate fingerprints for the target"""
-        print(f"{Fore.CYAN}[*] Fingerprint'ler oluşturuluyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         if hasattr(self, 'main_page_content'):
             # HTML hash

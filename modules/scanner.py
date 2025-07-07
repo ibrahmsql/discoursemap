@@ -247,9 +247,9 @@ class DiscourseScanner:
             # Finalize scan and generate reports
             self.reporter.finalize_scan()
             
-            # Print summary
-            if not self.quiet:
-                self.reporter.print_summary()
+            # Print summary is handled by finalize_scan
+            # if not self.quiet:
+            #     self.reporter.print_summary()
             
             return self.results
             

@@ -119,7 +119,7 @@ class PluginBruteforceModule:
         
     def run(self):
         """Run complete plugin bruteforce attack scan"""
-        print(f"\n{Fore.CYAN}[*] Plugin bruteforce saldırı testleri başlatılıyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         # Endpoint bruteforce saldırıları
         self._bruteforce_endpoints()
@@ -143,7 +143,7 @@ class PluginBruteforceModule:
     
     def _test_injection_attacks(self):
         """Test various injection attacks on plugin endpoints"""
-        print(f"{Fore.CYAN}[*] Injection saldırı testleri başlatılıyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         # SQL Injection payloads
         sql_payloads = [
@@ -237,7 +237,7 @@ class PluginBruteforceModule:
     
     def _test_authentication_bypasses(self):
         """Test authentication bypass techniques"""
-        print(f"{Fore.CYAN}[*] Authentication bypass testleri başlatılıyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         bypass_techniques = [
             # Header manipulation
@@ -290,7 +290,7 @@ class PluginBruteforceModule:
     
     def _bruteforce_endpoints(self):
         """Bruteforce attack on plugin endpoints"""
-        print(f"{Fore.CYAN}[*] Plugin endpoint bruteforce saldırıları başlatılıyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         # Common attack endpoints
         attack_endpoints = [
@@ -363,7 +363,7 @@ class PluginBruteforceModule:
     
     def _bruteforce_vulnerabilities(self):
         """Bruteforce vulnerability testing on discovered endpoints"""
-        print(f"{Fore.CYAN}[*] Zafiyet bruteforce testleri başlatılıyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         endpoints = self.results['endpoint_attacks']
         
@@ -411,7 +411,7 @@ class PluginBruteforceModule:
     
     def _test_file_disclosures(self):
         """Test for file disclosure vulnerabilities"""
-        print(f"{Fore.CYAN}[*] Dosya ifşası testleri başlatılıyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         sensitive_files = [
             'config/database.yml',
@@ -453,7 +453,7 @@ class PluginBruteforceModule:
     
     def _test_configuration_leaks(self):
         """Test for configuration information leaks"""
-        print(f"{Fore.CYAN}[*] Konfigürasyon sızıntı testleri başlatılıyor...{Style.RESET_ALL}")
+        # Removed print statement for cleaner output
         
         config_endpoints = [
             '/admin/plugins.json',

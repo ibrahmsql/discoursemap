@@ -88,8 +88,17 @@ python3 discoursemap/scanner.py --help
 # Build Docker image
 docker build -t discoursemap .
 
-# Run scanner
-docker run -it discoursemap python3 scanner.py -u https://target-forum.com
+# Run scanner with Docker
+docker run --rm -v $(pwd)/reports:/app/reports discoursemap \
+  python3 main.py -u https://target-forum.com --modules info
+
+# Using Docker Compose
+docker-compose build
+docker-compose run --rm discoursemap \
+  python3 main.py -u https://target-forum.com --modules info,vuln
+
+# Interactive mode
+docker run -it --rm discoursemap bash
 ```
 
 ### Development Setup

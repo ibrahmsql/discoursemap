@@ -37,9 +37,9 @@ class NetworkModule:
         
     def run_scan(self):
         """Run complete network security scan"""
-        print(f"\n{self.scanner.colors['info']}[*] Ağ güvenlik taraması başlatılıyor...{self.scanner.colors['reset']}")
+        print(f"\n{self.scanner.colors['info']}[*] Starting network security scan...{self.scanner.colors['reset']}")
         
-        # Port taraması
+        # Port scanning
         self._port_scan()
         
         # Servis tespiti
@@ -73,7 +73,7 @@ class NetworkModule:
     
     def _port_scan(self):
         """Perform port scan on target"""
-        print(f"{self.scanner.colors['info']}[*] Port taraması yapılıyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Performing port scan...{self.scanner.colors['reset']}")
         
         # Common ports to scan
         common_ports = [
