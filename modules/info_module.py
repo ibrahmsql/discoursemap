@@ -271,7 +271,8 @@ class InfoModule:
             except json.JSONDecodeError:
                 pass
         
-        self.results['users_found'] = users_found
+        self.results['users'] = users_found
+        self.results['users_found'] = users_found  # Keep backward compatibility
         if users_found:
             self.scanner.log(f"Found {len(users_found)} users", 'success')
     

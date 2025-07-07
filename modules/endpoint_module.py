@@ -388,6 +388,13 @@ class EndpointModule:
     def _extract_title(self, html_content):
         """Extract page title from HTML"""
         try:
+            # Check if content is XML and use appropriate parser
+            if html_content.strip().startswith('<?xml') or '<urlset' in html_content or '<sitemapindex' in html_content:
+                # Suppress XML parsing warning for XML content
+                import warnings
+                from bs4 import XMLParsedAsHTMLWarning
+                warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+                
             soup = BeautifulSoup(html_content, 'html.parser')
             title = soup.find('title')
             return title.get_text().strip() if title else ''

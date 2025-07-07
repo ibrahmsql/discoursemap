@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""
-Discourse Security Scanner Modules
+"""Discourse Security Scanner Modules
 
-This package contains Discourse security scanning modules.
+This package contains all security scanning modules for Discourse forums.
+Includes vulnerability testing, endpoint discovery, user enumeration, and more.
 """
 
 __version__ = "1.0.0"

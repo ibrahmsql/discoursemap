@@ -1,0 +1,415 @@
+# Discourse Plugin Vulnerabilities Database
+# Priority: Critical > High > Medium > Low
+# Status: Active Development
+
+plugin_vulnerabilities:
+  
+  # CRITICAL PRIORITY VULNERABILITIES
+  critical:
+    
+    # API Security Vulnerabilities
+    api_vulnerabilities:
+      - name: "REST API Authentication Bypass"
+        severity: "Critical"
+        cvss: 9.8
+        description: "Unauthenticated access to sensitive API endpoints"
+        affected_plugins:
+          - "discourse-api"
+          - "discourse-oauth2-basic"
+          - "discourse-openid-connect"
+        exploitation:
+          - "Direct API access without authentication"
+          - "JWT token manipulation"
+          - "API key enumeration"
+        
+      - name: "GraphQL Injection"
+        severity: "Critical"
+        cvss: 9.1
+        description: "SQL injection through GraphQL queries"
+        affected_plugins:
+          - "discourse-graphql"
+          - "discourse-api-graphql"
+        exploitation:
+          - "Malicious GraphQL queries"
+          - "Schema introspection abuse"
+          - "Nested query DoS"
+    
+    # File Upload Vulnerabilities
+    file_upload_vulnerabilities:
+      - name: "Unrestricted File Upload RCE"
+        severity: "Critical"
+        cvss: 9.8
+        description: "Remote code execution via malicious file uploads"
+        affected_plugins:
+          - "discourse-upload-recovery"
+          - "discourse-file-upload"
+          - "discourse-media-optimization"
+        exploitation:
+          - "PHP/Ruby shell upload"
+          - "SVG XSS payload"
+          - "Archive bomb attacks"
+          
+      - name: "Path Traversal in File Operations"
+        severity: "Critical"
+        cvss: 8.8
+        description: "Directory traversal leading to arbitrary file access"
+        affected_plugins:
+          - "discourse-backup-restore"
+          - "discourse-file-manager"
+        exploitation:
+          - "../../../etc/passwd access"
+          - "Configuration file disclosure"
+          - "Log file enumeration"
+    
+    # Database Security
+    database_vulnerabilities:
+      - name: "SQL Injection in Search"
+        severity: "Critical"
+        cvss: 9.3
+        description: "Direct database access via search parameters"
+        affected_plugins:
+          - "discourse-elasticsearch"
+          - "discourse-search-advanced"
+          - "discourse-solr"
+        exploitation:
+          - "UNION-based injection"
+          - "Boolean-based blind injection"
+          - "Time-based blind injection"
+          
+      - name: "NoSQL Injection"
+        severity: "Critical"
+        cvss: 8.9
+        description: "MongoDB/Redis injection vulnerabilities"
+        affected_plugins:
+          - "discourse-mongodb"
+          - "discourse-redis-cache"
+        exploitation:
+          - "JavaScript injection in MongoDB"
+          - "Redis command injection"
+          - "Document enumeration"
+    
+    # Cache Security
+    cache_vulnerabilities:
+      - name: "Cache Poisoning RCE"
+        severity: "Critical"
+        cvss: 9.0
+        description: "Remote code execution via cache manipulation"
+        affected_plugins:
+          - "discourse-memcached"
+          - "discourse-redis-cache"
+          - "discourse-varnish"
+        exploitation:
+          - "Serialized object injection"
+          - "Cache key manipulation"
+          - "TTL bypass techniques"
+    
+    # WebSocket Security
+    websocket_vulnerabilities:
+      - name: "WebSocket Authentication Bypass"
+        severity: "Critical"
+        cvss: 8.7
+        description: "Unauthorized access to real-time communications"
+        affected_plugins:
+          - "discourse-chat"
+          - "discourse-presence"
+          - "discourse-live-notifications"
+        exploitation:
+          - "Origin header manipulation"
+          - "CSRF in WebSocket handshake"
+          - "Message injection attacks"
+
+  # HIGH PRIORITY VULNERABILITIES
+  high:
+    
+    # Authentication & Authorization
+    auth_vulnerabilities:
+      - name: "OAuth2 State Parameter Bypass"
+        severity: "High"
+        cvss: 8.1
+        description: "CSRF attacks via OAuth2 state manipulation"
+        affected_plugins:
+          - "discourse-oauth2-basic"
+          - "discourse-google-oauth2"
+          - "discourse-github-auth"
+        exploitation:
+          - "State parameter prediction"
+          - "Redirect URI manipulation"
+          - "Authorization code reuse"
+          
+      - name: "SSO Signature Bypass"
+        severity: "High"
+        cvss: 7.8
+        description: "Single Sign-On authentication bypass"
+        affected_plugins:
+          - "discourse-sso"
+          - "discourse-saml"
+        exploitation:
+          - "HMAC signature forgery"
+          - "Timestamp manipulation"
+          - "Nonce reuse attacks"
+    
+    # Cryptographic Issues
+    crypto_vulnerabilities:
+      - name: "Weak JWT Implementation"
+        severity: "High"
+        cvss: 7.5
+        description: "JWT tokens with weak algorithms or secrets"
+        affected_plugins:
+          - "discourse-jwt-auth"
+          - "discourse-api-tokens"
+        exploitation:
+          - "Algorithm confusion (RS256 to HS256)"
+          - "None algorithm bypass"
+          - "Weak secret brute force"
+          
+      - name: "Insecure Session Management"
+        severity: "High"
+        cvss: 7.2
+        description: "Session fixation and hijacking vulnerabilities"
+        affected_plugins:
+          - "discourse-session-manager"
+          - "discourse-remember-me"
+        exploitation:
+          - "Session ID prediction"
+          - "Cross-subdomain session sharing"
+          - "Session timeout bypass"
+    
+    # Network Security
+    network_vulnerabilities:
+      - name: "SSRF in URL Validation"
+        severity: "High"
+        cvss: 8.6
+        description: "Server-Side Request Forgery via URL parameters"
+        affected_plugins:
+          - "discourse-linkify"
+          - "discourse-url-preview"
+          - "discourse-embed"
+        exploitation:
+          - "Internal network scanning"
+          - "Cloud metadata access"
+          - "Port scanning via HTTP"
+          
+      - name: "DNS Rebinding Attack"
+        severity: "High"
+        cvss: 7.4
+        description: "Bypass of same-origin policy via DNS manipulation"
+        affected_plugins:
+          - "discourse-external-api"
+          - "discourse-webhook"
+        exploitation:
+          - "Internal service access"
+          - "Firewall bypass"
+          - "Private network enumeration"
+
+  # MEDIUM PRIORITY VULNERABILITIES
+  medium:
+    
+    # Configuration Security
+    config_vulnerabilities:
+      - name: "Debug Information Disclosure"
+        severity: "Medium"
+        cvss: 6.5
+        description: "Sensitive configuration data exposure"
+        affected_plugins:
+          - "discourse-debug-toolbar"
+          - "discourse-developer-tools"
+        exploitation:
+          - "Stack trace information"
+          - "Database credentials"
+          - "API keys exposure"
+          
+      - name: "Backup File Exposure"
+        severity: "Medium"
+        cvss: 6.2
+        description: "Accessible backup files containing sensitive data"
+        affected_plugins:
+          - "discourse-backup-restore"
+          - "discourse-data-export"
+        exploitation:
+          - "Direct backup file access"
+          - "Directory listing"
+          - "Predictable backup names"
+    
+    # Mobile Security
+    mobile_vulnerabilities:
+      - name: "Mobile App Deep Link Hijacking"
+        severity: "Medium"
+        cvss: 5.8
+        description: "Malicious apps intercepting deep links"
+        affected_plugins:
+          - "discourse-mobile-app"
+          - "discourse-push-notifications"
+        exploitation:
+          - "Intent filter manipulation"
+          - "URL scheme hijacking"
+          - "Sensitive data in URLs"
+          
+      - name: "PWA Security Issues"
+        severity: "Medium"
+        cvss: 5.5
+        description: "Progressive Web App security misconfigurations"
+        affected_plugins:
+          - "discourse-pwa"
+          - "discourse-service-worker"
+        exploitation:
+          - "Service worker injection"
+          - "Cache poisoning"
+          - "Offline data exposure"
+    
+    # Social Engineering
+    social_vulnerabilities:
+      - name: "User Enumeration via Timing"
+        severity: "Medium"
+        cvss: 5.3
+        description: "Username enumeration through response timing"
+        affected_plugins:
+          - "discourse-user-directory"
+          - "discourse-login-required"
+        exploitation:
+          - "Login timing analysis"
+          - "Registration timing"
+          - "Password reset timing"
+          
+      - name: "Information Disclosure in Errors"
+        severity: "Medium"
+        cvss: 5.0
+        description: "Sensitive information in error messages"
+        affected_plugins:
+          - "discourse-error-handler"
+          - "discourse-logging"
+        exploitation:
+          - "Database error messages"
+          - "File path disclosure"
+          - "Version information"
+
+  # LOW PRIORITY VULNERABILITIES
+  low:
+    
+    # Compliance Issues
+    compliance_vulnerabilities:
+      - name: "GDPR Compliance Gaps"
+        severity: "Low"
+        cvss: 3.1
+        description: "Missing privacy controls and data protection"
+        affected_plugins:
+          - "discourse-gdpr"
+          - "discourse-privacy-policy"
+        exploitation:
+          - "Data subject rights bypass"
+          - "Consent mechanism flaws"
+          - "Data retention violations"
+          
+      - name: "Accessibility Security Issues"
+        severity: "Low"
+        cvss: 2.8
+        description: "Security issues in accessibility features"
+        affected_plugins:
+          - "discourse-accessibility"
+          - "discourse-screen-reader"
+        exploitation:
+          - "Screen reader XSS"
+          - "Keyboard navigation bypass"
+          - "Focus management issues"
+
+# URGENT TASKS FROM TODO.md
+urgent_tasks:
+  
+  missing_modules:
+    - name: "API Module"
+      priority: "High"
+      description: "REST/GraphQL API security testing module"
+      estimated_effort: "Medium"
+      
+    - name: "File Module"
+      priority: "High"
+      description: "File upload/download security testing"
+      estimated_effort: "Medium"
+      
+    - name: "Database Module"
+      priority: "High"
+      description: "Database security testing and injection detection"
+      estimated_effort: "High"
+      
+    - name: "Cache Module"
+      priority: "High"
+      description: "Cache poisoning and security testing"
+      estimated_effort: "Medium"
+      
+    - name: "WebSocket Module"
+      priority: "High"
+      description: "Real-time communication security testing"
+      estimated_effort: "Medium"
+  
+  critical_issues:
+    - name: "Rate Limiting False Negatives"
+      priority: "Critical"
+      description: "Rate limiting causing missed vulnerabilities"
+      impact: "High"
+      
+    - name: "Large Payload Timeouts"
+      priority: "Critical"
+      description: "Scanner timeouts with large payloads"
+      impact: "High"
+      
+    - name: "SSL Certificate Validation"
+      priority: "Critical"
+      description: "Issues with SSL certificate validation"
+      impact: "Medium"
+      
+    - name: "Memory Leaks in Long Scans"
+      priority: "Critical"
+      description: "Memory consumption issues in extended scans"
+      impact: "High"
+
+# EXPLOITATION TECHNIQUES
+exploitation_techniques:
+  
+  automated_discovery:
+    - "Plugin enumeration via /admin/plugins"
+    - "Theme detection through CSS/JS analysis"
+    - "Version fingerprinting"
+    - "Dependency analysis"
+    
+  manual_testing:
+    - "Source code review of plugin files"
+    - "Configuration file analysis"
+    - "Database schema examination"
+    - "API endpoint discovery"
+    
+  payload_categories:
+    - "SQL injection payloads"
+    - "XSS vectors"
+    - "SSRF payloads"
+    - "File upload bypasses"
+    - "Authentication bypasses"
+    - "Privilege escalation"
+
+# MITIGATION STRATEGIES
+mitigation_strategies:
+  
+  immediate_actions:
+    - "Update all plugins to latest versions"
+    - "Disable unused plugins and themes"
+    - "Implement proper input validation"
+    - "Enable security headers"
+    - "Configure rate limiting"
+    
+  long_term_security:
+    - "Regular security audits"
+    - "Automated vulnerability scanning"
+    - "Security-focused code reviews"
+    - "Penetration testing"
+    - "Security awareness training"
+
+# METADATA
+metadata:
+  version: "1.0"
+  last_updated: "2024-12-19"
+  maintainer: "Security Research Team"
+  license: "MIT"
+  status: "Active Development"
+  total_vulnerabilities: 25
+  critical_count: 8
+  high_count: 8
+  medium_count: 6
+  low_count: 3

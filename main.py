@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Discourse Security Scanner
+DiscourseMap v2.0
 Comprehensive Discourse forum security assessment tool
 
 Author: ibrahimsql
-Version: 1.0.0
+Version: 2.0.0
 License: MIT
 
 WARNING: This tool should only be used on authorized systems.
@@ -14,6 +14,7 @@ Unauthorized use is prohibited and may have legal consequences.
 import argparse
 import sys
 import os
+from datetime import datetime
 from colorama import init, Fore, Style
 from modules.scanner import DiscourseScanner
 from modules.reporter import Reporter
@@ -26,9 +27,13 @@ init(autoreset=True)
 def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description='Discourse Security Scanner - Comprehensive security assessment tool',
+        description='DiscourseMap v2.0 - Comprehensive Discourse security assessment tool',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
+Examples:
+  python3 main.py -u https://forum.example.com --modules info vuln
+  python3 main.py -u https://forum.example.com -o json --output-file report.json
+  python3 main.py -u https://forum.example.com --verbose --threads 10
         """
     )
     
@@ -58,7 +63,8 @@ def parse_arguments():
     
     # Module options
     parser.add_argument('--modules', nargs='+', 
-                       choices=['info', 'vuln', 'endpoint', 'user', 'cve'],
+                       choices=['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
+                               'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'compliance'],
                        help='Modules to run (default: all)')
     
     # Output options
@@ -93,10 +99,15 @@ def main():
             quiet=args.quiet
         )
         
-        print(f"{Fore.GREEN}[+] Starting scan: {args.url}{Style.RESET_ALL}")
+        # Print beautiful header
+        print(f"{Fore.CYAN}🛡️  DiscourseMap v2.0{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}🎯 Target: `{args.url}`{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}⏰ Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
+        print()
         
         # Determine modules
-        modules_to_run = args.modules if args.modules else ['info', 'vuln', 'endpoint', 'user', 'cve']
+        modules_to_run = args.modules if args.modules else ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
+                                                           'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'compliance']
         
         # Start scan
         results = scanner.run_scan(modules_to_run)

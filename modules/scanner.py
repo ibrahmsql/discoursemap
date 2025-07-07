@@ -21,6 +21,15 @@ from .vulnerability_module import VulnerabilityModule
 from .endpoint_module import EndpointModule
 from .user_module import UserModule
 from .cve_exploit_module import CVEExploitModule
+from .plugin_bruteforce_module import PluginBruteforceModule
+from .plugin_detection_module import PluginDetectionModule
+from .api_module import APISecurityModule
+from .auth_module import AuthModule
+from .config_module import ConfigModule
+from .crypto_module import CryptoModule
+from .network_module import NetworkModule
+from .plugin_module import PluginModule
+from .compliance_module import ComplianceModule
 from .reporter import Reporter
 
 class DiscourseScanner:
@@ -74,7 +83,17 @@ class DiscourseScanner:
             'vuln': VulnerabilityModule(self),
             'endpoint': EndpointModule(self),
             'user': UserModule(self),
-            'cve': CVEExploitModule(self)
+            'cve': CVEExploitModule(self),
+            'plugin_detection': PluginDetectionModule(self),
+            'plugin_bruteforce': PluginBruteforceModule(self),
+            'api': APISecurityModule(self),
+            'auth': AuthModule(self),
+            'config': ConfigModule(self),
+            'crypto': CryptoModule(self),
+            'network': NetworkModule(self),
+            'plugin': PluginModule(self),
+            # 'social': SocialEngineeringModule(self),
+            'compliance': ComplianceModule(self)
         }
         
         # Initialize reporter
@@ -172,7 +191,8 @@ class DiscourseScanner:
     def run_scan(self, modules_to_run=None):
         """Run the security scan"""
         if modules_to_run is None:
-            modules_to_run = ['info', 'vuln', 'endpoint', 'user', 'cve']
+          modules_to_run = modules_to_run or ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
+                                             'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'compliance']
         
         self.log("Starting Discourse Security Scan", 'success')
         self.log(f"Target: {self.target_url}")
@@ -182,6 +202,7 @@ class DiscourseScanner:
         # Record start time
         start_time = time.time()
         self.results['scan_info']['start_time'] = start_time
+        self.reporter.scan_start_time = start_time
         
         try:
             # Verify target
@@ -219,6 +240,7 @@ class DiscourseScanner:
             
             self.results['scan_info']['end_time'] = end_time
             self.results['scan_info']['duration'] = duration
+            self.reporter.scan_end_time = end_time
             
             self.log(f"Scan completed in {duration:.2f} seconds", 'success')
             
@@ -226,7 +248,8 @@ class DiscourseScanner:
             self.reporter.finalize_scan()
             
             # Print summary
-            self._print_summary()
+            if not self.quiet:
+                self.reporter.print_summary()
             
             return self.results
             
@@ -259,9 +282,7 @@ class DiscourseScanner:
             self.log(f"Failed to generate HTML report: {e}", 'error')
             return None
     
-    def _print_summary(self):
-        """Print scan summary"""
-        self.reporter.print_summary()
+
     
     def get_base_url(self):
         """Get base URL for the target"""

