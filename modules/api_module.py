@@ -5,9 +5,8 @@ Discourse API Security Testing Module
 This module tests API-specific security vulnerabilities in Discourse forums,
 including authentication, authorization, rate limiting, and data exposure issues.
 
-Author: Security Research Team
+Author: ibrahimsql
 Version: 2.0
-Date: 2024-12-20
 """
 
 import requests
