@@ -612,7 +612,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Made with ❤️ by the Security Research Team**
+**Made with ❤️ by İbrahimsql**
 
 [![GitHub stars](https://img.shields.io/github/stars/ibrahmsql/discoursemap?style=social)](https://github.com/ibrahmsql/discoursemap/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/ibrahmsql/discoursemap?style=social)](https://github.com/ibrahmsql/discoursemap/network/members)
