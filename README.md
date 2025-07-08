@@ -51,16 +51,28 @@ DiscourseMap is a comprehensive, modular security testing framework specifically
 
 ## 📦 Installation
 
-### 📦 PyPI Installation (Recommended)
+### 🚀 Quick Install (Recommended)
 ```bash
-# Install from PyPI
+# Install from PyPI - Simple and fast!
 pip install discoursemap
 
-# Or with pipx for isolated installation
+# Verify installation
+discoursemap --help
+
+# Start scanning immediately
+discoursemap -u https://forum.example.com
+```
+
+### 📦 Alternative Installation Methods
+```bash
+# Install with pipx for isolated environment
 pipx install discoursemap
 
-# Run directly
-discoursemap -u https://forum.example.com
+# Install specific version
+pip install discoursemap==1.1.0
+
+# Upgrade to latest version
+pip install --upgrade discoursemap
 ```
 
 ### Prerequisites
