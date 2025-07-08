@@ -1,5 +1,41 @@
 # Discourse Security Scanner - TODO List
 
+## ⚡ Quick Wins 
+
+### 🎯 Immediate Improvements (< 1 hour each)
+- [ ] **Add --version flag** to main.py for version information
+- [ ] **Add --quiet mode** to suppress non-essential output
+- [ ] **Add --output-dir** parameter to specify custom output directory
+- [ ] **Add basic input validation** for URL format in main.py
+- [ ] **Add simple progress indicators** for long-running scans
+- [ ] **Fix typos and formatting** in existing output messages
+- [ ] **Add --help examples** with common usage scenarios
+- [ ] **Add basic error logging** to file (errors.log)
+
+### 🛠️ Simple Configuration 
+- [ ] **Add --timeout parameter** for request timeouts
+- [ ] **Add --user-agent** parameter for custom user agents
+- [ ] **Add --max-threads** parameter for concurrent requests
+- [ ] **Add --delay parameter** for request delays
+- [ ] **Add --output-format** (json/txt/csv) selection
+- [ ] **Add --exclude-modules** parameter to skip specific modules
+- [ ] **Add --include-only** parameter to run specific modules only
+
+### 📝 Documentation Quick Fixes 
+- [ ] **Add CHANGELOG.md** file for version history
+- [ ] **Add CONTRIBUTING.md** with basic guidelines
+- [ ] **Add LICENSE file** (MIT or preferred license)
+- [ ] **Update README.md** with latest features and examples
+- [ ] **Add usage examples** in examples/ directory
+
+### 🔧 Code Quality Basics (< 1 hour each)
+- [ ] **Add version string** to all module files
+
+### 🚀 User Experience Improvements (< 1 hour each)
+- [ ] **Add keyboard interrupt handling** (Ctrl+C graceful exit)
+- [ ] **Add scan duration** in final report
+- [ ] **Add basic ASCII banner** for tool startup
+
 ## 🚀 Completed Features
 
 ### ✅ Core Scanner Framework
