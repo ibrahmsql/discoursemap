@@ -20,7 +20,7 @@ from .vulnerability_module import VulnerabilityModule
 from .endpoint_module import EndpointModule
 from .user_module import UserModule
 from .cve_exploit_module import CVEExploitModule
-
+from .banner import Banner
 __all__ = [
     'validate_url', 'normalize_url', 'make_request', 'extract_csrf_token',
     'extract_discourse_version', 'generate_payloads', 'random_user_agent',
