@@ -14,6 +14,7 @@ Unauthorized use is prohibited and may have legal consequences.
 import argparse
 import sys
 import os
+import time
 from datetime import datetime
 from colorama import init, Fore, Style
 from modules.scanner import DiscourseScanner
@@ -78,6 +79,8 @@ Examples:
 def main():
     print(Banner)
     """Main function"""
+    start_time = time.time()
+    
     try:
         # Parse arguments
         args = parse_arguments()
@@ -100,8 +103,14 @@ def main():
             quiet=args.quiet
         )
         
-        # Header will be shown by reporter
-        pass
+        # Show scan configuration
+        if not args.quiet:
+            print(f"{Fore.CYAN}[*] Scan Configuration:{Style.RESET_ALL}")
+            print(f"    Target: {args.url}")
+            print(f"    Threads: {args.threads}")
+            print(f"    User-Agent: {'Custom' if args.user_agent else 'Rotating'}")
+            print(f"    Delay: {args.delay}s")
+            print()
         
         # Determine modules
         modules_to_run = args.modules if args.modules else ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
@@ -109,6 +118,10 @@ def main():
         
         # Start scan
         results = scanner.run_scan(modules_to_run)
+        
+        # Calculate scan duration
+        end_time = time.time()
+        duration = end_time - start_time
         
         # Generate report
         if args.output:
@@ -124,13 +137,30 @@ def main():
             
             print(f"{Fore.GREEN}[+] Report saved: {output_file}{Style.RESET_ALL}")
         
-        print(f"{Fore.GREEN}[+] Scan completed!{Style.RESET_ALL}")
+        # Show completion with duration
+        print(f"{Fore.GREEN}[+] Scan completed in {duration:.2f} seconds!{Style.RESET_ALL}")
         
     except KeyboardInterrupt:
-        print(f"\n{Fore.YELLOW}[!] Cancelled by user.{Style.RESET_ALL}")
+        end_time = time.time()
+        duration = end_time - start_time
+        print(f"\n{Fore.YELLOW}[!] Scan interrupted by user after {duration:.2f} seconds{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[!] Performing graceful shutdown...{Style.RESET_ALL}")
+        
+        # Try to save partial results if available
+        try:
+            if 'scanner' in locals() and hasattr(scanner, 'results'):
+                print(f"{Fore.CYAN}[*] Saving partial scan results...{Style.RESET_ALL}")
+                partial_file = f"partial_scan_{int(time.time())}.json"
+                scanner.generate_json_report(partial_file)
+                print(f"{Fore.GREEN}[+] Partial results saved: {partial_file}{Style.RESET_ALL}")
+        except:
+            pass
+        
         sys.exit(0)
     except Exception as e:
-        print(f"{Fore.RED}[!] Error: {str(e)}{Style.RESET_ALL}")
+        end_time = time.time()
+        duration = end_time - start_time
+        print(f"{Fore.RED}[!] Error after {duration:.2f} seconds: {str(e)}{Style.RESET_ALL}")
         if args.verbose if 'args' in locals() else False:
             import traceback
             traceback.print_exc()
