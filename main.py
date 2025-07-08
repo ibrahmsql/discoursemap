@@ -19,9 +19,9 @@ from colorama import init, Fore, Style
 from modules.scanner import DiscourseScanner
 from modules.reporter import Reporter
 from modules.utils import validate_url
+from modules.banner import Banner
 
 init(autoreset=True)
-
 
 
 def parse_arguments():
@@ -76,6 +76,7 @@ Examples:
     return parser.parse_args()
 
 def main():
+    print(Banner)
     """Main function"""
     try:
         # Parse arguments
