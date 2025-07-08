@@ -2,7 +2,7 @@
 
 ## ⚡ Quick Wins 
 
-### 🎯 Immediate Improvements (< 1 hour each)
+### 🎯 Immediate Improvements 
 - [ ] **Add --version flag** to main.py for version information
 - [ ] **Add --quiet mode** to suppress non-essential output
 - [ ] **Add --output-dir** parameter to specify custom output directory
@@ -14,7 +14,7 @@
 
 ### 🛠️ Simple Configuration 
 - [ ] **Add --timeout parameter** for request timeouts
-- [ ] **Add --user-agent** parameter for custom user agents
+- [x] **Add --user-agent** parameter for custom user agents
 - [ ] **Add --max-threads** parameter for concurrent requests
 - [ ] **Add --delay parameter** for request delays
 - [ ] **Add --output-format** (json/txt/csv) selection
@@ -32,9 +32,9 @@
 - [ ] **Add version string** to all module files
 
 ### 🚀 User Experience Improvements (< 1 hour each)
-- [ ] **Add keyboard interrupt handling** (Ctrl+C graceful exit)
-- [ ] **Add scan duration** in final report
-- [ ] **Add basic ASCII banner** for tool startup
+- [x] **Add keyboard interrupt handling** (Ctrl+C graceful exit)
+- [x] **Add scan duration** in final report
+- [x] **Add basic ASCII banner** for tool startup
 
 ## 🚀 Completed Features
 

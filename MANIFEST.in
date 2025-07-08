@@ -1,0 +1,10 @@
+include README.md
+include LICENSE
+include requirements.txt
+include TODO.md
+recursive-include data *.yaml
+recursive-include discourse_exploits *
+recursive-include ruby_exploits *.rb
+recursive-include modules *.py
+include main.py
+include setup.py

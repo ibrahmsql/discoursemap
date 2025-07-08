@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-DiscourseMap v2.0
+DiscourseMap v1.1.0
 Comprehensive Discourse forum security assessment tool
 
 Author: ibrahimsql
-Version: 2.0.0
+Version: 1.1.0
 License: MIT
 
 WARNING: This tool should only be used on authorized systems.
@@ -17,18 +17,18 @@ import os
 import time
 from datetime import datetime
 from colorama import init, Fore, Style
-from modules.scanner import DiscourseScanner
-from modules.reporter import Reporter
-from modules.utils import validate_url
-from modules.banner import Banner
+from discoursemap.modules.scanner import DiscourseScanner
+from discoursemap.modules.reporter import Reporter
+from discoursemap.modules.utils import validate_url
+from discoursemap.modules.banner import Banner
 
-init(autoreset=True)
+init(autoreset=False)
 
 
 def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description='DiscourseMap v2.0 - Comprehensive Discourse security assessment tool',
+        description='DiscourseMap v1.1.0 - Comprehensive Discourse security assessment tool',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -77,8 +77,8 @@ Examples:
     return parser.parse_args()
 
 def main():
-    print(Banner)
     """Main function"""
+    print(Banner)
     start_time = time.time()
     
     try:
