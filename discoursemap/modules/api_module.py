@@ -97,6 +97,10 @@ class APISecurityModule:
         self.rate_limit_requests = 100
         self.rate_limit_threads = 10
         
+    def run(self):
+        """Run API security testing module (main entry point)"""
+        return self.run_scan()
+    
     def run_scan(self):
         """Run comprehensive API security testing"""
         print(f"[*] Starting API security testing for {self.target_url}")
