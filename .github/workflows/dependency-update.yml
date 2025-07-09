@@ -1,0 +1,57 @@
+name: Dependency Update
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Every Monday at 2 AM
+  workflow_dispatch:
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install pip-tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-tools
+    
+    - name: Update requirements
+      run: |
+        pip-compile --upgrade requirements.in
+        pip-compile --upgrade requirements-dev.in
+      continue-on-error: true
+    
+    - name: Check for security vulnerabilities
+      run: |
+        pip install safety
+        safety check --json --output safety-report.json
+      continue-on-error: true
+    
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update dependencies'
+        title: 'chore: update dependencies'
+        body: |
+          ## Dependency Updates
+          
+          This PR updates project dependencies to their latest versions.
+          
+          ### Changes
+          - Updated Python dependencies
+          - Security vulnerability check performed
+          
+          ### Testing
+          Please ensure all tests pass before merging.
+        branch: dependency-updates
+        delete-branch: true
