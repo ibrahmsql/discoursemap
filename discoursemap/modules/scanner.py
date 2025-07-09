@@ -182,7 +182,9 @@ class DiscourseScanner:
         
         # Check if target is Discourse
         if not is_discourse_site(self.target_url, self.timeout):
-            self.log("Warning: Target may not be a Discourse forum", 'warning')
+            self.log("Error: Target is not a Discourse forum!", 'error')
+            self.log("This tool is specifically designed for Discourse forums only.", 'error')
+            raise Exception("Target is not a Discourse forum. Scan aborted.")
         else:
             self.log("Target confirmed as Discourse forum", 'success')
         

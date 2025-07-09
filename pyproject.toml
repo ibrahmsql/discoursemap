@@ -1,0 +1,142 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "discoursemap"
+version = "1.0.1"
+description = "Discourse forum security scanner. Written for security professionals and forum administrators."
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "ibrahimsql", email = "ibrahimsql@proton.me"}
+]
+maintainers = [
+    {name = "ibrahimsql", email = "ibrahimsql@proton.me"}
+]
+keywords = ["discourse", "security", "scanner", "penetration-testing", "vulnerability-scanner", "cybersecurity"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Topic :: Security",
+    "Topic :: Internet :: WWW/HTTP :: Site Management",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+]
+dependencies = [
+    "PyYAML==6.0.2",
+    "requests>=2.28.0",
+    "beautifulsoup4>=4.11.0",
+    "lxml>=4.9.0",
+    "colorama>=0.4.5",
+    "tqdm>=4.64.0",
+    "jinja2>=3.1.0",
+    "urllib3>=1.26.0",
+    "certifi>=2022.0.0",
+    "chardet>=5.0.0",
+    "idna>=3.4",
+    "pysocks>=1.7.1",
+    "cryptography>=3.4.8",
+    "pyopenssl>=22.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "flake8>=5.0.0",
+    "black>=22.0.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/ibrahmsql/discoursemap"
+"Bug Reports" = "https://github.com/ibrahmsql/discoursemap/issues"
+"Source" = "https://github.com/ibrahmsql/discoursemap"
+"Documentation" = "https://github.com/ibrahmsql/discoursemap#readme"
+
+[project.scripts]
+discoursemap = "discoursemap.main:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."] 
+include = ["discoursemap*"]
+
+[tool.setuptools.package-data]
+discoursemap = [
+    "data/*.yaml",
+    "discourse_exploits/**/*",
+    "ruby_exploits/*.rb",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+(
+  /(
+      \.eggs
+    | \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+)
+'''
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers"
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.coverage.run]
+source = ["discoursemap"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    "*.egg-info",
+    ".venv",
+    ".tox",
+]

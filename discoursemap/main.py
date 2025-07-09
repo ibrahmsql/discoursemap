@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-DiscourseMap v1.1.0
+DiscourseMap v1.0.1
 Comprehensive Discourse forum security assessment tool
 
 Author: ibrahimsql
-Version: 1.1.0
+Version: 1.0.1
 License: MIT
 
 WARNING: This tool should only be used on authorized systems.
@@ -28,7 +28,7 @@ init(autoreset=False)
 def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description='DiscourseMap v1.1.0 - Comprehensive Discourse security assessment tool',
+        description='DiscourseMap v1.0.1 - Comprehensive Discourse security assessment tool',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
