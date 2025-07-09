@@ -1,0 +1,70 @@
+/* Custom CSS for DiscourseMap Documentation */
+
+/* Main theme customizations */
+.wy-nav-side {
+    background: #2c3e50;
+}
+
+.wy-side-nav-search {
+    background-color: #34495e;
+}
+
+.wy-side-nav-search input[type=text] {
+    border-color: #3498db;
+}
+
+/* Code blocks */
+.highlight {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+}
+
+/* Admonitions */
+.admonition {
+    border-radius: 4px;
+    margin: 1em 0;
+}
+
+.admonition.note {
+    border-left: 4px solid #3498db;
+}
+
+.admonition.warning {
+    border-left: 4px solid #f39c12;
+}
+
+.admonition.danger {
+    border-left: 4px solid #e74c3c;
+}
+
+/* Links */
+a {
+    color: #3498db;
+}
+
+a:hover {
+    color: #2980b9;
+}
+
+/* Headers */
+h1, h2, h3, h4, h5, h6 {
+    color: #2c3e50;
+}
+
+/* Tables */
+table.docutils {
+    border-collapse: collapse;
+    margin: 1em 0;
+}
+
+table.docutils th,
+table.docutils td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+table.docutils th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}

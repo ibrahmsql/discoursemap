@@ -18,9 +18,6 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'myst_parser',
 ]
 
 templates_path = ['_templates']
@@ -35,18 +32,6 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 # -- Extension configuration -------------------------------------------------
-
-# -- Options for intersphinx extension ---------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#configuration
-
-intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', None),
-}
-
-# -- Options for todo extension ----------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/extensions/todo.html#configuration
-
-todo_include_todos = True
 
 # -- Options for Napoleon extension ------------------------------------------
 napoleon_google_docstring = True
@@ -89,16 +74,8 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-# Custom CSS
-html_css_files = [
-    'custom.css',
-]
-
 # Source file suffixes
-source_suffix = {
-    '.rst': None,
-    '.md': 'myst_parser',
-}
+source_suffix = '.rst'
 
 # Master document
 master_doc = 'index'
