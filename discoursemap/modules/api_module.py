@@ -18,6 +18,10 @@ import hashlib
 from urllib.parse import urljoin, urlparse, parse_qs
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
+from colorama import Fore, Style, init
+
+# Initialize colorama
+init(autoreset=True)
 
 class APISecurityModule:
     def __init__(self, scanner):
@@ -103,7 +107,7 @@ class APISecurityModule:
     
     def run_scan(self):
         """Run comprehensive API security testing"""
-        print(f"[*] Starting API security testing for {self.target_url}")
+        print(f"{Fore.CYAN}[*] Starting API security testing for {self.target_url}{Style.RESET_ALL}")
         
         try:
             # API Discovery
@@ -142,10 +146,10 @@ class APISecurityModule:
             # GraphQL Testing (if available)
             self._test_graphql_security()
             
-            print(f"[+] API security testing completed")
+            print(f"{Fore.GREEN}[+] API security testing completed{Style.RESET_ALL}")
             
         except Exception as e:
-            print(f"[!] Error during API security testing: {str(e)}")
+            print(f"{Fore.RED}[!] Error during API security testing: {str(e)}{Style.RESET_ALL}")
             self.results['vulnerabilities'].append({
                 'type': 'API Testing Error',
                 'severity': 'info',
@@ -156,7 +160,7 @@ class APISecurityModule:
     
     def _discover_api_endpoints(self):
         """Discover available API endpoints"""
-        print("[*] Discovering API endpoints...")
+        print(f"{Fore.CYAN}[*] Discovering API endpoints...{Style.RESET_ALL}")
         
         discovered_endpoints = []
         
@@ -186,6 +190,7 @@ class APISecurityModule:
                             'endpoint': endpoint,
                             'description': f'API endpoint {endpoint} may expose sensitive information'
                         })
+                        print(f"{Fore.YELLOW}[!] Sensitive data found in {endpoint}{Style.RESET_ALL}")
                 
                 discovered_endpoints.append(endpoint_info)
                 
@@ -193,14 +198,15 @@ class APISecurityModule:
                 time.sleep(0.1)
                 
             except Exception as e:
-                print(f"[!] Error testing endpoint {endpoint}: {str(e)}")
+                print(f"{Fore.RED}[!] Error testing endpoint {endpoint}: {str(e)}{Style.RESET_ALL}")
         
         self.results['api_endpoints'] = discovered_endpoints
-        print(f"[+] Discovered {len([e for e in discovered_endpoints if e['accessible']])} accessible API endpoints")
+        accessible_count = len([e for e in discovered_endpoints if e['accessible']])
+        print(f"{Fore.GREEN}[+] Discovered {accessible_count} accessible API endpoints{Style.RESET_ALL}")
     
     def _test_api_authentication(self):
         """Test API authentication mechanisms"""
-        print("[*] Testing API authentication...")
+        print(Fore.CYAN + "[*] Testing API authentication..." + Style.RESET_ALL)
         
         # Test unauthenticated access to protected endpoints
         protected_endpoints = ['/admin/api', '/admin/users.json', '/admin/site_settings.json']
@@ -253,11 +259,11 @@ class APISecurityModule:
                     })
                 
             except Exception as e:
-                print(f"[!] Error testing authentication for {endpoint}: {str(e)}")
+                print(Fore.RED + f"[!] Error testing authentication for {endpoint}: {str(e)}" + Style.RESET_ALL)
     
     def _test_api_authorization(self):
         """Test API authorization and privilege escalation"""
-        print("[*] Testing API authorization...")
+        print(Fore.CYAN + "[*] Testing API authorization..." + Style.RESET_ALL)
         
         # Test horizontal privilege escalation
         user_endpoints = [
@@ -287,7 +293,7 @@ class APISecurityModule:
                         pass
                 
             except Exception as e:
-                print(f"[!] Error testing authorization for {endpoint}: {str(e)}")
+                print(Fore.RED + f"[!] Error testing authorization for {endpoint}: {str(e)}" + Style.RESET_ALL)
         
         # Test admin endpoint access with regular user credentials
         admin_endpoints = ['/admin/users.json', '/admin/site_settings.json', '/admin/api/keys.json']
@@ -317,11 +323,11 @@ class APISecurityModule:
                         })
                 
             except Exception as e:
-                print(f"[!] Error testing admin access for {endpoint}: {str(e)}")
+                print(Fore.RED + f"[!] Error testing admin access for {endpoint}: {str(e)}" + Style.RESET_ALL)
     
     def _test_rate_limiting(self):
         """Test API rate limiting mechanisms"""
-        print("[*] Testing API rate limiting...")
+        print(Fore.CYAN + "[*] Testing API rate limiting..." + Style.RESET_ALL)
         
         test_endpoints = ['/latest.json', '/search.json', '/users.json']
         
@@ -366,11 +372,11 @@ class APISecurityModule:
                     })
                 
             except Exception as e:
-                print(f"[!] Error testing rate limiting for {endpoint}: {str(e)}")
+                print(Fore.RED + f"[!] Error testing rate limiting for {endpoint}: {str(e)}" + Style.RESET_ALL)
     
     def _test_data_exposure(self):
         """Test for sensitive data exposure in API responses"""
-        print("[*] Testing for data exposure...")
+        print(Fore.CYAN + "[*] Testing for data exposure..." + Style.RESET_ALL)
         
         sensitive_patterns = {
             'email': r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
@@ -407,11 +413,11 @@ class APISecurityModule:
                             })
                 
             except Exception as e:
-                print(f"[!] Error testing data exposure for {endpoint}: {str(e)}")
+                print(Fore.RED + f"[!] Error testing data exposure for {endpoint}: {str(e)}" + Style.RESET_ALL)
     
     def _test_api_abuse(self):
         """Test for API abuse vulnerabilities"""
-        print("[*] Testing for API abuse...")
+        print(Fore.CYAN + "[*] Testing for API abuse..." + Style.RESET_ALL)
         
         # Test for SQL injection in API parameters
         sql_payloads = ["'", "' OR '1'='1", "'; DROP TABLE users; --", "' UNION SELECT 1,2,3 --"]
@@ -438,7 +444,7 @@ class APISecurityModule:
                         })
                 
                 except Exception as e:
-                    print(f"[!] Error testing SQL injection for {endpoint}: {str(e)}")
+                    print(Fore.RED + f"[!] Error testing SQL injection for {endpoint}: {str(e)}" + Style.RESET_ALL)
         
         # Test for XSS in API responses
         xss_payloads = ['<script>alert(1)</script>', '"><script>alert(1)</script>', "'><script>alert(1)</script>"]
@@ -461,11 +467,11 @@ class APISecurityModule:
                         })
                 
                 except Exception as e:
-                    print(f"[!] Error testing XSS for {endpoint}: {str(e)}")
+                    print(Fore.RED + f"[!] Error testing XSS for {endpoint}: {str(e)}" + Style.RESET_ALL)
     
     def _test_http_methods(self):
         """Test different HTTP methods on API endpoints"""
-        print("[*] Testing HTTP methods...")
+        print(Fore.CYAN + "[*] Testing HTTP methods..." + Style.RESET_ALL)
         
         test_endpoints = ['/users.json', '/categories.json', '/admin/users.json']
         
@@ -507,11 +513,11 @@ class APISecurityModule:
                                 })
                 
                 except Exception as e:
-                    print(f"[!] Error testing {method} method for {endpoint}: {str(e)}")
+                    print(Fore.RED + f"[!] Error testing {method} method for {endpoint}: {str(e)}" + Style.RESET_ALL)
     
     def _test_parameter_pollution(self):
         """Test for HTTP parameter pollution vulnerabilities"""
-        print("[*] Testing parameter pollution...")
+        print(Fore.CYAN + "[*] Testing parameter pollution..." + Style.RESET_ALL)
         
         test_endpoints = ['/search.json', '/users.json']
         
@@ -545,11 +551,11 @@ class APISecurityModule:
                     })
             
             except Exception as e:
-                print(f"[!] Error testing parameter pollution for {endpoint}: {str(e)}")
+                print(Fore.RED + f"[!] Error testing parameter pollution for {endpoint}: {str(e)}" + Style.RESET_ALL)
     
     def _test_api_versioning(self):
         """Test API versioning security issues"""
-        print("[*] Testing API versioning...")
+        print(Fore.CYAN + "[*] Testing API versioning..." + Style.RESET_ALL)
         
         version_patterns = [
             '/v1/users.json',
@@ -583,11 +589,11 @@ class APISecurityModule:
                         })
             
             except Exception as e:
-                print(f"[!] Error testing API version {version_endpoint}: {str(e)}")
+                print(Fore.RED + f"[!] Error testing API version {version_endpoint}: {str(e)}" + Style.RESET_ALL)
     
     def _test_content_types(self):
         """Test different content types for API abuse"""
-        print("[*] Testing content types...")
+        print(Fore.CYAN + "[*] Testing content types..." + Style.RESET_ALL)
         
         test_endpoints = ['/posts.json', '/users.json']
         content_types = [
@@ -621,11 +627,11 @@ class APISecurityModule:
                         })
                 
                 except Exception as e:
-                    print(f"[!] Error testing content type {content_type} for {endpoint}: {str(e)}")
+                    print(Fore.RED + f"[!] Error testing content type {content_type} for {endpoint}: {str(e)}" + Style.RESET_ALL)
     
     def _test_cors_issues(self):
         """Test for CORS misconfigurations"""
-        print("[*] Testing CORS issues...")
+        print(Fore.CYAN + "[*] Testing CORS issues..." + Style.RESET_ALL)
         
         test_endpoints = ['/latest.json', '/users.json', '/admin/users.json']
         
@@ -676,11 +682,11 @@ class APISecurityModule:
                     })
             
             except Exception as e:
-                print(f"[!] Error testing CORS for {endpoint}: {str(e)}")
+                print(Fore.RED + f"[!] Error testing CORS for {endpoint}: {str(e)}" + Style.RESET_ALL)
     
     def _test_graphql_security(self):
         """Test GraphQL security if available"""
-        print("[*] Testing GraphQL security...")
+        print(Fore.CYAN + "[*] Testing GraphQL security..." + Style.RESET_ALL)
         
         graphql_endpoints = ['/graphql', '/api/graphql', '/admin/graphql']
         
@@ -732,7 +738,7 @@ class APISecurityModule:
                     })
             
             except Exception as e:
-                print(f"[!] Error testing GraphQL for {endpoint}: {str(e)}")
+                print(Fore.RED + f"[!] Error testing GraphQL for {endpoint}: {str(e)}" + Style.RESET_ALL)
 
 if __name__ == "__main__":
     # Test the module

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-DiscourseMap v1.0.1
+DiscourseMap v1.1.1
 Comprehensive Discourse forum security assessment tool
 
 Author: ibrahimsql
-Version: 1.0.1
+Version: 1.1.1
 License: MIT
 
 WARNING: This tool should only be used on authorized systems.
