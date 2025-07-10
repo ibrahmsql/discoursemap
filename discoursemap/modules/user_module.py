@@ -67,13 +67,31 @@ class UserModule:
         """Test for user enumeration vulnerabilities"""
         self.scanner.log("Testing user enumeration...", 'debug')
         
-        # Common usernames to test
+        # Extended list of common usernames to test
         common_usernames = [
             'admin', 'administrator', 'root', 'user', 'test',
             'guest', 'demo', 'support', 'moderator', 'mod',
             'staff', 'owner', 'webmaster', 'discourse',
-            'system', 'service', 'api', 'bot'
+            'system', 'service', 'api', 'bot', 'help',
+            'info', 'contact', 'sales', 'marketing', 'dev',
+            'developer', 'manager', 'supervisor', 'leader',
+            'team', 'group', 'community', 'forum', 'board',
+            'member', 'subscriber', 'customer', 'client',
+            'operator', 'maintainer', 'editor', 'author',
+            'writer', 'blogger', 'poster', 'contributor',
+            'reviewer', 'tester', 'qa', 'quality', 'security',
+            'backup', 'archive', 'temp', 'temporary', 'new',
+            'old', 'legacy', 'default', 'example', 'sample'
         ]
+        
+        # Try to discover users from public endpoints
+        self._discover_users_from_public_endpoints()
+        
+        # Try to discover users from directory listing
+        self._discover_users_from_directory()
+        
+        # Try to discover users from search functionality
+        self._discover_users_from_search()
         
         # Test user enumeration via different endpoints
         enumeration_endpoints = [
@@ -109,11 +127,123 @@ class UserModule:
                                 user_data = response.json()
                                 if 'user' in user_data:
                                     user_info.update({
+                                        'id': user_data['user'].get('id'),
                                         'name': user_data['user'].get('name'),
+                                        'username': user_data['user'].get('username'),
+                                        'avatar_template': user_data['user'].get('avatar_template'),
                                         'trust_level': user_data['user'].get('trust_level'),
                                         'last_seen': user_data['user'].get('last_seen_at'),
-                                        'post_count': user_data['user'].get('post_count')
+                                        'last_posted': user_data['user'].get('last_posted_at'),
+                                        'post_count': user_data['user'].get('post_count'),
+                                        'topic_count': user_data['user'].get('topic_count'),
+                                        'likes_given': user_data['user'].get('likes_given'),
+                                        'likes_received': user_data['user'].get('likes_received'),
+                                        'days_visited': user_data['user'].get('days_visited'),
+                                        'posts_read_count': user_data['user'].get('posts_read_count'),
+                                        'topics_entered': user_data['user'].get('topics_entered'),
+                                        'time_read': user_data['user'].get('time_read'),
+                                        'recent_time_read': user_data['user'].get('recent_time_read'),
+                                        'primary_group_name': user_data['user'].get('primary_group_name'),
+                                        'primary_group_flair_url': user_data['user'].get('primary_group_flair_url'),
+                                        'primary_group_flair_bg_color': user_data['user'].get('primary_group_flair_bg_color'),
+                                        'primary_group_flair_color': user_data['user'].get('primary_group_flair_color'),
+                                        'featured_badge_id': user_data['user'].get('featured_badge_id'),
+                                        'card_badge': user_data['user'].get('card_badge'),
+                                        'bio_raw': user_data['user'].get('bio_raw'),
+                                        'bio_cooked': user_data['user'].get('bio_cooked'),
+                                        'website': user_data['user'].get('website'),
+                                        'website_name': user_data['user'].get('website_name'),
+                                        'location': user_data['user'].get('location'),
+                                        'can_edit': user_data['user'].get('can_edit'),
+                                        'can_edit_username': user_data['user'].get('can_edit_username'),
+                                        'can_edit_email': user_data['user'].get('can_edit_email'),
+                                        'can_edit_name': user_data['user'].get('can_edit_name'),
+                                        'uploaded_avatar_id': user_data['user'].get('uploaded_avatar_id'),
+                                        'has_title_badges': user_data['user'].get('has_title_badges'),
+                                        'pending_count': user_data['user'].get('pending_count'),
+                                        'profile_view_count': user_data['user'].get('profile_view_count'),
+                                        'second_factor_enabled': user_data['user'].get('second_factor_enabled'),
+                                        'can_upload_profile_header': user_data['user'].get('can_upload_profile_header'),
+                                        'can_upload_user_card_background': user_data['user'].get('can_upload_user_card_background'),
+                                        'groups': user_data['user'].get('groups', []),
+                                        'group_users': user_data['user'].get('group_users', []),
+                                        'featured_user_badge_ids': user_data['user'].get('featured_user_badge_ids', []),
+                                        'invited_by': user_data['user'].get('invited_by'),
+                                        'custom_fields': user_data['user'].get('custom_fields', {}),
+                                        'user_fields': user_data['user'].get('user_fields', {}),
+                                        'topic_post_count': user_data['user'].get('topic_post_count', {}),
+                                        'can_see_private_messages': user_data['user'].get('can_see_private_messages'),
+                                        'can_send_private_messages': user_data['user'].get('can_send_private_messages'),
+                                        'can_send_private_message_to_user': user_data['user'].get('can_send_private_message_to_user'),
+                                        'mutual_following': user_data['user'].get('mutual_following'),
+                                        'is_followed': user_data['user'].get('is_followed'),
+                                        'muted': user_data['user'].get('muted'),
+                                        'can_mute_user': user_data['user'].get('can_mute_user'),
+                                        'can_ignore_user': user_data['user'].get('can_ignore_user'),
+                                        'system_avatar_upload_id': user_data['user'].get('system_avatar_upload_id'),
+                                        'system_avatar_template': user_data['user'].get('system_avatar_template'),
+                                        'gravatar_avatar_upload_id': user_data['user'].get('gravatar_avatar_upload_id'),
+                                        'gravatar_avatar_template': user_data['user'].get('gravatar_avatar_template'),
+                                        'custom_avatar_upload_id': user_data['user'].get('custom_avatar_upload_id'),
+                                        'custom_avatar_template': user_data['user'].get('custom_avatar_template'),
+                                        'has_posted': user_data['user'].get('has_posted'),
+                                        'email': user_data['user'].get('email'),
+                                        'secondary_emails': user_data['user'].get('secondary_emails', []),
+                                        'unconfirmed_emails': user_data['user'].get('unconfirmed_emails', []),
+                                        'associated_accounts': user_data['user'].get('associated_accounts', []),
+                                        'can_change_bio': user_data['user'].get('can_change_bio'),
+                                        'can_change_location': user_data['user'].get('can_change_location'),
+                                        'can_change_website': user_data['user'].get('can_change_website'),
+                                        'user_api_keys': user_data['user'].get('user_api_keys', []),
+                                        'user_auth_tokens': user_data['user'].get('user_auth_tokens', []),
+                                        'user_notification_schedule': user_data['user'].get('user_notification_schedule', {}),
+                                        'use_logo_small_as_avatar': user_data['user'].get('use_logo_small_as_avatar'),
+                                        'sidebar_category_ids': user_data['user'].get('sidebar_category_ids', []),
+                                        'sidebar_tag_names': user_data['user'].get('sidebar_tag_names', []),
+                                        'display_sidebar_tags': user_data['user'].get('display_sidebar_tags'),
+                                        'timezone': user_data['user'].get('timezone'),
+                                        'skip_new_user_tips': user_data['user'].get('skip_new_user_tips'),
+                                        'seen_notification_id': user_data['user'].get('seen_notification_id'),
+                                        'sidebar_list_destination': user_data['user'].get('sidebar_list_destination'),
+                                        'hide_profile_and_presence': user_data['user'].get('hide_profile_and_presence'),
+                                        'text_size': user_data['user'].get('text_size'),
+                                        'text_size_seq': user_data['user'].get('text_size_seq'),
+                                        'title_count_mode': user_data['user'].get('title_count_mode'),
+                                        'enable_quoting': user_data['user'].get('enable_quoting'),
+                                        'enable_defer': user_data['user'].get('enable_defer'),
+                                        'external_links_in_new_tab': user_data['user'].get('external_links_in_new_tab'),
+                                        'dynamic_favicon': user_data['user'].get('dynamic_favicon'),
+                                        'automatically_unpin_topics': user_data['user'].get('automatically_unpin_topics'),
+                                        'digest_after_minutes': user_data['user'].get('digest_after_minutes'),
+                                        'new_topic_duration_minutes': user_data['user'].get('new_topic_duration_minutes'),
+                                        'auto_track_topics_after_msecs': user_data['user'].get('auto_track_topics_after_msecs'),
+                                        'notification_level_when_replying': user_data['user'].get('notification_level_when_replying'),
+                                        'email_level': user_data['user'].get('email_level'),
+                                        'email_messages_level': user_data['user'].get('email_messages_level'),
+                                        'email_previous_replies': user_data['user'].get('email_previous_replies'),
+                                        'email_in_reply_to': user_data['user'].get('email_in_reply_to'),
+                                        'like_notification_frequency': user_data['user'].get('like_notification_frequency'),
+                                        'mailing_list_mode': user_data['user'].get('mailing_list_mode'),
+                                        'mailing_list_mode_frequency': user_data['user'].get('mailing_list_mode_frequency'),
+                                        'include_tl0_in_digests': user_data['user'].get('include_tl0_in_digests'),
+                                        'theme_ids': user_data['user'].get('theme_ids', []),
+                                        'theme_key_seq': user_data['user'].get('theme_key_seq'),
+                                        'allow_private_messages': user_data['user'].get('allow_private_messages'),
+                                        'enable_allowed_pm_users': user_data['user'].get('enable_allowed_pm_users'),
+                                        'homepage_id': user_data['user'].get('homepage_id'),
+                                        'hide_profile_and_presence': user_data['user'].get('hide_profile_and_presence'),
+                                        'user_option': user_data['user'].get('user_option', {})
                                     })
+                                    
+                                    # Extract avatar URLs if available
+                                    if user_data['user'].get('avatar_template'):
+                                        avatar_template = user_data['user']['avatar_template']
+                                        user_info['avatar_urls'] = {
+                                            'small': avatar_template.replace('{size}', '25'),
+                                            'medium': avatar_template.replace('{size}', '45'),
+                                            'large': avatar_template.replace('{size}', '120'),
+                                            'extra_large': avatar_template.replace('{size}', '240')
+                                        }
                             except json.JSONDecodeError:
                                 pass
                         
@@ -147,6 +277,317 @@ class UserModule:
         
         self.results['user_enumeration'] = valid_users
         self.discovered_users = [user['username'] for user in valid_users]
+        
+        # Log total users found
+        self.scanner.log(f"Total users discovered: {len(self.discovered_users)}", 'info')
+        if self.discovered_users:
+            self.scanner.log(f"Discovered users: {', '.join(self.discovered_users)}", 'info')
+    
+    def _discover_users_from_public_endpoints(self):
+        """Discover users from public API endpoints"""
+        self.scanner.log("Discovering users from public endpoints...", 'debug')
+        
+        # Try to get users from various public endpoints
+        public_endpoints = [
+            '/users.json',
+            '/directory_items.json',
+            '/directory_items.json?period=all&order=post_count',
+            '/directory_items.json?period=all&order=likes_received',
+            '/directory_items.json?period=all&order=likes_given',
+            '/directory_items.json?period=all&order=topics_entered',
+            '/directory_items.json?period=all&order=posts_read',
+            '/directory_items.json?period=all&order=days_visited',
+            '/about.json',
+            '/site.json',
+            '/groups.json',
+            '/badges.json',
+            '/user_badges.json'
+        ]
+        
+        for endpoint in public_endpoints:
+            url = urljoin(self.scanner.target_url, endpoint)
+            response = self.scanner.make_request(url)
+            
+            if response and response.status_code == 200:
+                try:
+                    data = response.json()
+                    users_found = self._extract_users_from_json(data, endpoint)
+                    if users_found:
+                        self.scanner.log(f"Found {len(users_found)} users from {endpoint}", 'success')
+                        for user in users_found:
+                            if user not in self.discovered_users:
+                                self.discovered_users.append(user)
+                except json.JSONDecodeError:
+                    pass
+            
+            time.sleep(0.1)
+    
+    def _discover_users_from_directory(self):
+        """Discover users from directory pages and /u/ endpoint"""
+        self.scanner.log("Discovering users from directory pages...", 'debug')
+        
+        # Try different directory pages
+        directory_pages = [
+            '/u',
+            '/users',
+            '/directory',
+            '/directory?period=all',
+            '/directory?order=post_count',
+            '/directory?order=likes_received',
+            '/directory?order=likes_given',
+            '/directory?order=topics_entered'
+        ]
+        
+        for page in directory_pages:
+            url = urljoin(self.scanner.target_url, page)
+            response = self.scanner.make_request(url)
+            
+            if response and response.status_code == 200:
+                users_found = self._extract_users_from_html(response.text)
+                if users_found:
+                    self.scanner.log(f"Found {len(users_found)} users from {page}", 'success')
+                    for user in users_found:
+                        if user not in self.discovered_users:
+                            self.discovered_users.append(user)
+            
+            time.sleep(0.1)
+        
+        # Special method to discover users from /u/ endpoint with ID enumeration
+        self._discover_users_from_u_endpoint()
+    
+    def _discover_users_from_u_endpoint(self):
+        """Discover users from /u/ endpoint by ID enumeration"""
+        self.scanner.log("Discovering users from /u/ endpoint with ID enumeration...", 'debug')
+        
+        # Try to enumerate users by ID from /u/ endpoint
+        # Start with low IDs and check for patterns
+        user_ids_to_check = list(range(1, 201))  # Check first 200 IDs
+        user_ids_to_check.extend([250, 300, 400, 500, 750, 1000, 1337, 1500, 2000, 2500, 3000, 4000, 5000, 7500, 10000])  # Add some common IDs
+        
+        # Add some random IDs in different ranges
+        import random
+        user_ids_to_check.extend(random.sample(range(201, 1000), 50))  # 50 random IDs between 201-1000
+        user_ids_to_check.extend(random.sample(range(1001, 5000), 25))  # 25 random IDs between 1001-5000
+        user_ids_to_check.extend(random.sample(range(5001, 10000), 10))  # 10 random IDs between 5001-10000
+        
+        # Sort the list to check in order
+        user_ids_to_check = sorted(list(set(user_ids_to_check)))
+        
+        found_users_count = 0
+        
+        for user_id in user_ids_to_check:
+            # Try different /u/ endpoint patterns
+            u_endpoints = [
+                f'/u/by-external/{user_id}',
+                f'/u/{user_id}',
+                f'/users/{user_id}',
+                f'/users/{user_id}.json'
+            ]
+            
+            for endpoint in u_endpoints:
+                url = urljoin(self.scanner.target_url, endpoint)
+                response = self.scanner.make_request(url)
+                
+                if response and response.status_code == 200:
+                    try:
+                        if endpoint.endswith('.json'):
+                            # JSON response
+                            data = response.json()
+                            if 'user' in data:
+                                user_data = data['user']
+                                username = user_data.get('username')
+                                if username and username not in self.discovered_users:
+                                    # Create detailed user info
+                                    detailed_user = {
+                                        'username': username,
+                                        'id': user_data.get('id'),
+                                        'name': user_data.get('name'),
+                                        'avatar_template': user_data.get('avatar_template'),
+                                        'trust_level': user_data.get('trust_level'),
+                                        'last_seen': user_data.get('last_seen_at'),
+                                        'last_posted': user_data.get('last_posted_at'),
+                                        'post_count': user_data.get('post_count'),
+                                        'topic_count': user_data.get('topic_count'),
+                                        'likes_given': user_data.get('likes_given'),
+                                        'likes_received': user_data.get('likes_received'),
+                                        'days_visited': user_data.get('days_visited'),
+                                        'posts_read_count': user_data.get('posts_read_count'),
+                                        'topics_entered': user_data.get('topics_entered'),
+                                        'time_read': user_data.get('time_read'),
+                                        'primary_group_name': user_data.get('primary_group_name'),
+                                        'bio_raw': user_data.get('bio_raw'),
+                                        'website': user_data.get('website'),
+                                        'location': user_data.get('location'),
+                                        'groups': user_data.get('groups', []),
+                                        'featured_user_badge_ids': user_data.get('featured_user_badge_ids', []),
+                                        'custom_fields': user_data.get('custom_fields', {}),
+                                        'user_fields': user_data.get('user_fields', {}),
+                                        'email': user_data.get('email'),
+                                        'secondary_emails': user_data.get('secondary_emails', []),
+                                        'associated_accounts': user_data.get('associated_accounts', []),
+                                        'timezone': user_data.get('timezone'),
+                                        'discovery_method': 'id_enumeration',
+                                        'discovery_endpoint': endpoint
+                                    }
+                                    
+                                    # Extract avatar URLs if available
+                                    if user_data.get('avatar_template'):
+                                        avatar_template = user_data['avatar_template']
+                                        detailed_user['avatar_urls'] = {
+                                            'small': avatar_template.replace('{size}', '25'),
+                                            'medium': avatar_template.replace('{size}', '45'),
+                                            'large': avatar_template.replace('{size}', '120'),
+                                            'extra_large': avatar_template.replace('{size}', '240')
+                                        }
+                                    
+                                    # Add to results
+                                    self.results['user_enumeration'].append(detailed_user)
+                                    self.discovered_users.append(username)
+                                    found_users_count += 1
+                                    self.scanner.log(f"Found user via /u/ ID {user_id}: {username} (ID: {user_data.get('id')})", 'success')
+                                    break
+                        else:
+                            # HTML response - extract username from page
+                            users_found = self._extract_users_from_html(response.text)
+                            for username in users_found:
+                                if username not in self.discovered_users:
+                                    self.discovered_users.append(username)
+                                    found_users_count += 1
+                                    self.scanner.log(f"Found user via /u/ ID {user_id}: {username}", 'success')
+                            if users_found:
+                                break
+                    except (json.JSONDecodeError, KeyError):
+                        # Try to extract from HTML even if JSON parsing fails
+                        users_found = self._extract_users_from_html(response.text)
+                        for username in users_found:
+                            if username not in self.discovered_users:
+                                self.discovered_users.append(username)
+                                found_users_count += 1
+                                self.scanner.log(f"Found user via /u/ ID {user_id}: {username}", 'success')
+                        if users_found:
+                            break
+                
+                time.sleep(0.05)  # Small delay between requests
+            
+            # If we found many users, continue with more IDs
+            if found_users_count > 20 and user_id < 100:
+                # Extend the range if we're finding many users
+                additional_ids = list(range(user_id + 1, min(user_id + 50, 500)))
+                user_ids_to_check.extend(additional_ids)
+        
+        if found_users_count > 0:
+            self.scanner.log(f"Total users found via /u/ endpoint: {found_users_count}", 'info')
+    
+    def _discover_users_from_search(self):
+        """Discover users from search functionality"""
+        self.scanner.log("Discovering users from search...", 'debug')
+        
+        # Try to search for users using common search terms
+        search_terms = ['a', 'e', 'i', 'o', 'u', 'admin', 'user', 'test', 'mod']
+        
+        for term in search_terms:
+            # Try user search endpoint
+            search_url = urljoin(self.scanner.target_url, f'/u/search/users?term={term}')
+            response = self.scanner.make_request(search_url)
+            
+            if response and response.status_code == 200:
+                try:
+                    data = response.json()
+                    if 'users' in data:
+                        for user_data in data['users']:
+                            username = user_data.get('username')
+                            if username and username not in self.discovered_users:
+                                self.discovered_users.append(username)
+                                self.scanner.log(f"Found user via search: {username}", 'success')
+                except json.JSONDecodeError:
+                    pass
+            
+            time.sleep(0.2)
+    
+    def _extract_users_from_json(self, data, endpoint):
+        """Extract usernames from JSON data"""
+        users = []
+        
+        # Handle different JSON structures
+        if isinstance(data, dict):
+            # Check for users array
+            if 'users' in data:
+                for user in data['users']:
+                    if isinstance(user, dict) and 'username' in user:
+                        users.append(user['username'])
+            
+            # Check for directory_items
+            if 'directory_items' in data:
+                for item in data['directory_items']:
+                    if isinstance(item, dict) and 'user' in item:
+                        user_data = item['user']
+                        if isinstance(user_data, dict) and 'username' in user_data:
+                            users.append(user_data['username'])
+            
+            # Check for moderators/admins in about.json
+            if 'about' in data:
+                about_data = data['about']
+                if 'moderators' in about_data:
+                    for mod in about_data['moderators']:
+                        if isinstance(mod, dict) and 'username' in mod:
+                            users.append(mod['username'])
+                if 'admins' in about_data:
+                    for admin in about_data['admins']:
+                        if isinstance(admin, dict) and 'username' in admin:
+                            users.append(admin['username'])
+            
+            # Check for groups with members
+            if 'groups' in data:
+                for group in data['groups']:
+                    if isinstance(group, dict) and 'members' in group:
+                        for member in group['members']:
+                            if isinstance(member, dict) and 'username' in member:
+                                users.append(member['username'])
+            
+            # Check for badge holders
+            if 'user_badges' in data:
+                for badge in data['user_badges']:
+                    if isinstance(badge, dict) and 'user' in badge:
+                        user_data = badge['user']
+                        if isinstance(user_data, dict) and 'username' in user_data:
+                            users.append(user_data['username'])
+        
+        return list(set(users))  # Remove duplicates
+    
+    def _extract_users_from_html(self, html_content):
+        """Extract usernames from HTML content"""
+        users = []
+        
+        try:
+            soup = BeautifulSoup(html_content, 'html.parser')
+            
+            # Look for user links
+            user_links = soup.find_all('a', href=re.compile(r'/u/[^/]+/?$'))
+            for link in user_links:
+                href = link.get('href')
+                if href:
+                    username = href.split('/u/')[-1].rstrip('/')
+                    if username and username not in users:
+                        users.append(username)
+            
+            # Look for username patterns in text
+            username_pattern = r'@([a-zA-Z0-9_-]+)'
+            matches = re.findall(username_pattern, html_content)
+            for match in matches:
+                if match not in users:
+                    users.append(match)
+            
+            # Look for data attributes with usernames
+            elements_with_username = soup.find_all(attrs={'data-username': True})
+            for element in elements_with_username:
+                username = element.get('data-username')
+                if username and username not in users:
+                    users.append(username)
+        
+        except Exception as e:
+            self.scanner.log(f"Error parsing HTML for users: {e}", 'debug')
+        
+        return users
     
     def _test_login_enumeration(self, usernames):
         """Test user enumeration via login responses"""

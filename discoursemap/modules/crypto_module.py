@@ -34,6 +34,13 @@ class CryptoModule:
             'signature_bypass': [],
             'timing_attacks': []
         }
+    
+    def _get_csrf_token(self):
+        """Helper method to get CSRF token"""
+        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        if response:
+            return extract_csrf_token(response.text)
+        return None
         
     def run(self):
         """Run cryptographic security testing module (main entry point)"""
@@ -490,7 +497,7 @@ class CryptoModule:
         if initial_session:
             # Attempt login (this would normally change session ID)
             login_url = urljoin(self.scanner.target_url, '/session')
-            csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+            csrf_token = self._get_csrf_token()
             
             login_data = {
                 'login': 'test@example.com',
@@ -545,7 +552,7 @@ class CryptoModule:
         print(f"{self.scanner.colors['info']}[*] Analyzing CSRF protection...{self.scanner.colors['reset']}")
         
         # Get CSRF token
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         if csrf_token:
             # Analyze CSRF token
@@ -765,7 +772,8 @@ class CryptoModule:
         for i in range(10):
             # Get fresh session
             temp_session = self.scanner.session.__class__()
-            token = extract_csrf_token(temp_session, self.scanner.target_url)
+            response = make_request(temp_session, 'GET', self.scanner.target_url)
+            token = extract_csrf_token(response.text) if response else None
             if token:
                 tokens.append(token)
             time.sleep(0.5)
@@ -884,7 +892,7 @@ class CryptoModule:
         
         # Test login endpoint for timing differences
         login_url = urljoin(self.scanner.target_url, '/session')
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         if csrf_token:
             # Test with valid username, invalid password

@@ -61,6 +61,16 @@ class DiscourseScanner:
         self.verbose = verbose
         self.quiet = quiet
         
+        # Color definitions for output formatting
+        self.colors = {
+            'info': Fore.CYAN,
+            'success': Fore.GREEN,
+            'warning': Fore.YELLOW,
+            'error': Fore.RED,
+            'debug': Fore.MAGENTA,
+            'reset': Style.RESET_ALL
+        }
+        
         # Results storage
         self.results = {
             'target': self.target_url,

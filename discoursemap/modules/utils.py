@@ -38,37 +38,62 @@ def normalize_url(url):
     
     return url
 
-def make_request(url, method='GET', headers=None, data=None, params=None, 
+def make_request(session_or_url, method_or_url=None, url_or_method=None, headers=None, data=None, params=None, 
                 timeout=10, verify_ssl=True, proxies=None, allow_redirects=True,
                 cookies=None):
-    """Send HTTP request"""
+    """Send HTTP request - supports both old and new calling conventions"""
     try:
-        default_headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-        }
-        
-        if headers:
-            default_headers.update(headers)
-        
-        response = requests.request(
-            method=method,
-            url=url,
-            headers=default_headers,
-            data=data,
-            params=params,
-            timeout=timeout,
-            verify=verify_ssl,
-            proxies=proxies,
-            allow_redirects=allow_redirects,
-            cookies=cookies
-        )
-        
-        return response
+        # Handle different calling conventions
+        if hasattr(session_or_url, 'request'):  # It's a session object
+            session = session_or_url
+            method = method_or_url
+            url = url_or_method
+            # Use session to make request
+            response = session.request(
+                method=method,
+                url=url,
+                headers=headers,
+                data=data,
+                params=params,
+                timeout=timeout,
+                allow_redirects=allow_redirects,
+                cookies=cookies
+            )
+            return response
+        else:  # It's a URL (new convention)
+            url = session_or_url
+            method = method_or_url or 'GET'
+            
+            default_headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1'
+            }
+            
+            if headers:
+                if isinstance(headers, dict):
+                    default_headers.update(headers)
+                else:
+                    # If headers is not a dict, ignore it
+                    pass
+            
+            response = requests.request(
+                method=method,
+                url=url,
+                headers=default_headers,
+                data=data,
+                params=params,
+                timeout=timeout,
+                verify=verify_ssl,
+                proxies=proxies,
+                allow_redirects=allow_redirects,
+                cookies=cookies
+            )
+            
+            return response
         
     except requests.exceptions.RequestException as e:
         return None

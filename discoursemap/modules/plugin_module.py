@@ -46,10 +46,10 @@ class PluginModule:
         self._discover_themes()
         
         # Plugin vulnerabilities
-        self._check_plugin_vulnerabilities()
+        self._test_plugin_vulnerabilities()
         
         # Theme vulnerabilities
-        self._check_theme_vulnerabilities()
+        self._test_theme_vulnerabilities()
         
         # Outdated plugin check
         self._check_outdated_plugins()
@@ -315,7 +315,7 @@ class PluginModule:
     
     def _check_outdated_plugins(self):
         """Check for outdated plugins"""
-        print(f"{self.scanner.colors['info']}[*] Güncel olmayan plugin'ler kontrol ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Checking for outdated plugins...{self.scanner.colors['reset']}")
         
         # Known vulnerable versions
         vulnerable_versions = {
@@ -341,7 +341,7 @@ class PluginModule:
     
     def _check_dangerous_permissions(self):
         """Check for dangerous plugin permissions"""
-        print(f"{self.scanner.colors['info']}[*] Tehlikeli plugin izinleri kontrol ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Checking dangerous plugin permissions...{self.scanner.colors['reset']}")
         
         dangerous_permissions = [
             'file_system_access',
@@ -370,7 +370,7 @@ class PluginModule:
     
     def _test_plugin_file_access(self):
         """Test plugin file access vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Plugin dosya erişim açıkları test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing plugin file access vulnerabilities...{self.scanner.colors['reset']}")
         
         file_access_paths = [
             '/plugins/../../etc/passwd',
@@ -395,7 +395,7 @@ class PluginModule:
     
     def _test_theme_injection(self):
         """Test theme injection vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Tema injection açıkları test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing theme injection vulnerabilities...{self.scanner.colors['reset']}")
         
         injection_payloads = [
             '<script>alert("XSS")</script>',

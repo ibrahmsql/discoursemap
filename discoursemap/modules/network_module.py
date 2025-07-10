@@ -159,7 +159,7 @@ class NetworkModule:
     
     def _service_detection(self):
         """Detect services running on open ports"""
-        print(f"{self.scanner.colors['info']}[*] Servis tespiti yapılıyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Performing service detection...{self.scanner.colors['reset']}")
         
         for port_info in self.results['port_scan']:
             port = port_info['port']
@@ -304,7 +304,7 @@ class NetworkModule:
     
     def _ssl_analysis(self):
         """Analyze SSL/TLS configuration"""
-        print(f"{self.scanner.colors['info']}[*] SSL/TLS analizi yapılıyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Performing SSL/TLS analysis...{self.scanner.colors['reset']}")
         
         try:
             import ssl
@@ -388,7 +388,7 @@ class NetworkModule:
     
     def _dns_analysis(self):
         """Analyze DNS configuration"""
-        print(f"{self.scanner.colors['info']}[*] DNS analizi yapılıyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Performing DNS analysis...{self.scanner.colors['reset']}")
         
         try:
             import dns.resolver
@@ -472,7 +472,7 @@ class NetworkModule:
     
     def _subdomain_enumeration(self):
         """Enumerate subdomains"""
-        print(f"{self.scanner.colors['info']}[*] Subdomain numaralandırma yapılıyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Performing subdomain enumeration...{self.scanner.colors['reset']}")
         
         # Common subdomain prefixes
         subdomains = [
@@ -538,7 +538,7 @@ class NetworkModule:
     
     def _cdn_detection(self):
         """Detect CDN usage"""
-        print(f"{self.scanner.colors['info']}[*] CDN tespiti yapılıyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Performing CDN detection...{self.scanner.colors['reset']}")
         
         response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
         
@@ -581,7 +581,7 @@ class NetworkModule:
     
     def _load_balancer_detection(self):
         """Detect load balancer usage"""
-        print(f"{self.scanner.colors['info']}[*] Load balancer tespiti yapılıyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Performing load balancer detection...{self.scanner.colors['reset']}")
         
         # Make multiple requests to detect load balancing
         server_headers = []
@@ -622,7 +622,7 @@ class NetworkModule:
     
     def _firewall_detection(self):
         """Detect Web Application Firewall (WAF)"""
-        print(f"{self.scanner.colors['info']}[*] Firewall tespiti yapılıyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Performing firewall detection...{self.scanner.colors['reset']}")
         
         # WAF detection payloads
         waf_payloads = [
@@ -674,7 +674,7 @@ class NetworkModule:
     
     def _rate_limiting_test(self):
         """Test rate limiting implementation"""
-        print(f"{self.scanner.colors['info']}[*] Rate limiting testi yapılıyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing rate limiting...{self.scanner.colors['reset']}")
         
         # Test rapid requests
         start_time = time.time()
@@ -713,7 +713,7 @@ class NetworkModule:
     
     def _ddos_protection_test(self):
         """Test DDoS protection mechanisms"""
-        print(f"{self.scanner.colors['info']}[*] DDoS koruması testi yapılıyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing DDoS protection...{self.scanner.colors['reset']}")
         
         # Test with different user agents and patterns
         test_patterns = [

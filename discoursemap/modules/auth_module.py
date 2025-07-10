@@ -33,6 +33,13 @@ class AuthModule:
             'admin_access': [],
             'user_enumeration': []
         }
+    
+    def _get_csrf_token(self):
+        """Helper method to get CSRF token"""
+        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        if response:
+            return extract_csrf_token(response.text)
+        return None
         
     def run(self):
         """Run authentication and authorization testing module (main entry point)"""
@@ -187,7 +194,12 @@ class AuthModule:
     def _test_parameter_pollution(self):
         """Test parameter pollution for authentication bypass"""
         login_url = urljoin(self.scanner.target_url, '/session')
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        
+        # Get CSRF token from login page
+        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        csrf_token = None
+        if response:
+            csrf_token = extract_csrf_token(response.text)
         
         if csrf_token:
             # Test parameter pollution techniques
@@ -253,7 +265,7 @@ class AuthModule:
     
     def _test_privilege_escalation(self):
         """Test for privilege escalation vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Yetki yükseltme test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing privilege escalation...{self.scanner.colors['reset']}")
         
         # Test role manipulation
         self._test_role_manipulation()
@@ -277,7 +289,11 @@ class AuthModule:
             '/my/preferences'
         ]
         
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        # Get CSRF token from login page
+        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        csrf_token = None
+        if response:
+            csrf_token = extract_csrf_token(response.text)
         
         for endpoint in profile_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
@@ -328,7 +344,7 @@ class AuthModule:
             '/admin/groups/bulk'
         ]
         
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         for endpoint in group_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
@@ -374,7 +390,7 @@ class AuthModule:
             '/my/preferences'
         ]
         
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         for endpoint in test_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
@@ -420,7 +436,7 @@ class AuthModule:
             '/user_api_keys'
         ]
         
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         for endpoint in api_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
@@ -452,7 +468,8 @@ class AuthModule:
                 if csrf_token:
                     payload['authenticity_token'] = csrf_token
                 
-                response = make_request(self.scanner.session, 'POST', url, json=payload)
+                headers = {'Content-Type': 'application/json'}
+                response = make_request(self.scanner.session, 'POST', url, headers=headers, data=json.dumps(payload))
                 
                 if response and response.status_code in [200, 201]:
                     try:
@@ -469,7 +486,7 @@ class AuthModule:
     
     def _test_session_management(self):
         """Test session management security"""
-        print(f"{self.scanner.colors['info']}[*] Session yönetimi test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing session management...{self.scanner.colors['reset']}")
         
         # Test session fixation
         self._test_session_fixation()
@@ -498,7 +515,7 @@ class AuthModule:
         if initial_session_id:
             # Attempt login
             login_url = urljoin(self.scanner.target_url, '/session')
-            csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+            csrf_token = self._get_csrf_token()
             
             if csrf_token:
                 login_data = {
@@ -550,7 +567,7 @@ class AuthModule:
         """Test concurrent session handling"""
         # Create multiple sessions for the same user
         login_url = urljoin(self.scanner.target_url, '/session')
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         if csrf_token:
             # Create second session
@@ -606,11 +623,11 @@ class AuthModule:
     
     def _test_password_policy(self):
         """Test password policy enforcement"""
-        print(f"{self.scanner.colors['info']}[*] Şifre politikası test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing password policy...{self.scanner.colors['reset']}")
         
         # Test user registration with weak passwords
         register_url = urljoin(self.scanner.target_url, '/u/create')
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         if csrf_token:
             weak_passwords = [
@@ -650,7 +667,7 @@ class AuthModule:
     def _test_password_change_policy(self):
         """Test password change policy"""
         change_url = urljoin(self.scanner.target_url, '/my/preferences/password')
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         if csrf_token:
             weak_passwords = ['123', 'password', 'test']
@@ -676,10 +693,10 @@ class AuthModule:
     
     def _test_account_lockout(self):
         """Test account lockout policy"""
-        print(f"{self.scanner.colors['info']}[*] Hesap kilitleme politikası test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing account lockout policy...{self.scanner.colors['reset']}")
         
         login_url = urljoin(self.scanner.target_url, '/session')
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         if csrf_token:
             # Test multiple failed login attempts
@@ -993,7 +1010,7 @@ class AuthModule:
     
     def _test_admin_access(self):
         """Test admin access controls"""
-        print(f"{self.scanner.colors['info']}[*] Admin erişim kontrolleri test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing admin access controls...{self.scanner.colors['reset']}")
         
         # Test default admin credentials
         self._test_default_credentials()
@@ -1007,7 +1024,7 @@ class AuthModule:
     def _test_default_credentials(self):
         """Test default admin credentials"""
         login_url = urljoin(self.scanner.target_url, '/session')
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         if csrf_token:
             default_creds = [
@@ -1101,7 +1118,7 @@ class AuthModule:
     
     def _test_user_enumeration(self):
         """Test user enumeration vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Kullanıcı numaralandırma test ediliyor...{self.scanner.colors['reset']}")
+        print(f"{self.scanner.colors['info']}[*] Testing user enumeration...{self.scanner.colors['reset']}")
         
         # Test user enumeration via login
         self._test_login_user_enumeration()
@@ -1118,7 +1135,7 @@ class AuthModule:
     def _test_login_user_enumeration(self):
         """Test user enumeration via login responses"""
         login_url = urljoin(self.scanner.target_url, '/session')
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         if csrf_token:
             # Test with likely existing username
@@ -1153,7 +1170,7 @@ class AuthModule:
     def _test_registration_user_enumeration(self):
         """Test user enumeration via registration"""
         register_url = urljoin(self.scanner.target_url, '/u/create')
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         if csrf_token:
             # Test with existing username
@@ -1189,7 +1206,7 @@ class AuthModule:
     def _test_password_reset_enumeration(self):
         """Test user enumeration via password reset"""
         reset_url = urljoin(self.scanner.target_url, '/password-reset')
-        csrf_token = extract_csrf_token(self.scanner.session, self.scanner.target_url)
+        csrf_token = self._get_csrf_token()
         
         if csrf_token:
             # Test with existing email
