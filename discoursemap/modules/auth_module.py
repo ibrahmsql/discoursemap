@@ -34,6 +34,10 @@ class AuthModule:
             'user_enumeration': []
         }
         
+    def run(self):
+        """Run authentication and authorization testing module (main entry point)"""
+        return self.run_scan()
+    
     def run_scan(self):
         """Run complete authentication and authorization scan"""
         print(f"\n{self.scanner.colors['info']}[*] Starting authentication and authorization scan...{self.scanner.colors['reset']}")

@@ -35,6 +35,10 @@ class CryptoModule:
             'timing_attacks': []
         }
         
+    def run(self):
+        """Run cryptographic security testing module (main entry point)"""
+        return self.run_scan()
+    
     def run_scan(self):
         """Run complete cryptographic security scan"""
         print(f"\n{self.scanner.colors['info']}[*] Starting cryptographic security scan...{self.scanner.colors['reset']}")

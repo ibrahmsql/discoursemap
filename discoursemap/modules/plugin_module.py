@@ -31,6 +31,10 @@ class PluginModule:
             'theme_injection': []
         }
         
+    def run(self):
+        """Run plugin security testing module (main entry point)"""
+        return self.run_scan()
+    
     def run_scan(self):
         """Run complete plugin security scan"""
         print(f"\n{self.scanner.colors['info']}[*] Starting plugin security scan...{self.scanner.colors['reset']}")

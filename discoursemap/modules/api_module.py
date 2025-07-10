@@ -643,43 +643,62 @@ class APISecurityModule:
                 headers = {'Origin': 'https://evil.com'}
                 response = self.session.get(url, headers=headers)
                 
-                cors_headers = {
-                    'access-control-allow-origin': response.headers.get('Access-Control-Allow-Origin'),
-                    'access-control-allow-credentials': response.headers.get('Access-Control-Allow-Credentials'),
-                    'access-control-allow-methods': response.headers.get('Access-Control-Allow-Methods'),
-                    'access-control-allow-headers': response.headers.get('Access-Control-Allow-Headers')
-                }
+                # Safely get CORS headers with proper None handling
+                origin_header = response.headers.get('Access-Control-Allow-Origin')
+                credentials_header = response.headers.get('Access-Control-Allow-Credentials')
+                methods_header = response.headers.get('Access-Control-Allow-Methods')
+                headers_header = response.headers.get('Access-Control-Allow-Headers')
                 
                 # Check for wildcard with credentials
-                if (cors_headers['access-control-allow-origin'] == '*' and 
-                    cors_headers['access-control-allow-credentials'] == 'true'):
-                    self.results['vulnerabilities'].append({
-                        'type': 'CORS Misconfiguration - Wildcard with Credentials',
-                        'severity': 'high',
-                        'endpoint': endpoint,
-                        'description': f'Endpoint {endpoint} allows wildcard origin with credentials'
-                    })
+                try:
+                    if origin_header and credentials_header:
+                        if (str(origin_header) == '*' and str(credentials_header) == 'true'):
+                            self.results['vulnerabilities'].append({
+                                'type': 'CORS Misconfiguration - Wildcard with Credentials',
+                                'severity': 'high',
+                                'endpoint': endpoint,
+                                'description': f'Endpoint {endpoint} allows wildcard origin with credentials'
+                            })
+                except Exception:
+                    pass
                 
                 # Check for reflected origin
-                if cors_headers['access-control-allow-origin'] == 'https://evil.com':
-                    self.results['vulnerabilities'].append({
-                        'type': 'CORS Misconfiguration - Reflected Origin',
-                        'severity': 'medium',
-                        'endpoint': endpoint,
-                        'description': f'Endpoint {endpoint} reflects arbitrary origins'
-                    })
+                try:
+                    if origin_header and str(origin_header) == 'https://evil.com':
+                        self.results['vulnerabilities'].append({
+                            'type': 'CORS Misconfiguration - Reflected Origin',
+                            'severity': 'medium',
+                            'endpoint': endpoint,
+                            'description': f'Endpoint {endpoint} reflects arbitrary origins'
+                        })
+                except Exception:
+                    pass
                 
                 # Check for overly permissive methods
-                allowed_methods = cors_headers.get('access-control-allow-methods', '')
-                dangerous_methods = ['DELETE', 'PUT', 'PATCH']
-                if any(method in allowed_methods for method in dangerous_methods):
-                    self.results['vulnerabilities'].append({
-                        'type': 'CORS Misconfiguration - Dangerous Methods',
-                        'severity': 'medium',
-                        'endpoint': endpoint,
-                        'allowed_methods': allowed_methods,
-                        'description': f'Endpoint {endpoint} allows dangerous HTTP methods via CORS'
-                    })
+                try:
+                    if methods_header and str(methods_header) != 'None':
+                        dangerous_methods = ['DELETE', 'PUT', 'PATCH']
+                        methods_str = str(methods_header)
+                        # Check if any dangerous method exists in the allowed methods string
+                        has_dangerous_method = False
+                        for method in dangerous_methods:
+                            try:
+                                if method in methods_str:
+                                    has_dangerous_method = True
+                                    break
+                            except TypeError:
+                                continue
+                        
+                        if has_dangerous_method:
+                            self.results['vulnerabilities'].append({
+                                'type': 'CORS Misconfiguration - Dangerous Methods',
+                                'severity': 'medium',
+                                'endpoint': endpoint,
+                                'allowed_methods': methods_str,
+                                'description': f'Endpoint {endpoint} allows dangerous HTTP methods via CORS'
+                            })
+                except Exception:
+                    pass
             
             except Exception as e:
                 print(Fore.RED + f"[!] Error testing CORS for {endpoint}: {str(e)}" + Style.RESET_ALL)

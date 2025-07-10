@@ -106,6 +106,10 @@ class ComplianceModule:
             'insufficient_logging': 'Insufficient logging and monitoring'
         }
         
+    def run(self):
+        """Run compliance and regulatory testing module (main entry point)"""
+        return self.run_scan()
+    
     def run_scan(self):
         """Run comprehensive compliance testing"""
         print(f"[*] Starting compliance testing for {self.target_url}")

@@ -35,6 +35,10 @@ class NetworkModule:
         }
         self.target_host = urlparse(scanner.target_url).hostname
         
+    def run(self):
+        """Run network security testing module (main entry point)"""
+        return self.run_scan()
+    
     def run_scan(self):
         """Run complete network security scan"""
         print(f"\n{self.scanner.colors['info']}[*] Starting network security scan...{self.scanner.colors['reset']}")
