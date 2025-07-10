@@ -57,6 +57,9 @@ class PluginModule:
         # Tehlikeli izinler
         self._check_dangerous_permissions()
         
+        # Plugin vulnerability check
+        self._check_plugin_vulnerabilities()
+        
         # Dosya erişim testleri
         self._test_plugin_file_access()
         
@@ -241,6 +244,36 @@ class PluginModule:
                                 'severity': 'Medium',
                                 'description': f'Sensitive information exposed at {endpoint}'
                             })
+    
+    def _check_plugin_vulnerabilities(self):
+        """Check for plugin vulnerabilities using vulnerability database"""
+        print(f"{self.scanner.colors['info']}[*] Checking plugin vulnerabilities...{self.scanner.colors['reset']}")
+        
+        try:
+            from .plugin_vuln_db import PluginVulnDB
+            vuln_db = PluginVulnDB()
+            
+            for plugin in self.results['plugins_found']:
+                plugin_name = plugin.get('name', '')
+                plugin_version = plugin.get('version', '')
+                
+                # Check if plugin has known vulnerabilities
+                vulnerabilities = vuln_db.get_plugin_vulnerabilities(plugin_name)
+                
+                if vulnerabilities:
+                    for vuln in vulnerabilities:
+                        self.results['plugin_vulnerabilities'].append({
+                            'plugin': plugin_name,
+                            'vulnerability': vuln.get('title', 'Unknown'),
+                            'severity': vuln.get('severity', 'Medium'),
+                            'cve': vuln.get('cve', ''),
+                            'description': vuln.get('description', 'No description available'),
+                            'affected_versions': vuln.get('affected_versions', []),
+                            'source': 'vulnerability_database'
+                        })
+                        
+        except ImportError:
+            self.scanner.log("Plugin vulnerability database not available", 'warning')
     
     def _test_theme_css_injection(self, theme_id, theme_name):
         """Test for CSS injection in themes"""

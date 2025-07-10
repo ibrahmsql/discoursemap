@@ -52,7 +52,7 @@ For development or contributing:
 ================
 
 System Requirements
-------------------
+-------------------
 
 * Python 3.8 or higher
 * Ruby 2.7 or higher (for exploit modules)
@@ -60,7 +60,7 @@ System Requirements
 * Internet connection
 
 Python Dependencies
-------------------
+-------------------
 
 The following Python packages are automatically installed:
 
@@ -72,7 +72,7 @@ The following Python packages are automatically installed:
 * rich
 
 Ruby Dependencies
-----------------
+-----------------
 
 For Ruby exploit modules:
 
@@ -104,7 +104,7 @@ To verify your installation is working correctly:
 ==================
 
 Common Issues
-------------
+-------------
 
 **Permission Denied**
 

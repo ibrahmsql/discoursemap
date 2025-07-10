@@ -28,8 +28,8 @@ Welcome to DiscourseMap's documentation!
 * **Professional Reporting** with detailed findings and recommendations
 * **Active Development** with regular updates and new features
 
-📚 Table of Contents
-===================
+Table of Contents
+=================
 
 .. toctree::
    :maxdepth: 2
@@ -37,41 +37,12 @@ Welcome to DiscourseMap's documentation!
 
    installation
    quickstart
-   configuration
 
 .. toctree::
    :maxdepth: 2
    :caption: User Guide:
 
-   usage
    modules
-   examples
-   reporting
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Advanced:
-
-   ruby_exploits
-   docker
-   ci_cd
-   customization
-
-.. toctree::
-   :maxdepth: 2
-   :caption: API Reference:
-
-   api/modules
-   api/core
-   api/utils
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Development:
-
-   contributing
-   changelog
-   roadmap
 
 🚀 Quick Start
 ==============

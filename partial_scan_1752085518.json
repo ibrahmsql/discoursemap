@@ -1,0 +1,498 @@
+{
+  "scan_info": {
+    "target": "https://meta.discourse.org",
+    "scan_time": "2025-07-09T21:24:23.942175",
+    "scanner": "DiscourseMap Security Scanner",
+    "version": "1.0.0"
+  },
+  "results": {
+    "info": {
+      "module_name": "Information Gathering",
+      "target": "https://meta.discourse.org",
+      "discourse_info": {
+        "version": "3.5.0",
+        "generator": "Discourse 3.5.0.beta8-dev - https://github.com/discourse/discourse version 0a242221fc126bb23462c5569a93913c0c928534",
+        "site_title": "Discourse Meta - The Official Support Forum for Discourse",
+        "indicators": {
+          "ember_app": false,
+          "discourse_css": true,
+          "discourse_js": true,
+          "csrf_token": false
+        },
+        "site_config": {
+          "default_locale": null,
+          "title": null,
+          "description": null,
+          "logo_url": null,
+          "mobile_logo_url": null,
+          "favicon_url": null,
+          "apple_touch_icon_url": null,
+          "auth_providers": [
+            {
+              "can_connect": true,
+              "can_revoke": true,
+              "custom_url": null,
+              "frame_height": 400,
+              "frame_width": 580,
+              "icon": "fab-facebook",
+              "name": "facebook",
+              "pretty_name_override": null,
+              "provider_url": "https://www.facebook.com",
+              "title_override": null
+            },
+            {
+              "can_connect": true,
+              "can_revoke": true,
+              "custom_url": null,
+              "frame_height": 500,
+              "frame_width": 850,
+              "icon": null,
+              "name": "google_oauth2",
+              "pretty_name_override": null,
+              "provider_url": "https://accounts.google.com",
+              "title_override": null
+            },
+            {
+              "can_connect": true,
+              "can_revoke": true,
+              "custom_url": null,
+              "frame_height": null,
+              "frame_width": null,
+              "icon": "fab-github",
+              "name": "github",
+              "pretty_name_override": null,
+              "provider_url": "https://github.com",
+              "title_override": null
+            },
+            {
+              "can_connect": true,
+              "can_revoke": true,
+              "custom_url": null,
+              "frame_height": null,
+              "frame_width": null,
+              "icon": "fab-x-twitter",
+              "name": "twitter",
+              "pretty_name_override": null,
+              "provider_url": "https://x.com",
+              "title_override": null
+            },
+            {
+              "can_connect": true,
+              "can_revoke": true,
+              "custom_url": null,
+              "frame_height": null,
+              "frame_width": null,
+              "icon": "fab-discord",
+              "name": "discord",
+              "pretty_name_override": null,
+              "provider_url": "https://discord.com",
+              "title_override": null
+            },
+            {
+              "can_connect": true,
+              "can_revoke": true,
+              "custom_url": null,
+              "frame_height": null,
+              "frame_width": null,
+              "icon": "fab-apple",
+              "name": "apple",
+              "pretty_name_override": null,
+              "provider_url": null,
+              "title_override": null
+            }
+          ],
+          "trust_levels": {
+            "newuser": 0,
+            "basic": 1,
+            "member": 2,
+            "regular": 3,
+            "leader": 4
+          }
+        }
+      },
+      "server_info": {
+        "server": "nginx",
+        "powered_by": "Unknown",
+        "content_type": "text/html; charset=utf-8",
+        "status_code": 200,
+        "response_time": 0.299734,
+        "security_headers": {
+          "x_frame_options": "SAMEORIGIN",
+          "x_content_type_options": "nosniff",
+          "x_xss_protection": "0",
+          "strict_transport_security": null,
+          "content_security_policy": "upgrade-insecure-requests; base-uri 'self'; object-src 'none'; script-src 'nonce-yiMdjZRuG3SFO2Q3gtiKHlkpv' 'strict-dynamic'; frame-ancestors 'self' https://lillinator.github.io https://blog.discourse.org https://civilized-discourse-construction-kit-inc.ghost.io; manifest-src 'self'",
+          "referrer_policy": "strict-origin-when-cross-origin"
+        }
+      },
+      "plugins": [
+        {
+          "name": "chat",
+          "endpoint": "/chat",
+          "status": "detected"
+        },
+        {
+          "name": "bbcode",
+          "endpoint": "detected_in_source",
+          "status": "likely_installed"
+        },
+        {
+          "name": "math",
+          "endpoint": "detected_in_source",
+          "status": "likely_installed"
+        },
+        {
+          "name": "poll",
+          "endpoint": "detected_in_source",
+          "status": "likely_installed"
+        },
+        {
+          "name": "solved",
+          "endpoint": "detected_in_source",
+          "status": "likely_installed"
+        },
+        {
+          "name": "voting",
+          "endpoint": "detected_in_source",
+          "status": "likely_installed"
+        }
+      ],
+      "admin_access": false,
+      "users_found": [
+        {
+          "username": "sam",
+          "name": "Sam Saffron",
+          "avatar_template": "/user_avatar/meta.discourse.org/sam/{size}/102149_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "pfaffman",
+          "name": "Jay Pfaffman",
+          "avatar_template": "/user_avatar/meta.discourse.org/pfaffman/{size}/120154_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "Falco",
+          "name": "Falco",
+          "avatar_template": "/user_avatar/meta.discourse.org/falco/{size}/179432_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "Discourse",
+          "name": null,
+          "avatar_template": "/user_avatar/meta.discourse.org/discourse/{size}/148734_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "awesomerobot",
+          "name": "Kris",
+          "avatar_template": "/user_avatar/meta.discourse.org/awesomerobot/{size}/142900_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "david",
+          "name": "David Taylor",
+          "avatar_template": "/user_avatar/meta.discourse.org/david/{size}/157490_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "merefield",
+          "name": "Robert",
+          "avatar_template": "/user_avatar/meta.discourse.org/merefield/{size}/176214_2.png",
+          "trust_level": 3
+        },
+        {
+          "username": "JammyDodger",
+          "name": "",
+          "avatar_template": "/user_avatar/meta.discourse.org/jammydodger/{size}/254611_2.png",
+          "trust_level": 3
+        },
+        {
+          "username": "jomaxro",
+          "name": "Joshua Rosenfeld",
+          "avatar_template": "/user_avatar/meta.discourse.org/jomaxro/{size}/126216_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "simon",
+          "name": "",
+          "avatar_template": "/user_avatar/meta.discourse.org/simon/{size}/339122_2.png",
+          "trust_level": 3
+        }
+      ],
+      "categories": [
+        {
+          "id": 124,
+          "name": "General",
+          "slug": "general",
+          "description": "Create topics here that don’t fit into any other existing category.",
+          "topic_count": 196,
+          "post_count": 1635,
+          "read_restricted": false
+        },
+        {
+          "id": 10,
+          "name": "Documentation",
+          "slug": "documentation",
+          "description": "Official documentation for how to use Discourse, install and configure sites, develop plugins and themes, and troubleshoot common issues. Includes topics for tutorials, how-tos, general reference and troubleshooting.",
+          "topic_count": 0,
+          "post_count": 0,
+          "read_restricted": false
+        },
+        {
+          "id": 177,
+          "name": "Community wiki",
+          "slug": "community-wiki",
+          "description": "This wiki includes guides, tips, and examples written by members of the Discourse community. All content is created and edited by users of Trust Level 2 and above, and is open to new community contributions.",
+          "topic_count": 0,
+          "post_count": 0,
+          "read_restricted": false
+        },
+        {
+          "id": 67,
+          "name": "Announcements",
+          "slug": "announcements",
+          "description": "Important News and Updates from Discourse",
+          "topic_count": 423,
+          "post_count": 5694,
+          "read_restricted": false
+        },
+        {
+          "id": 6,
+          "name": "Support",
+          "slug": "support",
+          "description": "The category for general support questions on using your Discourse site.",
+          "topic_count": 19038,
+          "post_count": 123286,
+          "read_restricted": false
+        },
+        {
+          "id": 1,
+          "name": "Bug",
+          "slug": "bug",
+          "description": "A bug report means something is broken, preventing normal/typical use of Discourse. Do be sure to search prior to submitting bugs. Include repro steps, and only describe one bug per topic please.",
+          "topic_count": 6064,
+          "post_count": 41856,
+          "read_restricted": false
+        },
+        {
+          "id": 9,
+          "name": "UX",
+          "slug": "ux",
+          "description": "Discussion about the user interface of Discourse and how features are presented (including language and UI elements).",
+          "topic_count": 3244,
+          "post_count": 21278,
+          "read_restricted": false
+        },
+        {
+          "id": 2,
+          "name": "Feature",
+          "slug": "feature",
+          "description": "Discussion about existing Discourse features, how they can be improved or enhanced, and how proposed new features could work.",
+          "topic_count": 7615,
+          "post_count": 62640,
+          "read_restricted": false
+        },
+        {
+          "id": 148,
+          "name": "Data & reporting",
+          "slug": "data-reporting",
+          "description": "This is the category for everything related to Discourse data and reporting. Here, you can discuss dashboard reports, custom badge queries, data-explorer queries and any other analytic add-ons.",
+          "topic_count": 747,
+          "post_count": 3638,
+          "read_restricted": false
+        },
+        {
+          "id": 24,
+          "name": "SSO",
+          "slug": "sso",
+          "description": "For queries specifically about SSO (single sign-on) and login using third-party providers (Google, Facebook, GitHub etc). See the official documentation on DiscourseConnect SSO.",
+          "topic_count": 622,
+          "post_count": 3199,
+          "read_restricted": false
+        },
+        {
+          "id": 65,
+          "name": "Community",
+          "slug": "community",
+          "description": "A great platform doesn’t guarantee success. Community building is a science. This category is for discussions about launching, building, growing and managing a thriving community.",
+          "topic_count": 972,
+          "post_count": 10116,
+          "read_restricted": false
+        },
+        {
+          "id": 7,
+          "name": "Dev",
+          "slug": "dev",
+          "description": "The category for all things Discourse Development. Building a customization for yourself or the community? Then this is the category for you!",
+          "topic_count": 4166,
+          "post_count": 24577,
+          "read_restricted": false
+        },
+        {
+          "id": 14,
+          "name": "Marketplace",
+          "slug": "marketplace",
+          "description": "This is your hub for all Discourse-related commerce: jobs, gigs, plugins, themes, hosting, and more.",
+          "topic_count": 1279,
+          "post_count": 6478,
+          "read_restricted": false
+        },
+        {
+          "id": 22,
+          "name": "Plugin",
+          "slug": "plugin",
+          "description": "A directory of Discourse plugins, both official and third-party.",
+          "topic_count": 346,
+          "post_count": 12703,
+          "read_restricted": false
+        },
+        {
+          "id": 61,
+          "name": "Theme",
+          "slug": "theme",
+          "description": "Themes are expansive customizations that change multiple elements of the style of your forum design, and often also include additional front-end features.",
+          "topic_count": 70,
+          "post_count": 2535,
+          "read_restricted": false
+        },
+        {
+          "id": 120,
+          "name": "Theme component",
+          "slug": "theme-component",
+          "description": "Theme components are customizations that change surface elements of your forum design, or add extra front-end features.",
+          "topic_count": 362,
+          "post_count": 9835,
+          "read_restricted": false
+        },
+        {
+          "id": 31,
+          "name": "Installation",
+          "slug": "installation",
+          "description": "Getting Discourse up and running, keeping it going, updating, and any other general sysadmin maintenance.",
+          "topic_count": 3994,
+          "post_count": 34253,
+          "read_restricted": false
+        },
+        {
+          "id": 106,
+          "name": "Migration",
+          "slug": "migration",
+          "description": "You want to migrate your community to Discourse? Awesome! This is the category where you can ask questions, get help, and document your Discourse migration journey.",
+          "topic_count": 278,
+          "post_count": 1960,
+          "read_restricted": false
+        },
+        {
+          "id": 30,
+          "name": "Releases",
+          "slug": "releases",
+          "description": "Outlining each official release of Discourse, and plans for future releases.",
+          "topic_count": 24,
+          "post_count": 106,
+          "read_restricted": false
+        },
+        {
+          "id": 3,
+          "name": "Site feedback",
+          "slug": "site-feedback",
+          "description": "Discussion about meta.discourse.org itself - the organization of this forum, how it works, and how we can improve this site.",
+          "topic_count": 508,
+          "post_count": 4027,
+          "read_restricted": false
+        },
+        {
+          "id": 35,
+          "name": "Praise",
+          "slug": "praise",
+          "description": "Have something nice to say about Discourse? We would love to hear it",
+          "topic_count": 329,
+          "post_count": 1201,
+          "read_restricted": false
+        },
+        {
+          "id": 193,
+          "name": "IEEE Summer of Code 2025",
+          "slug": "ieee-summer-of-code-2025",
+          "description": "Discussion about Discourse contributions on the IEEE Summer of Code 2025.",
+          "topic_count": 2,
+          "post_count": 2,
+          "read_restricted": false
+        }
+      ],
+      "scan_time": 23.293365001678467,
+      "users": [
+        {
+          "username": "sam",
+          "name": "Sam Saffron",
+          "avatar_template": "/user_avatar/meta.discourse.org/sam/{size}/102149_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "pfaffman",
+          "name": "Jay Pfaffman",
+          "avatar_template": "/user_avatar/meta.discourse.org/pfaffman/{size}/120154_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "Falco",
+          "name": "Falco",
+          "avatar_template": "/user_avatar/meta.discourse.org/falco/{size}/179432_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "Discourse",
+          "name": null,
+          "avatar_template": "/user_avatar/meta.discourse.org/discourse/{size}/148734_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "awesomerobot",
+          "name": "Kris",
+          "avatar_template": "/user_avatar/meta.discourse.org/awesomerobot/{size}/142900_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "david",
+          "name": "David Taylor",
+          "avatar_template": "/user_avatar/meta.discourse.org/david/{size}/157490_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "merefield",
+          "name": "Robert",
+          "avatar_template": "/user_avatar/meta.discourse.org/merefield/{size}/176214_2.png",
+          "trust_level": 3
+        },
+        {
+          "username": "JammyDodger",
+          "name": "",
+          "avatar_template": "/user_avatar/meta.discourse.org/jammydodger/{size}/254611_2.png",
+          "trust_level": 3
+        },
+        {
+          "username": "jomaxro",
+          "name": "Joshua Rosenfeld",
+          "avatar_template": "/user_avatar/meta.discourse.org/jomaxro/{size}/126216_2.png",
+          "trust_level": 4
+        },
+        {
+          "username": "simon",
+          "name": "",
+          "avatar_template": "/user_avatar/meta.discourse.org/simon/{size}/339122_2.png",
+          "trust_level": 3
+        }
+      ]
+    }
+  },
+  "summary": {
+    "total_vulnerabilities": 0,
+    "critical_count": 0,
+    "high_count": 0,
+    "medium_count": 0,
+    "low_count": 0,
+    "info_count": 0,
+    "total_tests": 0,
+    "modules_run": 1
+  }
+}

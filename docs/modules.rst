@@ -3,8 +3,8 @@ Modules
 
 DiscourseMap uses a modular architecture that allows you to run specific security tests based on your needs. Each module focuses on a particular aspect of Discourse security.
 
-🎯 Available Modules
-===================
+Available Modules
+=================
 
 Information Gathering
 --------------------
