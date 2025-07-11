@@ -292,6 +292,13 @@ ruby ruby_exploit_runner.rb https://discourse.example.com \
 | **CVE-2022-31053** | SSRF via onebox preview | 8.6 | `CVE-2022-31053.rb` |
 | **CVE-2024-35198** | Server-side template injection | 8.8 | `CVE-2024-35198.rb` |
 | **CVE-2023-37467** | CSP nonce reuse XSS | 7.5 | `discourse_cve_exploits.rb` |
+| **CVE-2021-41082** | Microsoft Exchange Server RCE | 8.8 | `CVE-2021-41082.rb` |
+
+### Medium Severity (CVSS 4.0-6.9)
+
+| CVE | Description | CVSS | Module |
+|-----|-------------|------|--------|
+| **CVE-2023-45131** | Discourse unauthenticated chat access | 6.5 | `CVE-2023-45131.rb` |
 
 ### General Vulnerability Categories
 
@@ -472,6 +479,8 @@ discoursemap/
 │   ├── discourse_csrf.rb
 │   ├── discourse_xxe.rb
 │   ├── discourse_plugin_exploits.rb
+├── CVE-2023-45131.rb
+├── CVE-2021-41082.rb
 │   ├── discourse_cve_exploits.rb
 │   ├── discourse_file_upload_exploits.rb
 │   ├── discourse_api_exploits.rb
