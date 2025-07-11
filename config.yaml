@@ -1,0 +1,58 @@
+# DiscourseMap Configuration File
+# Copy this file to config.yaml and modify as needed
+
+# Target configuration
+target:
+  url: "https://meta.discourse.org"  # Target Discourse forum URL
+
+# Default scan settings
+threads: 5
+timeout: 10
+delay: 0.5
+user_agent: "DiscourseMap/1.2.0"
+
+# Proxy settings (optional)
+# proxy: "http://127.0.0.1:8080"
+
+# SSL settings
+verify_ssl: true
+
+# Modules to run (if not specified via command line)
+modules:
+  - info
+  - vuln
+  - endpoint
+  - user
+  # - cve  # Uncomment for CVE scanning
+  # - plugin_detection
+  # - plugin_bruteforce
+  # - api
+  # - auth
+  # - config
+  # - crypto
+  # - network
+  # - plugin
+  # - compliance
+
+# Output settings
+output:
+  format: json  # json, html, csv
+  directory: "./reports"
+  auto_timestamp: true
+
+# Docker automation settings
+automation:
+  enabled: false
+  targets_file: "targets.txt"
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  notification:
+    webhook_url: ""
+    slack_channel: ""
+
+# Advanced settings
+advanced:
+  max_retries: 3
+  rate_limit: 10  # requests per second
+  user_agents_rotation: true
+  save_partial_results: true
+  auto_resume: true

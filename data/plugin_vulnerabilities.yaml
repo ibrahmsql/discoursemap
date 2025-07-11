@@ -1179,7 +1179,7 @@ plugin_vulnerabilities:
           - "Keyboard navigation bypass"
           - "Focus management issues"
 
-# URGENT TASKS FROM TODO.md
+# DEVELOPMENT PRIORITIES
 urgent_tasks:
   
   missing_modules:
