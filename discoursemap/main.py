@@ -72,9 +72,10 @@ def parse_arguments():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python3 main.py -u https://forum.example.com --modules info vuln
-  python3 main.py -u https://forum.example.com -o json --output-file report.json
-  python3 main.py -u https://forum.example.com --verbose --threads 10
+  python3 main.py -u https://forum.example.com -m info vuln
+  python3 main.py -u https://forum.example.com -o json -f report.json
+  python3 main.py -u https://forum.example.com -v -t 10
+  python3 main.py -u https://forum.example.com -m cve -p http://127.0.0.1:8080
         """
     )
     
@@ -87,7 +88,7 @@ Examples:
                        help='Number of threads (default: 5)')
     parser.add_argument('--timeout', type=int, default=10,
                        help='HTTP timeout duration (default: 10)')
-    parser.add_argument('--proxy', type=str,
+    parser.add_argument('-p', '--proxy', type=str,
                        help='Proxy server (e.g: http://127.0.0.1:8080)')
     parser.add_argument('--user-agent', type=str,
                        help='Custom User-Agent string')
@@ -103,7 +104,7 @@ Examples:
                        help='Show only results')
     
     # Module options
-    parser.add_argument('--modules', nargs='+', 
+    parser.add_argument('-m', '--modules', nargs='+', 
                        choices=['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
                                'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'compliance'],
                        help='Modules to run (default: all)')
@@ -111,13 +112,13 @@ Examples:
     # Output options
     parser.add_argument('-o', '--output', choices=['json', 'html', 'csv'],
                        help='Report format')
-    parser.add_argument('--output-file', type=str,
+    parser.add_argument('-f', '--output-file', type=str,
                        help='Output file name')
     
     # Resume and update options
     parser.add_argument('--resume', type=str,
                        help='Resume scan from partial results file')
-    parser.add_argument('--config', type=str, default='config.yaml',
+    parser.add_argument('-c', '--config', type=str, default='config.yaml',
                        help='Configuration file path (default: config.yaml)')
     parser.add_argument('--update', action='store_true',
                        help='Update scan data and signatures')
