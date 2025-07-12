@@ -55,6 +55,15 @@ class InfoModule:
         # Site configuration
         self._gather_site_config()
         
+        # SSL/TLS information check
+        self._check_ssl_info()
+        
+        # Discourse-specific features
+        self._check_discourse_features()
+        
+        # Discourse API endpoint discovery (disabled for performance)
+        # self._discover_discourse_api_endpoints()
+        
         self.results['scan_time'] = time.time() - self.start_time
         return self.results
     
@@ -241,40 +250,260 @@ class InfoModule:
                             })
             except json.JSONDecodeError:
                 pass
+    
+    def _check_discourse_features(self):
+        """Check Discourse-specific features"""
+        self.scanner.log("Checking Discourse-specific features...", 'debug')
         
-        # Check about page for staff
-        about_url = urljoin(self.scanner.target_url, '/about.json')
-        response = self.scanner.make_request(about_url)
+        features = {
+            'features_detected': [],
+            'discourse_version': None,
+            'special_endpoints': []
+        }
         
-        if response and response.status_code == 200:
-            try:
-                data = response.json()
-                if 'about' in data and 'moderators' in data['about']:
-                    for mod in data['about']['moderators']:
-                        if not any(u['username'] == mod.get('username') for u in users_found):
-                            users_found.append({
-                                'username': mod.get('username'),
-                                'name': mod.get('name'),
-                                'role': 'moderator',
-                                'avatar_template': mod.get('avatar_template')
-                            })
+        # Check for Discourse-specific endpoints
+        discourse_endpoints = [
+            '/latest.json',
+            '/top.json', 
+            '/categories.json',
+            '/tags.json',
+            '/groups.json',
+            '/badges.json',
+            '/site.json',
+            '/about.json'
+        ]
+        
+        for endpoint in discourse_endpoints:
+            url = urljoin(self.scanner.target_url, endpoint)
+            response = self.scanner.make_request(url)
+            
+            if response and response.status_code == 200:
+                features['special_endpoints'].append({
+                    'endpoint': endpoint,
+                    'accessible': True,
+                    'content_type': response.headers.get('content-type', 'unknown')
+                })
                 
-                if 'about' in data and 'admins' in data['about']:
-                    for admin in data['about']['admins']:
-                        if not any(u['username'] == admin.get('username') for u in users_found):
-                            users_found.append({
-                                'username': admin.get('username'),
-                                'name': admin.get('name'),
-                                'role': 'admin',
-                                'avatar_template': admin.get('avatar_template')
-                            })
-            except json.JSONDecodeError:
-                pass
+                # Try to extract Discourse version from headers
+                if 'X-Discourse-Route' in response.headers:
+                    features['features_detected'].append('discourse_routing')
+                
+                if endpoint == '/site.json':
+                    try:
+                        data = response.json()
+                        if 'version' in data:
+                            features['discourse_version'] = data['version']
+                    except json.JSONDecodeError:
+                        pass
+            
+            time.sleep(0.1)
         
-        self.results['users'] = users_found
-        self.results['users_found'] = users_found  # Keep backward compatibility
-        if users_found:
-            self.scanner.log(f"Found {len(users_found)} users", 'success')
+        self.results['discourse_features'] = features
+        if features['discourse_version']:
+            self.scanner.log(f"Discourse version detected: {features['discourse_version']}", 'info')
+    
+    def _discover_discourse_api_endpoints(self):
+        """Discover Discourse API endpoints"""
+        self.scanner.log("Discovering Discourse API endpoints...", 'debug')
+        
+        api_endpoints = {
+            'public_endpoints': [],
+            'admin_endpoints': [],
+            'user_endpoints': [],
+            'api_capabilities': []
+        }
+        
+        # Public API endpoints
+        public_apis = [
+            '/posts.json',
+            '/topics.json',
+            '/users.json',
+            '/search.json',
+            '/notifications.json',
+            '/user_actions.json',
+            '/categories.json',
+            '/latest.json',
+            '/top.json',
+            '/new.json',
+            '/unread.json',
+            '/groups.json',
+            '/badges.json',
+            '/user_badges.json',
+            '/tags.json',
+            '/tag_groups.json'
+        ]
+        
+        for endpoint in public_apis:
+            url = urljoin(self.scanner.target_url, endpoint)
+            response = self.scanner.make_request(url)
+            
+            if response and response.status_code == 200:
+                api_endpoints['public_endpoints'].append({
+                    'endpoint': endpoint,
+                    'status': 'accessible',
+                    'content_type': response.headers.get('content-type', 'unknown')
+                })
+                
+                # Check for API capabilities
+                if 'application/json' in response.headers.get('content-type', ''):
+                    api_endpoints['api_capabilities'].append(f'json_api_{endpoint.replace("/", "").replace(".json", "")}')
+            
+            time.sleep(0.1)
+        
+        # Admin API endpoints
+        admin_apis = [
+            '/admin/users.json',
+            '/admin/groups.json',
+            '/admin/site_settings.json',
+            '/admin/dashboard.json',
+            '/admin/flags.json',
+            '/admin/logs.json',
+            '/admin/customize.json',
+            '/admin/plugins.json'
+        ]
+        
+        for endpoint in admin_apis:
+            url = urljoin(self.scanner.target_url, endpoint)
+            response = self.scanner.make_request(url)
+            
+            if response:
+                status = 'accessible' if response.status_code == 200 else f'status_{response.status_code}'
+                api_endpoints['admin_endpoints'].append({
+                    'endpoint': endpoint,
+                    'status': status,
+                    'requires_auth': response.status_code in [401, 403]
+                })
+            
+            time.sleep(0.1)
+        
+        # User-specific endpoints
+        user_apis = [
+            '/u/{username}.json',
+            '/u/{username}/summary.json',
+            '/u/{username}/activity.json',
+            '/u/{username}/badges.json',
+            '/u/{username}/preferences.json'
+        ]
+        
+        # Test with common usernames
+        test_usernames = ['admin', 'system', 'discobot']
+        
+        for username in test_usernames:
+            for endpoint_template in user_apis:
+                endpoint = endpoint_template.format(username=username)
+                url = urljoin(self.scanner.target_url, endpoint)
+                response = self.scanner.make_request(url)
+                
+                if response and response.status_code == 200:
+                    api_endpoints['user_endpoints'].append({
+                        'endpoint': endpoint,
+                        'username': username,
+                        'status': 'accessible'
+                    })
+                    break  # Found working endpoint for this user
+                
+                time.sleep(0.1)
+        
+        self.results['api_endpoints'] = api_endpoints
+        
+        total_accessible = len(api_endpoints['public_endpoints']) + len([e for e in api_endpoints['admin_endpoints'] if e['status'] == 'accessible'])
+        self.scanner.log(f"API endpoint discovery completed. Found {total_accessible} accessible endpoints", 'info')
+    
+    def _check_ssl_info(self):
+        """Check SSL/TLS information"""
+        self.scanner.log("Checking SSL/TLS information...", 'debug')
+        
+        ssl_info = {
+            'ssl_enabled': False,
+            'certificate_info': {},
+            'security_headers': {},
+            'ssl_issues': []
+        }
+        
+        # Check if HTTPS is used
+        if self.scanner.target_url.startswith('https://'):
+            ssl_info['ssl_enabled'] = True
+            
+            try:
+                import ssl
+                import socket
+                from urllib.parse import urlparse
+                
+                parsed_url = urlparse(self.scanner.target_url)
+                hostname = parsed_url.hostname
+                port = parsed_url.port or 443
+                
+                # Get SSL certificate info
+                context = ssl.create_default_context()
+                with socket.create_connection((hostname, port), timeout=10) as sock:
+                    with context.wrap_socket(sock, server_hostname=hostname) as ssock:
+                        cert = ssock.getpeercert()
+                        
+                        ssl_info['certificate_info'] = {
+                            'subject': dict(x[0] for x in cert.get('subject', [])),
+                            'issuer': dict(x[0] for x in cert.get('issuer', [])),
+                            'version': cert.get('version'),
+                            'serial_number': cert.get('serialNumber'),
+                            'not_before': cert.get('notBefore'),
+                            'not_after': cert.get('notAfter'),
+                            'signature_algorithm': cert.get('signatureAlgorithm')
+                        }
+                        
+                        # Check certificate validity
+                        import datetime
+                        not_after = datetime.datetime.strptime(cert.get('notAfter'), '%b %d %H:%M:%S %Y %Z')
+                        days_until_expiry = (not_after - datetime.datetime.now()).days
+                        
+                        if days_until_expiry < 30:
+                            ssl_info['ssl_issues'].append({
+                                'issue': 'certificate_expiring_soon',
+                                'days_remaining': days_until_expiry,
+                                'severity': 'medium' if days_until_expiry > 7 else 'high'
+                            })
+                        
+            except Exception as e:
+                ssl_info['ssl_issues'].append({
+                    'issue': 'ssl_check_failed',
+                    'error': str(e),
+                    'severity': 'low'
+                })
+        
+        # Check security headers
+        response = self.scanner.make_request(self.scanner.target_url)
+        if response:
+            security_headers = {
+                'strict-transport-security': response.headers.get('Strict-Transport-Security'),
+                'content-security-policy': response.headers.get('Content-Security-Policy'),
+                'x-frame-options': response.headers.get('X-Frame-Options'),
+                'x-content-type-options': response.headers.get('X-Content-Type-Options'),
+                'x-xss-protection': response.headers.get('X-XSS-Protection'),
+                'referrer-policy': response.headers.get('Referrer-Policy')
+            }
+            
+            ssl_info['security_headers'] = {k: v for k, v in security_headers.items() if v is not None}
+            
+            # Check for missing security headers
+            missing_headers = [k for k, v in security_headers.items() if v is None]
+            if missing_headers:
+                ssl_info['ssl_issues'].append({
+                    'issue': 'missing_security_headers',
+                    'missing_headers': missing_headers,
+                    'severity': 'low'
+                })
+        
+        self.results['ssl_info'] = ssl_info
+        
+        if ssl_info['ssl_enabled']:
+            self.scanner.log("SSL/TLS is enabled", 'success')
+        else:
+            self.scanner.log("SSL/TLS is not enabled", 'warning')
+            ssl_info['ssl_issues'].append({
+                'issue': 'ssl_not_enabled',
+                'severity': 'high',
+                'description': 'Site does not use HTTPS'
+            })
+        
+        self.scanner.log("SSL/TLS information check completed", 'debug')
     
     def _enumerate_categories(self):
         """Enumerate forum categories"""

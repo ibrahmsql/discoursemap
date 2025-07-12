@@ -60,6 +60,12 @@ class UserModule:
         # Privilege escalation testing
         self._test_privilege_escalation()
         
+        # Trust level system analysis
+        self._analyze_trust_levels()
+        
+        # Badge system detection
+        self._detect_badge_system()
+        
         self.results['scan_time'] = time.time() - self.start_time
         return self.results
     
@@ -267,7 +273,223 @@ class UserModule:
                         self.scanner.log(f"Protected user found: {username}", 'info')
                 
                 self.results['tests_performed'] += 1
-                time.sleep(0.1)
+                time.sleep(0.02)
+    
+    def _analyze_trust_levels(self):
+        """Analyze Discourse trust level system"""
+        self.scanner.log("Analyzing Discourse trust level system...", 'debug')
+        
+        trust_level_info = {
+            'trust_levels_found': [],
+            'trust_level_distribution': {},
+            'trust_level_permissions': {},
+            'potential_issues': []
+        }
+        
+        # Check trust level information from discovered users
+        for user_info in self.results.get('user_enumeration', []):
+            if 'trust_level' in user_info and user_info['trust_level'] is not None:
+                tl = user_info['trust_level']
+                username = user_info.get('username', 'unknown')
+                
+                if tl not in trust_level_info['trust_levels_found']:
+                    trust_level_info['trust_levels_found'].append(tl)
+                
+                if tl not in trust_level_info['trust_level_distribution']:
+                    trust_level_info['trust_level_distribution'][tl] = []
+                trust_level_info['trust_level_distribution'][tl].append(username)
+        
+        # Check for trust level endpoints
+        trust_level_endpoints = [
+            '/admin/users/list/trust_level_0',
+            '/admin/users/list/trust_level_1', 
+            '/admin/users/list/trust_level_2',
+            '/admin/users/list/trust_level_3',
+            '/admin/users/list/trust_level_4'
+        ]
+        
+        for endpoint in trust_level_endpoints:
+            url = urljoin(self.scanner.target_url, endpoint)
+            response = self.scanner.make_request(url)
+            
+            if response and response.status_code == 200:
+                try:
+                    data = response.json()
+                    if isinstance(data, list) and len(data) > 0:
+                        tl = endpoint.split('_')[-1]
+                        trust_level_info['trust_level_permissions'][f'TL{tl}'] = {
+                            'accessible': True,
+                            'user_count': len(data),
+                            'endpoint': endpoint
+                        }
+                        
+                        # Check if sensitive information is exposed
+                        for user in data[:5]:  # Check first 5 users
+                            if isinstance(user, dict):
+                                sensitive_fields = ['email', 'ip_address', 'registration_ip_address']
+                                exposed_fields = [field for field in sensitive_fields if field in user]
+                                if exposed_fields:
+                                    trust_level_info['potential_issues'].append({
+                                        'issue': 'sensitive_data_exposure',
+                                        'trust_level': f'TL{tl}',
+                                        'exposed_fields': exposed_fields,
+                                        'severity': 'high'
+                                    })
+                except json.JSONDecodeError:
+                    pass
+            
+            time.sleep(0.02)
+        
+        # Analyze trust level patterns
+        if trust_level_info['trust_level_distribution']:
+            # Check for unusual trust level distributions
+            total_users = sum(len(users) for users in trust_level_info['trust_level_distribution'].values())
+            
+            for tl, users in trust_level_info['trust_level_distribution'].items():
+                percentage = (len(users) / total_users) * 100
+                
+                # Flag unusual patterns
+                if tl == 4 and percentage > 10:  # Too many TL4 users
+                    trust_level_info['potential_issues'].append({
+                        'issue': 'excessive_high_trust_users',
+                        'trust_level': f'TL{tl}',
+                        'percentage': percentage,
+                        'severity': 'medium'
+                    })
+                elif tl == 0 and percentage > 80:  # Too many new users
+                    trust_level_info['potential_issues'].append({
+                        'issue': 'high_new_user_ratio',
+                        'trust_level': f'TL{tl}',
+                        'percentage': percentage,
+                        'severity': 'low'
+                    })
+        
+        self.results['trust_level_analysis'] = trust_level_info
+        self.scanner.log(f"Trust level analysis completed. Found levels: {trust_level_info['trust_levels_found']}", 'info')
+    
+    def _detect_badge_system(self):
+        """Detect and analyze Discourse badge system"""
+        self.scanner.log("Analyzing Discourse badge system...", 'debug')
+        
+        badge_info = {
+            'badges_found': [],
+            'badge_categories': {},
+            'user_badges': {},
+            'potential_issues': []
+        }
+        
+        # Check badges endpoint
+        badges_url = urljoin(self.scanner.target_url, '/badges.json')
+        response = self.scanner.make_request(badges_url)
+        
+        if response and response.status_code == 200:
+            try:
+                data = response.json()
+                
+                if 'badges' in data:
+                    for badge in data['badges']:
+                        badge_data = {
+                            'id': badge.get('id'),
+                            'name': badge.get('name'),
+                            'description': badge.get('description'),
+                            'badge_type_id': badge.get('badge_type_id'),
+                            'grant_count': badge.get('grant_count', 0),
+                            'allow_title': badge.get('allow_title', False),
+                            'multiple_grant': badge.get('multiple_grant', False),
+                            'listable': badge.get('listable', True),
+                            'enabled': badge.get('enabled', True),
+                            'auto_revoke': badge.get('auto_revoke', True),
+                            'target_posts': badge.get('target_posts', False),
+                            'show_posts': badge.get('show_posts', False),
+                            'trigger': badge.get('trigger'),
+                            'badge_grouping_id': badge.get('badge_grouping_id'),
+                            'system': badge.get('system', False)
+                        }
+                        
+                        badge_info['badges_found'].append(badge_data)
+                        
+                        # Categorize badges
+                        badge_type = badge.get('badge_type_id', 'unknown')
+                        if badge_type not in badge_info['badge_categories']:
+                            badge_info['badge_categories'][badge_type] = []
+                        badge_info['badge_categories'][badge_type].append(badge_data)
+                        
+                        # Check for potential security issues
+                        if badge.get('allow_title') and not badge.get('system'):
+                            badge_info['potential_issues'].append({
+                                'issue': 'custom_title_badge',
+                                'badge_name': badge.get('name'),
+                                'badge_id': badge.get('id'),
+                                'severity': 'low',
+                                'description': 'Non-system badge allows custom titles'
+                            })
+                        
+                        if badge.get('multiple_grant') and badge.get('grant_count', 0) > 1000:
+                            badge_info['potential_issues'].append({
+                                'issue': 'excessive_badge_grants',
+                                'badge_name': badge.get('name'),
+                                'badge_id': badge.get('id'),
+                                'grant_count': badge.get('grant_count'),
+                                'severity': 'low',
+                                'description': 'Badge has been granted excessively'
+                            })
+                
+                # Check badge groupings
+                if 'badge_groupings' in data:
+                    badge_info['badge_groupings'] = data['badge_groupings']
+                
+                # Check badge types
+                if 'badge_types' in data:
+                    badge_info['badge_types'] = data['badge_types']
+                    
+            except json.JSONDecodeError:
+                pass
+        
+        # Check user badges for discovered users
+        for user_info in self.results.get('user_enumeration', []):
+            username = user_info.get('username')
+            if username:
+                user_badges_url = urljoin(self.scanner.target_url, f'/user_badges/{username}.json')
+                response = self.scanner.make_request(user_badges_url)
+                
+                if response and response.status_code == 200:
+                    try:
+                        data = response.json()
+                        if 'user_badges' in data:
+                            badge_info['user_badges'][username] = data['user_badges']
+                            
+                            # Check for unusual badge patterns
+                            badge_count = len(data['user_badges'])
+                            if badge_count > 50:  # User has many badges
+                                badge_info['potential_issues'].append({
+                                    'issue': 'user_excessive_badges',
+                                    'username': username,
+                                    'badge_count': badge_count,
+                                    'severity': 'low',
+                                    'description': f'User {username} has {badge_count} badges'
+                                })
+                    except json.JSONDecodeError:
+                        pass
+                
+                time.sleep(0.02)
+        
+        # Analyze badge statistics
+        if badge_info['badges_found']:
+            total_badges = len(badge_info['badges_found'])
+            system_badges = len([b for b in badge_info['badges_found'] if b.get('system')])
+            custom_badges = total_badges - system_badges
+            
+            badge_info['statistics'] = {
+                'total_badges': total_badges,
+                'system_badges': system_badges,
+                'custom_badges': custom_badges,
+                'title_badges': len([b for b in badge_info['badges_found'] if b.get('allow_title')]),
+                'multiple_grant_badges': len([b for b in badge_info['badges_found'] if b.get('multiple_grant')])
+            }
+            
+            self.scanner.log(f"Badge analysis completed. Found {total_badges} badges ({system_badges} system, {custom_badges} custom)", 'info')
+        
+        self.results['badge_analysis'] = badge_info
         
         # Test login enumeration
         self._test_login_enumeration(common_usernames)
@@ -320,7 +542,7 @@ class UserModule:
                 except json.JSONDecodeError:
                     pass
             
-            time.sleep(0.1)
+            time.sleep(0.02)
     
     def _discover_users_from_directory(self):
         """Discover users from directory pages and /u/ endpoint"""
@@ -350,7 +572,7 @@ class UserModule:
                         if user not in self.discovered_users:
                             self.discovered_users.append(user)
             
-            time.sleep(0.1)
+            time.sleep(0.02)
         
         # Special method to discover users from /u/ endpoint with ID enumeration
         self._discover_users_from_u_endpoint()
@@ -364,7 +586,7 @@ class UserModule:
         user_ids_to_check = list(range(1, 201))  # Check first 200 IDs
         user_ids_to_check.extend([250, 300, 400, 500, 750, 1000, 1337, 1500, 2000, 2500, 3000, 4000, 5000, 7500, 10000])  # Add some common IDs
         
-        # Add some random IDs in different ranges
+        # Add random IDs for comprehensive scanning
         import random
         user_ids_to_check.extend(random.sample(range(201, 1000), 50))  # 50 random IDs between 201-1000
         user_ids_to_check.extend(random.sample(range(1001, 5000), 25))  # 25 random IDs between 1001-5000
@@ -502,7 +724,7 @@ class UserModule:
                 except json.JSONDecodeError:
                     pass
             
-            time.sleep(0.2)
+            time.sleep(0.05)
     
     def _extract_users_from_json(self, data, endpoint):
         """Extract usernames from JSON data"""

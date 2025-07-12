@@ -1,30 +1,42 @@
 version: '3.8'
 
 services:
+  # Main scanner service
   discoursemap:
     build: .
     container_name: discoursemap-scanner
     volumes:
       - ./reports:/app/reports
       - ./data:/app/data
+      - ./config.yaml:/app/config.yaml:ro
+      - ./targets.txt:/app/targets.txt:ro
     environment:
       - PYTHONUNBUFFERED=1
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
     networks:
       - scanner-network
     # Example usage:
-    # docker-compose run --rm discoursemap python3 main.py -u https://forum.example.com --modules info
+    # docker-compose run --rm discoursemap python3 main.py -u https://forum.example.com --config config.yaml
     
-  # Optional: Web interface (future enhancement)
-  # web:
-  #   build: .
-  #   container_name: discoursemap-web
-  #   ports:
-  #     - "8080:8080"
-  #   volumes:
-  #     - ./reports:/app/reports
-  #   command: python3 -m http.server 8080
-  #   networks:
-  #     - scanner-network
+  # Automated scanner with cron-like scheduling
+  auto-scanner:
+    build: .
+    container_name: discoursemap-auto
+    volumes:
+      - ./reports:/app/reports
+      - ./data:/app/data
+      - ./config.yaml:/app/config.yaml:ro
+      - ./targets.txt:/app/targets.txt:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - SCAN_INTERVAL=${SCAN_INTERVAL:-3600}  # Default: 1 hour
+    command: python3 auto_scanner.py
+    networks:
+      - scanner-network
+    restart: unless-stopped
 
 networks:
   scanner-network:
