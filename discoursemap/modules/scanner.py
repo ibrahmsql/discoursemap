@@ -8,9 +8,14 @@ Core scanning functionality for Discourse forum security assessment
 import threading
 import time
 import queue
+import gc
+import weakref
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock, BoundedSemaphore
 from urllib.parse import urljoin, urlparse
 from colorama import Fore, Style
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from .utils import (
     make_request, extract_csrf_token, extract_discourse_version,
     generate_payloads, random_user_agent, print_progress,
@@ -35,10 +40,10 @@ from .reporter import Reporter
 class DiscourseScanner:
     """Main Discourse security scanner class"""
     
-    def __init__(self, target_url, threads=5, timeout=10, proxy=None,
-                 user_agent=None, delay=0.5, verify_ssl=True, verbose=False, quiet=False):
+    def __init__(self, target_url, threads=10, timeout=7, proxy=None,
+                 user_agent=None, delay=0.1, verify_ssl=True, verbose=False, quiet=False):
         """
-        Initialize the scanner
+        Initialize the scanner with threading and memory management
         
         Args:
             target_url (str): Target Discourse forum URL
@@ -52,7 +57,7 @@ class DiscourseScanner:
             quiet (bool): Quiet mode (minimal output)
         """
         self.target_url = clean_url(target_url)
-        self.threads = threads
+        self.threads = min(threads, 15)  # Limit max threads to prevent overwhelming
         self.timeout = timeout
         self.proxy = {'http': proxy, 'https': proxy} if proxy else None
         self.user_agent = user_agent or random_user_agent()
@@ -60,6 +65,18 @@ class DiscourseScanner:
         self.verify_ssl = verify_ssl
         self.verbose = verbose
         self.quiet = quiet
+        
+        # Threading controls
+        self.thread_semaphore = BoundedSemaphore(self.threads)
+        self.request_lock = Lock()
+        self.active_requests = 0
+        self.max_concurrent_requests = self.threads * 2
+        
+        # Memory management
+        self.response_cache = weakref.WeakValueDictionary()
+        self.max_cache_size = 50
+        self.memory_cleanup_interval = 20  # Clean memory every 20 requests
+        self.request_count = 0
         
         # Color definitions for output formatting
         self.colors = {
@@ -110,9 +127,27 @@ class DiscourseScanner:
         self.reporter = Reporter(self.target_url)
     
     def _setup_session(self):
-        """Setup HTTP session with configuration"""
+        """Setup HTTP session with configuration and connection pooling"""
         import requests
         self.session = requests.Session()
+        
+        # Setup retry strategy
+        retry_strategy = Retry(
+            total=3,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["HEAD", "GET", "OPTIONS"],
+            backoff_factor=1
+        )
+        
+        # Setup HTTP adapter with connection pooling
+        adapter = HTTPAdapter(
+            pool_connections=self.threads,
+            pool_maxsize=self.threads * 2,
+            max_retries=retry_strategy
+        )
+        
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
         
         # Set headers
         self.session.headers.update({
@@ -158,25 +193,57 @@ class DiscourseScanner:
         print(f"{color}{prefix} {message}{Style.RESET_ALL}")
     
     def make_request(self, url, method='GET', **kwargs):
-        """Make HTTP request using configured session"""
+        """Make HTTP request with threading and memory management"""
+        with self.thread_semaphore:
+            try:
+                # Control concurrent requests
+                with self.request_lock:
+                    if self.active_requests >= self.max_concurrent_requests:
+                        time.sleep(0.1)  # Brief wait if too many active requests
+                    self.active_requests += 1
+                    self.request_count += 1
+                
+                # Add delay between requests
+                if self.delay > 0:
+                    time.sleep(self.delay)
+                
+                # Use session for request
+                response = self.session.request(
+                    method=method,
+                    url=url,
+                    timeout=self.timeout,
+                    **kwargs
+                )
+                
+                # Periodic memory cleanup
+                if self.request_count % self.memory_cleanup_interval == 0:
+                    self._cleanup_memory()
+                
+                return response
+                
+            except Exception as e:
+                self.log(f"Request failed for {url}: {str(e)}", 'debug')
+                return None
+            finally:
+                # Decrement active request counter
+                with self.request_lock:
+                    self.active_requests = max(0, self.active_requests - 1)
+    
+    def _cleanup_memory(self):
+        """Clean up memory to prevent leaks"""
         try:
-            # Add delay between requests
-            if self.delay > 0:
-                time.sleep(self.delay)
+            # Clear response cache if it gets too large
+            if len(self.response_cache) > self.max_cache_size:
+                self.response_cache.clear()
             
-            # Use session for request
-            response = self.session.request(
-                method=method,
-                url=url,
-                timeout=self.timeout,
-                **kwargs
-            )
+            # Force garbage collection
+            gc.collect()
             
-            return response
-            
+            if self.verbose:
+                self.log(f"Memory cleanup performed (request #{self.request_count})", 'debug')
+                
         except Exception as e:
-            self.log(f"Request failed for {url}: {str(e)}", 'debug')
-            return None
+            self.log(f"Memory cleanup error: {str(e)}", 'debug')
     
     def verify_target(self):
         """Verify target is accessible and is Discourse"""
@@ -226,7 +293,7 @@ class DiscourseScanner:
                     self.log(f"Unknown module: {module_name}", 'warning')
                     continue
                 
-                self.log(f"Running {module_name.upper()} module")
+                self.log(f"Running {module_name} module")
                 
                 try:
                     module_results = self.modules[module_name].run()
@@ -270,9 +337,18 @@ class DiscourseScanner:
             raise
         
         finally:
-            # Close session
+            # Final memory cleanup
+            self._cleanup_memory()
+            
+            # Close session properly
             if self.session:
-                self.session.close()
+                try:
+                    self.session.close()
+                except Exception as e:
+                    self.log(f"Error closing session: {str(e)}", 'debug')
+            
+            # Final garbage collection
+            gc.collect()
     
     def generate_json_report(self, output_file=None):
         """Generate JSON report"""

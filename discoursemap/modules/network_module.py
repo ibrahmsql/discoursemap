@@ -107,7 +107,7 @@ class NetworkModule:
         def scan_port(port):
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(3)
+                sock.settimeout(2)
                 result = sock.connect_ex((self.target_host, port))
                 sock.close()
                 
@@ -167,7 +167,7 @@ class NetworkModule:
             try:
                 # Banner grabbing
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(5)
+                sock.settimeout(3)
                 sock.connect((self.target_host, port))
                 
                 # Send HTTP request for web services
@@ -601,7 +601,7 @@ class NetworkModule:
                 }
                 server_headers.append(server_info)
             
-            time.sleep(1)
+            time.sleep(0.2)
         
         # Analyze for load balancing indicators
         unique_servers = set(info['server'] for info in server_headers if info['server'])
@@ -668,7 +668,7 @@ class NetworkModule:
                         if any(keyword in response.text.lower() for keyword in waf_keywords):
                             detected_wafs.append('Generic WAF')
             
-            time.sleep(1)  # Avoid triggering rate limits
+            time.sleep(0.2)  # Avoid triggering rate limits
         
         self.results['firewall_detection'] = list(set(detected_wafs)) if detected_wafs else ['None detected']
     
@@ -691,7 +691,7 @@ class NetworkModule:
                 elif response.status_code in [403, 503]:  # Potential rate limiting
                     blocked_count += 1
             
-            time.sleep(0.1)  # Small delay between requests
+            time.sleep(0.05)  # Small delay between requests
         
         end_time = time.time()
         duration = end_time - start_time
@@ -717,9 +717,9 @@ class NetworkModule:
         
         # Test with different user agents and patterns
         test_patterns = [
-            {'name': 'Rapid requests', 'count': 50, 'delay': 0.05},
+            {'name': 'Rapid requests', 'count': 50, 'delay': 0.02},
             {'name': 'Burst requests', 'count': 10, 'delay': 0},
-            {'name': 'Sustained load', 'count': 30, 'delay': 0.5}
+            {'name': 'Sustained load', 'count': 30, 'delay': 0.1}
         ]
         
         for pattern in test_patterns:
@@ -758,4 +758,4 @@ class NetworkModule:
             
             self.results['ddos_protection'].append(protection_info)
             
-            time.sleep(2)  # Cool down between tests
+            time.sleep(0.5)  # Cool down between tests

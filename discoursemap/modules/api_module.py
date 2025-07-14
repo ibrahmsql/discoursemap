@@ -15,10 +15,15 @@ import time
 import random
 import base64
 import hashlib
+import gc
+import weakref
 from urllib.parse import urljoin, urlparse, parse_qs
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
+from threading import Lock, BoundedSemaphore
 from colorama import Fore, Style, init
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # Initialize colorama
 init(autoreset=True)
@@ -97,13 +102,94 @@ class APISecurityModule:
         # API methods to test
         self.http_methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
         
-        # Rate limiting test parameters
-        self.rate_limit_requests = 100
-        self.rate_limit_threads = 10
+        # Rate limiting test parameters with intelligent adaptation
+        self.rate_limit_requests = 50  # Reduced to prevent overwhelming
+        self.rate_limit_threads = 5   # Reduced thread count
+        self.request_semaphore = BoundedSemaphore(self.rate_limit_threads)
+        self.rate_limit_lock = Lock()
+        self.adaptive_delay = 0.1  # Start with 0.1s delay
+        self.max_delay = 5.0       # Maximum delay
+        self.rate_limited_count = 0
         
+        # Memory management
+        self.response_cache = weakref.WeakValueDictionary()
+        self.max_cache_size = 100
+        
+        # Setup session with connection pooling
+        self._setup_session_pool()
+        
+    def _setup_session_pool(self):
+        """Setup session with connection pooling and retry strategy"""
+        retry_strategy = Retry(
+            total=3,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["HEAD", "GET", "OPTIONS"],
+            backoff_factor=1
+        )
+        
+        adapter = HTTPAdapter(
+            pool_connections=10,
+            pool_maxsize=20,
+            max_retries=retry_strategy
+        )
+        
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+    
+    def _adaptive_request(self, url, method='GET', **kwargs):
+        """Make request with adaptive rate limiting"""
+        with self.request_semaphore:
+            try:
+                # Apply adaptive delay
+                time.sleep(self.adaptive_delay)
+                
+                response = self.session.request(method, url, timeout=10, **kwargs)
+                
+                # Check for rate limiting
+                if response.status_code == 429:
+                    with self.rate_limit_lock:
+                        self.rate_limited_count += 1
+                        # Increase delay exponentially
+                        self.adaptive_delay = min(self.adaptive_delay * 2, self.max_delay)
+                        print(f"{Fore.YELLOW}[!] Rate limited. Increasing delay to {self.adaptive_delay}s{Style.RESET_ALL}")
+                    
+                    # Wait for retry-after header if present
+                    retry_after = response.headers.get('Retry-After')
+                    if retry_after:
+                        try:
+                            wait_time = int(retry_after)
+                            time.sleep(min(wait_time, 60))  # Max 60s wait
+                        except ValueError:
+                            time.sleep(self.adaptive_delay)
+                    else:
+                        time.sleep(self.adaptive_delay)
+                else:
+                    # Gradually reduce delay on successful requests
+                    with self.rate_limit_lock:
+                        if self.adaptive_delay > 0.1:
+                            self.adaptive_delay = max(0.1, self.adaptive_delay * 0.9)
+                
+                return response
+                
+            except Exception as e:
+                print(f"{Fore.RED}[!] Request error for {url}: {str(e)}{Style.RESET_ALL}")
+                return None
+    
+    def _cleanup_memory(self):
+        """Clean up memory to prevent leaks"""
+        # Clear response cache if it gets too large
+        if len(self.response_cache) > self.max_cache_size:
+            self.response_cache.clear()
+        
+        # Force garbage collection
+        gc.collect()
+    
     def run(self):
         """Run API security testing module (main entry point)"""
-        return self.run_scan()
+        try:
+            return self.run_scan()
+        finally:
+            self._cleanup_memory()
     
     def run_scan(self):
         """Run comprehensive API security testing"""
@@ -159,49 +245,53 @@ class APISecurityModule:
         return self.results
     
     def _discover_api_endpoints(self):
-        """Discover available API endpoints"""
-        print(f"{Fore.CYAN}[*] Discovering API endpoints...{Style.RESET_ALL}")
+        """Discover available API endpoints using adaptive requests"""
+        print(f"{Fore.CYAN}[*] Discovering API endpoints with adaptive requests...{Style.RESET_ALL}")
         
         discovered_endpoints = []
         
         for endpoint in self.api_endpoints:
             try:
                 url = urljoin(self.target_url, endpoint)
-                response = self.session.get(url, timeout=10)
+                response = self._adaptive_request(url, method='GET')
                 
-                endpoint_info = {
-                    'endpoint': endpoint,
-                    'url': url,
-                    'status_code': response.status_code,
-                    'accessible': response.status_code != 404,
-                    'requires_auth': response.status_code == 401 or response.status_code == 403,
-                    'content_type': response.headers.get('content-type', ''),
-                    'response_size': len(response.content)
-                }
-                
-                # Check for sensitive information in response
-                if response.status_code == 200:
-                    content = response.text.lower()
-                    if any(keyword in content for keyword in ['password', 'secret', 'key', 'token', 'api_key']):
-                        endpoint_info['contains_sensitive_data'] = True
-                        self.results['vulnerabilities'].append({
-                            'type': 'Sensitive Data Exposure',
-                            'severity': 'medium',
-                            'endpoint': endpoint,
-                            'description': f'API endpoint {endpoint} may expose sensitive information'
-                        })
-                        print(f"{Fore.YELLOW}[!] Sensitive data found in {endpoint}{Style.RESET_ALL}")
-                
-                discovered_endpoints.append(endpoint_info)
-                
-                # Small delay to avoid overwhelming the server
-                time.sleep(0.1)
+                if response:
+                    endpoint_info = {
+                        'endpoint': endpoint,
+                        'url': url,
+                        'status_code': response.status_code,
+                        'accessible': response.status_code != 404,
+                        'requires_auth': response.status_code == 401 or response.status_code == 403,
+                        'content_type': response.headers.get('content-type', ''),
+                        'response_size': len(response.content)
+                    }
+                    
+                    # Check for sensitive information in response
+                    if response.status_code == 200:
+                        content = response.text.lower()
+                        if any(keyword in content for keyword in ['password', 'secret', 'key', 'token', 'api_key']):
+                            endpoint_info['contains_sensitive_data'] = True
+                            self.results['vulnerabilities'].append({
+                                'type': 'Sensitive Data Exposure',
+                                'severity': 'medium',
+                                'endpoint': endpoint,
+                                'description': f'API endpoint {endpoint} may expose sensitive information'
+                            })
+                            print(f"{Fore.YELLOW}[!] Sensitive data found in {endpoint}{Style.RESET_ALL}")
+                    
+                    discovered_endpoints.append(endpoint_info)
+                else:
+                    discovered_endpoints.append({
+                        'endpoint': endpoint,
+                        'url': urljoin(self.target_url, endpoint),
+                        'error': 'No response received'
+                    })
                 
             except Exception as e:
                 print(f"{Fore.RED}[!] Error testing endpoint {endpoint}: {str(e)}{Style.RESET_ALL}")
         
         self.results['api_endpoints'] = discovered_endpoints
-        accessible_count = len([e for e in discovered_endpoints if e['accessible']])
+        accessible_count = len([e for e in discovered_endpoints if e.get('accessible', False)])
         print(f"{Fore.GREEN}[+] Discovered {accessible_count} accessible API endpoints{Style.RESET_ALL}")
     
     def _test_api_authentication(self):
@@ -216,7 +306,7 @@ class APISecurityModule:
                 url = urljoin(self.target_url, endpoint)
                 
                 # Test without authentication
-                response = self.session.get(url)
+                response = self._adaptive_request(url, method='GET')
                 if response.status_code == 200:
                     self.results['authentication_issues'].append({
                         'type': 'Unauthenticated Access',
@@ -227,7 +317,7 @@ class APISecurityModule:
                 
                 # Test with invalid API key
                 headers = {'Api-Key': 'invalid_key', 'Api-Username': 'admin'}
-                response = self.session.get(url, headers=headers)
+                response = self._adaptive_request(url, method='GET', headers=headers)
                 if response.status_code == 200:
                     self.results['authentication_issues'].append({
                         'type': 'Invalid API Key Bypass',
@@ -238,7 +328,7 @@ class APISecurityModule:
                 
                 # Test with empty API key
                 headers = {'Api-Key': '', 'Api-Username': 'admin'}
-                response = self.session.get(url, headers=headers)
+                response = self._adaptive_request(url, method='GET', headers=headers)
                 if response.status_code == 200:
                     self.results['authentication_issues'].append({
                         'type': 'Empty API Key Bypass',
@@ -249,7 +339,7 @@ class APISecurityModule:
                 
                 # Test API key in URL parameter
                 test_url = f"{url}?api_key=test_key&api_username=admin"
-                response = self.session.get(test_url)
+                response = self._adaptive_request(test_url, method='GET')
                 if response.status_code != 401:
                     self.results['authentication_issues'].append({
                         'type': 'API Key in URL',
@@ -277,7 +367,7 @@ class APISecurityModule:
         for endpoint in user_endpoints:
             try:
                 url = urljoin(self.target_url, endpoint)
-                response = self.session.get(url)
+                response = self._adaptive_request(url, method='GET')
                 
                 if response.status_code == 200:
                     try:
@@ -312,7 +402,7 @@ class APISecurityModule:
                 ]
                 
                 for headers in test_headers:
-                    response = self.session.get(url, headers=headers)
+                    response = self._adaptive_request(url, method='GET', headers=headers)
                     if response.status_code == 200:
                         self.results['authorization_issues'].append({
                             'type': 'Privilege Escalation',
@@ -326,8 +416,8 @@ class APISecurityModule:
                 print(Fore.RED + f"[!] Error testing admin access for {endpoint}: {str(e)}" + Style.RESET_ALL)
     
     def _test_rate_limiting(self):
-        """Test API rate limiting mechanisms"""
-        print(Fore.CYAN + "[*] Testing API rate limiting..." + Style.RESET_ALL)
+        """Test API rate limiting mechanisms with adaptive approach"""
+        print(Fore.CYAN + "[*] Testing API rate limiting with adaptive approach..." + Style.RESET_ALL)
         
         test_endpoints = ['/latest.json', '/search.json', '/users.json']
         
@@ -335,41 +425,67 @@ class APISecurityModule:
             try:
                 url = urljoin(self.target_url, endpoint)
                 
-                # Test rapid requests
+                # Test rapid requests with adaptive method
                 start_time = time.time()
                 successful_requests = 0
                 rate_limited = False
+                error_count = 0
                 
-                def make_request():
-                    nonlocal successful_requests, rate_limited
+                def make_adaptive_request():
+                    nonlocal successful_requests, rate_limited, error_count
                     try:
-                        response = self.session.get(url, timeout=5)
-                        if response.status_code == 429:  # Too Many Requests
-                            rate_limited = True
-                        elif response.status_code == 200:
-                            successful_requests += 1
-                    except:
-                        pass
+                        response = self._adaptive_request(url, method='GET')
+                        if response:
+                            if response.status_code == 429:  # Too Many Requests
+                                rate_limited = True
+                            elif response.status_code == 200:
+                                successful_requests += 1
+                        else:
+                            error_count += 1
+                    except Exception:
+                        error_count += 1
                 
-                # Make concurrent requests
+                # Make concurrent requests with controlled batching
+                batch_size = 10
                 with ThreadPoolExecutor(max_workers=self.rate_limit_threads) as executor:
-                    futures = [executor.submit(make_request) for _ in range(self.rate_limit_requests)]
-                    for future in as_completed(futures):
-                        future.result()
+                    for i in range(0, self.rate_limit_requests, batch_size):
+                        batch_futures = []
+                        for j in range(i, min(i + batch_size, self.rate_limit_requests)):
+                            future = executor.submit(make_adaptive_request)
+                            batch_futures.append(future)
+                        
+                        # Wait for batch completion
+                        for future in as_completed(batch_futures, timeout=30):
+                            try:
+                                future.result(timeout=5)
+                            except Exception:
+                                error_count += 1
+                        
+                        # Small delay between batches
+                        time.sleep(0.1)
                 
                 end_time = time.time()
                 duration = end_time - start_time
                 requests_per_second = successful_requests / duration if duration > 0 else 0
                 
-                if not rate_limited and successful_requests > 50:
+                # Vulnerability assessment
+                if not rate_limited and successful_requests > 30 and error_count < self.rate_limit_requests * 0.5:
                     self.results['rate_limiting_issues'].append({
                         'type': 'No Rate Limiting',
                         'severity': 'medium',
                         'endpoint': endpoint,
                         'successful_requests': successful_requests,
                         'requests_per_second': round(requests_per_second, 2),
+                        'error_count': error_count,
+                        'adaptive_delay_final': self.adaptive_delay,
                         'description': f'Endpoint {endpoint} has no rate limiting (processed {successful_requests} requests)'
                     })
+                elif rate_limited:
+                    print(f"{Fore.GREEN}[+] Rate limiting detected for {endpoint}{Style.RESET_ALL}")
+                
+                # Memory cleanup after each endpoint
+                if hasattr(self, '_cleanup_memory'):
+                    self._cleanup_memory()
                 
             except Exception as e:
                 print(Fore.RED + f"[!] Error testing rate limiting for {endpoint}: {str(e)}" + Style.RESET_ALL)
@@ -394,7 +510,7 @@ class APISecurityModule:
         for endpoint in test_endpoints:
             try:
                 url = urljoin(self.target_url, endpoint)
-                response = self.session.get(url)
+                response = self._adaptive_request(url, method='GET')
                 
                 if response.status_code == 200:
                     content = response.text
@@ -430,7 +546,7 @@ class APISecurityModule:
                     url = urljoin(self.target_url, endpoint)
                     params = {'q': payload, 'term': payload, 'filter': payload}
                     
-                    response = self.session.get(url, params=params)
+                    response = self._adaptive_request(url, method='GET', params=params)
                     
                     # Check for SQL error messages
                     error_indicators = ['sql', 'mysql', 'postgresql', 'sqlite', 'syntax error', 'database']
@@ -455,7 +571,7 @@ class APISecurityModule:
                     url = urljoin(self.target_url, endpoint)
                     params = {'q': payload, 'term': payload, 'name': payload}
                     
-                    response = self.session.get(url, params=params)
+                    response = self._adaptive_request(url, method='GET', params=params)
                     
                     if payload in response.text and 'application/json' not in response.headers.get('content-type', ''):
                         self.results['api_abuse_issues'].append({
@@ -480,7 +596,7 @@ class APISecurityModule:
             
             for method in self.http_methods:
                 try:
-                    response = self.session.request(method, url)
+                    response = self._adaptive_request(url, method=method)
                     
                     # Check for unexpected method support
                     if method in ['PUT', 'DELETE', 'PATCH'] and response.status_code not in [405, 501]:
@@ -502,7 +618,7 @@ class APISecurityModule:
                         }
                         
                         for header, value in override_headers.items():
-                            override_response = self.session.post(url, headers={header: value})
+                            override_response = self._adaptive_request(url, method='POST', headers={header: value})
                             if override_response.status_code != response.status_code:
                                 self.results['vulnerabilities'].append({
                                     'type': 'HTTP Method Override',
@@ -527,7 +643,7 @@ class APISecurityModule:
                 
                 # Test duplicate parameters
                 polluted_url = f"{url}?q=safe&q=<script>alert(1)</script>&q=admin"
-                response = self.session.get(polluted_url)
+                response = self._adaptive_request(polluted_url, method='GET')
                 
                 if '<script>' in response.text:
                     self.results['vulnerabilities'].append({
@@ -540,7 +656,7 @@ class APISecurityModule:
                 # Test parameter precedence
                 test_params = 'user=normal&user=admin&role=user&role=admin'
                 test_url = f"{url}?{test_params}"
-                response = self.session.get(test_url)
+                response = self._adaptive_request(test_url, method='GET')
                 
                 if response.status_code == 200:
                     self.results['vulnerabilities'].append({
@@ -614,7 +730,7 @@ class APISecurityModule:
                     headers = {'Content-Type': content_type}
                     data = '{"test": "data"}' if 'json' in content_type else 'test=data'
                     
-                    response = self.session.post(url, headers=headers, data=data)
+                    response = self._adaptive_request(url, method='POST', headers=headers, data=data)
                     
                     if response.status_code not in [400, 415, 405]:  # Not bad request, unsupported media type, or method not allowed
                         self.results['vulnerabilities'].append({
@@ -718,7 +834,7 @@ class APISecurityModule:
                     "query": "query IntrospectionQuery { __schema { queryType { name } } }"
                 }
                 
-                response = self.session.post(url, json=introspection_query)
+                response = self._adaptive_request(url, method='POST', json=introspection_query)
                 
                 if response.status_code == 200 and 'queryType' in response.text:
                     self.results['vulnerabilities'].append({
@@ -733,7 +849,7 @@ class APISecurityModule:
                         "query": "query IntrospectionQuery { __schema { types { name fields { name type { name } } } } }"
                     }
                     
-                    full_response = self.session.post(url, json=full_introspection)
+                    full_response = self._adaptive_request(url, method='POST', json=full_introspection)
                     if 'password' in full_response.text.lower() or 'secret' in full_response.text.lower():
                         self.results['vulnerabilities'].append({
                             'type': 'GraphQL Sensitive Schema',
@@ -747,7 +863,7 @@ class APISecurityModule:
                     "query": "query { " + "user { " * 20 + "id" + " }" * 20 + " }"
                 }
                 
-                response = self.session.post(url, json=deep_query)
+                response = self._adaptive_request(url, method='POST', json=deep_query)
                 if response.status_code == 200:
                     self.results['vulnerabilities'].append({
                         'type': 'GraphQL Query Depth Not Limited',

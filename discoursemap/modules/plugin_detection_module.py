@@ -40,8 +40,8 @@ class PluginDetectionModule:
         # Load plugin vulnerabilities database
         self.plugin_vulnerabilities = self._load_plugin_vulnerabilities()
         
-        # Enhanced plugin detection signatures with comprehensive patterns
-        self.plugin_signatures = self._build_enhanced_plugin_signatures()
+        #  plugin detection signatures with comprehensive patterns
+        self.plugin_signatures = self._build_plugin_signatures()
         
         # Technology detection patterns
         self.tech_patterns = {
@@ -140,8 +140,8 @@ class PluginDetectionModule:
         
         return sample_vulns
     
-    def _build_enhanced_plugin_signatures(self):
-        """Build  plugin signatures from vulnerability database"""
+    def _build_plugin_signatures(self):
+        """Build plugin signatures from vulnerability database"""
         signatures = {
             # Core Discourse plugins
             'discourse-poll': {
@@ -308,43 +308,60 @@ class PluginDetectionModule:
         """Run complete plugin detection scan"""
         self.scanner.log("Starting comprehensive plugin detection...", 'info')
          
-        # Ana sayfa analizi
+        # Main page analysis
         self._analyze_main_page()
         
-        # Enhance plugin detection with vulnerability checking
+        # Comprehensive plugin detection with vulnerability checking
         self._detect_plugins_comprehensive()
         
         # Plugin endpoint discovery
         self._discover_plugin_endpoints()
         
-        # Tema tespiti
+        # Theme detection
         self._detect_themes()
         
-        # Teknoloji stack tespiti
+        # Technology stack detection
         self._detect_technology_stack()
         
-        # JavaScript kütüphaneleri
+        # JavaScript libraries detection
         self._detect_javascript_libraries()
         
-        # CSS frameworks
+        # CSS frameworks detection
         self._detect_css_frameworks()
         
-        # Server information
+        # Server information gathering
         self._gather_server_info()
         
-        # Meta information
+        # Meta information extraction
         self._extract_meta_information()
         
         # Fingerprint generation
         self._generate_fingerprints()
         
-        # Vulnerability assessment for detected plugins
+        # Vulnerability assessment
+        self._vulnerability_assessment()
+        
+        # Plugin dependency analysis
+        self._analyze_plugin_dependencies()
+        
+        # Performance metrics generation
+        self._generate_performance_metrics()
+        
+        # Legacy vulnerability assessment for compatibility
         self._assess_plugin_vulnerabilities()
         
-        # Log results
+        # Log results summary
         total_plugins = len(self.results['detected_plugins'])
         vulnerable_plugins = len(self.results['vulnerability_plugins'])
-        self.scanner.log(f"Plugin detection completed: {total_plugins} plugins found, {vulnerable_plugins} with known vulnerabilities", 'info')
+        security_assessment = self.results.get('security_assessment', {})
+        high_risk = len(security_assessment.get('high_risk_plugins', []))
+        medium_risk = len(security_assessment.get('medium_risk_plugins', []))
+        
+        self.scanner.log(f"Plugin detection scan completed:", 'info')
+        self.scanner.log(f"  - Total plugins detected: {total_plugins}", 'info')
+        self.scanner.log(f"  - High-risk plugins: {high_risk}", 'warning' if high_risk > 0 else 'info')
+        self.scanner.log(f"  - Medium-risk plugins: {medium_risk}", 'warning' if medium_risk > 0 else 'info')
+        self.scanner.log(f"  - Vulnerable plugins: {vulnerable_plugins}", 'info')
         
         return self.results
     
@@ -362,55 +379,402 @@ class PluginDetectionModule:
         # HTML parsing
         self.soup = BeautifulSoup(self.main_page_content, 'html.parser')
     
-    def _detect_plugins(self):
-        """Detect installed plugins using various techniques"""
-        # Removed print statement for cleaner output
+    def _detect_plugins_comprehensive(self):
+        """comprehensive plugin detection with improved accuracy"""
+        self.scanner.log("Running comprehensive plugin detection...", 'info')
         
+        # Multi-method detection approach
+        self._detect_plugins_by_files()
+        self._detect_plugins_by_patterns()
+        self._detect_plugins_by_endpoints()
+        self._detect_plugins_by_javascript_analysis()
+        self._detect_plugins_by_css_analysis()
+        self._detect_plugins_by_admin_pages()
+        
+    def _detect_plugins_by_files(self):
+        """Detect plugins by checking for specific files"""
         for plugin_name, signatures in self.plugin_signatures.items():
-            detection_methods = []
-            confidence = 0
-            
-            # File-based detection
             if 'files' in signatures:
                 for file_path in signatures['files']:
-                    file_url = urljoin(self.scanner.target_url, file_path)
-                    response = make_request(self.scanner.session, 'GET', file_url)
-                    if response and response.status_code == 200:
-                        detection_methods.append(f'file:{file_path}')
-                        confidence += 30
+                    try:
+                        file_url = urljoin(self.scanner.target_url, file_path)
+                        response = make_request(self.scanner.session, 'GET', file_url, timeout=10)
+                        if response and response.status_code == 200:
+                            # Extract version from file content if possible
+                            version = self._detect_plugin_version(plugin_name, response.text)
+                            self._add_detected_plugin(
+                                plugin_name, 
+                                'file_detection', 
+                                f"Found file: {file_path}",
+                                confidence=90,
+                                version=version
+                            )
+                    except Exception as e:
+                        continue
+    
+    def _detect_plugins_by_patterns(self):
+        """Detect plugins by analyzing HTML, JS, and CSS patterns"""
+        if not hasattr(self, 'main_page_content'):
+            return
+            
+        for plugin_name, signatures in self.plugin_signatures.items():
+            confidence = 0
+            evidence = []
             
             # HTML pattern detection
-            if 'html_patterns' in signatures and hasattr(self, 'main_page_content'):
+            if 'html_patterns' in signatures:
                 for pattern in signatures['html_patterns']:
-                    if re.search(pattern, self.main_page_content, re.IGNORECASE):
-                        detection_methods.append(f'html_pattern:{pattern}')
+                    matches = re.findall(pattern, self.main_page_content, re.IGNORECASE)
+                    if matches:
+                        evidence.append(f"HTML pattern: {pattern} (matches: {len(matches)})")
                         confidence += 20
             
             # JavaScript pattern detection
-            if 'js_patterns' in signatures and hasattr(self, 'main_page_content'):
+            if 'js_patterns' in signatures:
                 for pattern in signatures['js_patterns']:
                     if re.search(pattern, self.main_page_content, re.IGNORECASE):
-                        detection_methods.append(f'js_pattern:{pattern}')
+                        evidence.append(f"JS pattern: {pattern}")
                         confidence += 25
+            
+            # CSS pattern detection
+            if 'css_patterns' in signatures:
+                for pattern in signatures['css_patterns']:
+                    if re.search(pattern, self.main_page_content, re.IGNORECASE):
+                        evidence.append(f"CSS pattern: {pattern}")
+                        confidence += 20
             
             # Response header detection
             if 'response_headers' in signatures and hasattr(self, 'main_page_headers'):
                 for header in signatures['response_headers']:
                     if header.lower() in [h.lower() for h in self.main_page_headers.keys()]:
-                        detection_methods.append(f'header:{header}')
-                        confidence += 35
+                        evidence.append(f"Response header: {header}")
+                        confidence += 30
             
-            # Plugin detected if confidence > 20
-            if confidence > 20:
-                plugin_info = {
-                    'name': plugin_name,
-                    'confidence': confidence,
-                    'detection_methods': detection_methods,
-                    'version': self._detect_plugin_version(plugin_name),
-                    'status': 'detected'
-                }
-                self.results['detected_plugins'].append(plugin_info)
-                print(f"{Fore.GREEN}[+] Plugin detected: {plugin_name} (confidence: {confidence}%){Style.RESET_ALL}")
+            # Add plugin if confidence threshold is met
+            if confidence >= 20:
+                self._add_detected_plugin(
+                    plugin_name,
+                    'pattern_detection',
+                    '; '.join(evidence),
+                    confidence=min(confidence, 100)
+                )
+    
+    def _detect_plugins_by_javascript_analysis(self):
+        """Detect plugins by analyzing JavaScript code"""
+        if not hasattr(self, 'main_page_content'):
+            return
+            
+        # Extract and analyze JavaScript URLs
+        js_urls = self._extract_js_urls()
+        
+        for js_url in js_urls[:10]:  # Limit to first 10 JS files
+            try:
+                response = make_request(self.scanner.session, 'GET', js_url, timeout=10)
+                if response and response.status_code == 200:
+                    js_content = response.text
+                    
+                    # Look for plugin-specific JavaScript patterns
+                    for plugin_name, signatures in self.plugin_signatures.items():
+                        if 'js_patterns' in signatures:
+                            for pattern in signatures['js_patterns']:
+                                if re.search(pattern, js_content, re.IGNORECASE):
+                                    version = self._detect_plugin_version(plugin_name, js_content)
+                                    self._add_detected_plugin(
+                                        plugin_name,
+                                        'javascript_analysis',
+                                        f"JS pattern found in {js_url}: {pattern}",
+                                        confidence=75,
+                                        version=version
+                                    )
+            except Exception as e:
+                continue
+    
+    def _detect_plugins_by_css_analysis(self):
+        """Detect plugins by analyzing CSS code"""
+        if not hasattr(self, 'main_page_content'):
+            return
+            
+        # Extract and analyze CSS URLs
+        css_urls = self._extract_css_urls()
+        
+        for css_url in css_urls[:10]:  # Limit to first 10 CSS files
+            try:
+                response = make_request(self.scanner.session, 'GET', css_url, timeout=10)
+                if response and response.status_code == 200:
+                    css_content = response.text
+                    
+                    # Look for plugin-specific CSS patterns
+                    for plugin_name, signatures in self.plugin_signatures.items():
+                        if 'css_patterns' in signatures:
+                            for pattern in signatures['css_patterns']:
+                                if re.search(pattern, css_content, re.IGNORECASE):
+                                    self._add_detected_plugin(
+                                        plugin_name,
+                                        'css_analysis',
+                                        f"CSS pattern found in {css_url}: {pattern}",
+                                        confidence=65
+                                    )
+            except Exception as e:
+                continue
+    
+    def _detect_plugins_by_admin_pages(self):
+        """Detect plugins by checking admin pages"""
+        admin_endpoints = [
+            '/admin/plugins',
+            '/admin/plugins.json',
+            '/admin/dashboard',
+            '/admin/dashboard.json',
+            '/admin/site_settings/category/plugins'
+        ]
+        
+        for endpoint in admin_endpoints:
+            try:
+                response = make_request(self.scanner.session, 'GET',
+                                      urljoin(self.scanner.target_url, endpoint),
+                                      timeout=self.scanner.timeout)
+                if response and response.status_code == 200:
+                    if endpoint.endswith('.json'):
+                        self._parse_admin_plugin_response(response.text, endpoint)
+                    else:
+                        # Parse HTML admin pages
+                        soup = BeautifulSoup(response.text, 'html.parser')
+                        
+                        # Look for plugin names in admin interface
+                        plugin_elements = soup.find_all(attrs={'data-plugin-name': True})
+                        for element in plugin_elements:
+                            plugin_name = element.get('data-plugin-name')
+                            if plugin_name:
+                                self._add_detected_plugin(
+                                    plugin_name,
+                                    'admin_interface',
+                                    f"Found in admin interface: {endpoint}",
+                                    confidence=95
+                                )
+                        
+                        # Look for plugin references in text
+                        text_content = soup.get_text().lower()
+                        for plugin_name in self.plugin_signatures.keys():
+                            if plugin_name.lower() in text_content:
+                                self._add_detected_plugin(
+                                    plugin_name,
+                                    'admin_text_analysis',
+                                    f"Plugin name found in admin text: {endpoint}",
+                                    confidence=60
+                                )
+            except Exception as e:
+                continue
+    
+    def _detect_plugins_by_endpoints(self):
+        """Detect plugins by checking known API endpoints"""
+        common_endpoints = [
+            '/admin/plugins.json',
+            '/admin/plugins',
+            '/site.json',
+            '/about.json'
+        ]
+        
+        for endpoint in common_endpoints:
+            try:
+                url = urljoin(self.scanner.target_url, endpoint)
+                response = make_request(self.scanner.session, 'GET', url, timeout=15)
+                if response and response.status_code == 200:
+                    self._parse_plugin_endpoint_response(response.text, endpoint)
+            except Exception as e:
+                continue
+    
+    def _detect_plugins_by_javascript_analysis(self):
+        """JavaScript analysis for plugin detection"""
+        js_urls = self._extract_js_urls()
+        
+        for js_url in js_urls[:20]:  # Limit to first 20 JS files
+            try:
+                response = make_request(self.scanner.session, 'GET', js_url, timeout=10)
+                if response and response.status_code == 200:
+                    self._analyze_javascript_content(response.text, js_url)
+            except Exception as e:
+                continue
+    
+    def _detect_plugins_by_css_analysis(self):
+        """CSS analysis for plugin detection"""
+        css_urls = self._extract_css_urls()
+        
+        for css_url in css_urls[:15]:  # Limit to first 15 CSS files
+            try:
+                response = make_request(self.scanner.session, 'GET', css_url, timeout=10)
+                if response and response.status_code == 200:
+                    self._analyze_css_content(response.text, css_url)
+            except Exception as e:
+                continue
+    
+    def _detect_plugins_by_admin_pages(self):
+        """Detect plugins through admin interface analysis"""
+        admin_urls = [
+            '/admin/plugins',
+            '/admin/customize/themes',
+            '/admin/site_settings'
+        ]
+        
+        for admin_url in admin_urls:
+            try:
+                url = urljoin(self.scanner.target_url, admin_url)
+                response = make_request(self.scanner.session, 'GET', url, timeout=15)
+                if response and response.status_code == 200:
+                    self._parse_admin_page_content(response.text, admin_url)
+            except Exception as e:
+                continue
+    
+    def _analyze_javascript_content(self, content, js_url):
+        """Analyze JavaScript content for plugin signatures"""
+        for plugin_name, signatures in self.plugin_signatures.items():
+            if 'js_patterns' in signatures:
+                for pattern in signatures['js_patterns']:
+                    if re.search(pattern, content, re.IGNORECASE):
+                        version = self._detect_plugin_version(plugin_name, content)
+                        self._add_detected_plugin(
+                            plugin_name,
+                            'javascript_analysis',
+                            f"Found in {js_url}: {pattern}",
+                            confidence=80,
+                            version=version
+                        )
+    
+    def _analyze_css_content(self, content, css_url):
+        """Analyze CSS content for plugin signatures"""
+        for plugin_name, signatures in self.plugin_signatures.items():
+            if 'css_patterns' in signatures:
+                for pattern in signatures['css_patterns']:
+                    if re.search(pattern, content, re.IGNORECASE):
+                        self._add_detected_plugin(
+                            plugin_name,
+                            'css_analysis',
+                            f"Found in {css_url}: {pattern}",
+                            confidence=75
+                        )
+    
+    def _parse_admin_page_content(self, content, admin_url):
+        """Parse admin page content for plugin information"""
+        try:
+            soup = BeautifulSoup(content, 'html.parser')
+            
+            # Look for plugin names in various elements
+            plugin_elements = soup.find_all(attrs={'data-plugin-name': True})
+            for element in plugin_elements:
+                plugin_name = element.get('data-plugin-name')
+                if plugin_name:
+                    self._add_detected_plugin(
+                        plugin_name,
+                        'admin_page',
+                        f"Found in admin page: {admin_url}",
+                        confidence=95
+                    )
+            
+            # Look for plugin references in text
+            plugin_pattern = r'discourse-[\w-]+'
+            matches = re.findall(plugin_pattern, content, re.IGNORECASE)
+            for match in set(matches):  # Remove duplicates
+                self._add_detected_plugin(
+                    match,
+                    'admin_page_text',
+                    f"Found reference in {admin_url}",
+                    confidence=70
+                )
+                
+        except Exception as e:
+            pass
+    
+    def _parse_plugin_endpoint_response(self, content, endpoint):
+        """Parse plugin endpoint responses for plugin information"""
+        try:
+            if endpoint.endswith('.json'):
+                data = json.loads(content)
+                
+                if endpoint == '/admin/plugins.json' and isinstance(data, list):
+                    for plugin in data:
+                        if isinstance(plugin, dict) and 'name' in plugin:
+                            version = plugin.get('version', 'Unknown')
+                            enabled = plugin.get('enabled', False)
+                            self._add_detected_plugin(
+                                plugin['name'],
+                                'admin_api',
+                                f"Found in {endpoint} (enabled: {enabled})",
+                                confidence=100,
+                                version=version
+                            )
+                
+                elif endpoint == '/site.json' and isinstance(data, dict):
+                    # Check for plugin-related configurations
+                    for key, value in data.items():
+                        if 'plugin' in key.lower() and isinstance(value, (str, bool)):
+                            if isinstance(value, str) and value.startswith('discourse-'):
+                                self._add_detected_plugin(
+                                    value,
+                                    'site_config',
+                                    f"Found in site configuration: {key}",
+                                    confidence=85
+                                )
+                                
+        except json.JSONDecodeError:
+            pass
+        except Exception as e:
+            pass
+    
+    def _add_detected_plugin(self, name, detection_method, evidence, confidence=50, version='Unknown'):
+        """Add detected plugin with metadata"""
+        # Check if plugin already exists
+        for plugin in self.results['detected_plugins']:
+            if plugin['name'] == name:
+                if detection_method not in plugin['detection_methods']:
+                    plugin['detection_methods'].append(detection_method)
+                    plugin['evidence'].append(evidence)
+                    plugin['confidence'] = max(plugin['confidence'], confidence)
+                    if version != 'Unknown' and plugin['version'] == 'Unknown':
+                        plugin['version'] = version
+                return
+        
+        # Add new plugin information
+        plugin_info = {
+            'name': name,
+            'detection_methods': [detection_method],
+            'evidence': [evidence],
+            'confidence': confidence,
+            'version': version,
+            'category': self._get_plugin_category(name),
+            'risk_score': self._calculate_risk_score(name),
+            'vulnerabilities': self._get_plugin_vulnerabilities(name),
+            'description': self._get_plugin_description(name)
+        }
+        
+        self.results['detected_plugins'].append(plugin_info)
+    
+    def _get_plugin_description(self, plugin_name):
+        """Get plugin description from known plugins"""
+        descriptions = {
+            'discourse-poll': 'Allows users to create polls in topics',
+            'discourse-chat': 'Real-time chat functionality for Discourse',
+            'discourse-calendar': 'Calendar and event management plugin',
+            'discourse-voting': 'Topic voting functionality',
+            'discourse-assign': 'Assign topics to users',
+            'discourse-checklist': 'Checklist functionality in posts',
+            'discourse-math': 'Mathematical notation support',
+            'discourse-spoiler-alert': 'Spoiler text functionality',
+            'discourse-reactions': 'Emoji reactions to posts',
+            'discourse-oauth2-basic': 'OAuth2 authentication provider'
+        }
+        return descriptions.get(plugin_name, 'Unknown plugin')
+    
+    def _get_plugin_vulnerabilities(self, plugin_name):
+        """Get vulnerabilities for specific plugin"""
+        if 'plugins' in self.plugin_vulnerabilities:
+            for plugin in self.plugin_vulnerabilities['plugins']:
+                if plugin.get('name') == plugin_name:
+                    return plugin.get('vulnerabilities', [])
+        return []
+    
+    def _detect_plugins(self):
+        """Legacy method - kept for compatibility"""
+        # This method is now replaced by _detect_plugins_comprehensive
+        # but kept for backward compatibility
+        self._detect_plugins_comprehensive()
     
     def _detect_themes(self):
         """Detect installed themes"""
@@ -574,30 +938,114 @@ class PluginDetectionModule:
                     'value': title_hash
                 })
     
-    def _detect_plugin_version(self, plugin_name):
-        """Detect plugin version"""
-        # Try to get version from plugin file
-        plugin_js_url = urljoin(self.scanner.target_url, f'/plugins/{plugin_name}/assets/javascripts/{plugin_name}.js')
-        response = make_request(self.scanner.session, 'GET', plugin_js_url)
+    def _detect_plugin_version(self, plugin_name, content=None):
+        """plugin version detection"""
+        # If content is provided, analyze it first
+        if content:
+            version = self._extract_version_from_content(plugin_name, content)
+            if version != 'Unknown':
+                return version
         
-        if response and response.status_code == 200:
-            # Look for version patterns
-            version_patterns = [
-                r'version["\']?\s*[:=]\s*["\']([^"\'\']+)["\']',
-                r'VERSION\s*=\s*["\']([^"\'\']+)["\']',
-                r'@version\s+([\d\.]+)'
-            ]
+        # Try multiple plugin file locations
+        plugin_file_patterns = [
+            f'/plugins/{plugin_name}/assets/javascripts/{plugin_name}.js',
+            f'/plugins/{plugin_name}/assets/{plugin_name}.js',
+            f'/plugins/{plugin_name.replace("discourse-", "")}/assets/javascripts/{plugin_name.replace("discourse-", "")}.js',
+            f'/assets/plugins/{plugin_name}.js',
+            f'/javascripts/plugins/{plugin_name}.js',
+            f'/plugins/{plugin_name}/plugin.rb',
+            f'/plugins/{plugin_name}/package.json'
+        ]
+        
+        for file_pattern in plugin_file_patterns:
+            try:
+                plugin_url = urljoin(self.scanner.target_url, file_pattern)
+                response = make_request(self.scanner.session, 'GET', plugin_url, timeout=10)
+                
+                if response and response.status_code == 200:
+                    version = self._extract_version_from_content(plugin_name, response.text)
+                    if version != 'Unknown':
+                        return version
+            except Exception as e:
+                continue
+        
+        # Try to get version from plugin manifest or metadata
+        manifest_patterns = [
+            f'/plugins/{plugin_name}/manifest.json',
+            f'/plugins/{plugin_name}/plugin.json',
+            f'/plugins/{plugin_name}/about.json'
+        ]
+        
+        for manifest_pattern in manifest_patterns:
+            try:
+                manifest_url = urljoin(self.scanner.target_url, manifest_pattern)
+                response = make_request(self.scanner.session, 'GET', manifest_url, timeout=10)
+                
+                if response and response.status_code == 200:
+                    try:
+                        manifest_data = json.loads(response.text)
+                        if isinstance(manifest_data, dict):
+                            # Check common version fields
+                            version_fields = ['version', 'plugin_version', 'about', 'meta']
+                            for field in version_fields:
+                                if field in manifest_data:
+                                    version_value = manifest_data[field]
+                                    if isinstance(version_value, str) and re.match(r'[\d\.]+', version_value):
+                                        return version_value
+                                    elif isinstance(version_value, dict) and 'version' in version_value:
+                                        return str(version_value['version'])
+                    except json.JSONDecodeError:
+                        pass
+            except Exception as e:
+                continue
+        
+        return 'Unknown'
+    
+    def _extract_version_from_content(self, plugin_name, content):
+        """Extract version from content using various patterns"""
+        # Version patterns
+        version_patterns = [
+            # Standard version patterns
+            r'version["\']?\s*[:=]\s*["\']([\d\.]+(?:-[a-zA-Z0-9]+)?)["\']',
+            r'VERSION\s*=\s*["\']([\d\.]+(?:-[a-zA-Z0-9]+)?)["\']',
+            r'@version\s+([\d\.]+(?:-[a-zA-Z0-9]+)?)',
             
-            for pattern in version_patterns:
-                match = re.search(pattern, response.text, re.IGNORECASE)
+            # Plugin-specific patterns
+            rf'{plugin_name}["\']?\s*[:=]\s*["\']([\d\.]+(?:-[a-zA-Z0-9]+)?)["\']',
+            rf'plugin["\']?\s*[:=]\s*["\']([\d\.]+(?:-[a-zA-Z0-9]+)?)["\']',
+            
+            # Ruby gem version patterns
+            r'gem\s+["\']' + plugin_name + r'["\'],\s*["\']([\d\.]+(?:-[a-zA-Z0-9]+)?)["\']',
+            r's\.version\s*=\s*["\']([\d\.]+(?:-[a-zA-Z0-9]+)?)["\']',
+            
+            # Package.json patterns
+            r'"version"\s*:\s*"([\d\.]+(?:-[a-zA-Z0-9]+)?)"',
+            
+            # Comment-based version patterns
+            r'#\s*Version:?\s*([\d\.]+(?:-[a-zA-Z0-9]+)?)',
+            r'//\s*Version:?\s*([\d\.]+(?:-[a-zA-Z0-9]+)?)',
+            r'/\*\s*Version:?\s*([\d\.]+(?:-[a-zA-Z0-9]+)?)\s*\*/',
+            
+            # Git tag patterns
+            r'tag["\']?\s*[:=]\s*["\']v?([\d\.]+(?:-[a-zA-Z0-9]+)?)["\']',
+            r'release["\']?\s*[:=]\s*["\']v?([\d\.]+(?:-[a-zA-Z0-9]+)?)["\']'
+        ]
+        
+        for pattern in version_patterns:
+            try:
+                match = re.search(pattern, content, re.IGNORECASE | re.MULTILINE)
                 if match:
-                    return match.group(1)
+                    version = match.group(1)
+                    # Validate version format
+                    if re.match(r'^\d+(\.\d+)*(-[a-zA-Z0-9]+)?$', version):
+                        return version
+            except Exception as e:
+                continue
         
         return 'Unknown'
     
     def _detect_plugins_comprehensive(self):
         """Comprehensive plugin detection using multiple methods"""
-        self.scanner.log("Starting comprehensive plugin detection...", 'info')
         
         # Method 1: File-based detection
         self._detect_plugins_by_files()
@@ -655,7 +1103,8 @@ class PluginDetectionModule:
                                               timeout=self.scanner.timeout)
                         if response and response.status_code == 200:
                             self._add_detected_plugin(plugin_name, 'file_detection', file_path)
-                            self.scanner.log(f"Plugin detected via file: {plugin_name} ({file_path})", 'success')
+                            if self.scanner.verbose:
+                                self.scanner.log(f"Plugin detected via file: {plugin_name} ({file_path})", 'success')
                     except Exception as e:
                         continue
     
@@ -672,7 +1121,8 @@ class PluginDetectionModule:
                         for pattern in signatures['html_patterns']:
                             if re.search(pattern, html_content, re.IGNORECASE):
                                 self._add_detected_plugin(plugin_name, 'html_pattern', pattern)
-                                self.scanner.log(f"Plugin detected via HTML pattern: {plugin_name}", 'success')
+                                if self.scanner.verbose:
+                                    self.scanner.log(f"Plugin detected via HTML pattern: {plugin_name}", 'success')
         except Exception as e:
             self.scanner.log(f"Error in HTML pattern detection: {e}", 'error')
     
@@ -692,7 +1142,8 @@ class PluginDetectionModule:
                             for pattern in signatures['js_patterns']:
                                 if re.search(pattern, js_content, re.IGNORECASE):
                                     self._add_detected_plugin(plugin_name, 'js_pattern', pattern)
-                                    self.scanner.log(f"Plugin detected via JS pattern: {plugin_name}", 'success')
+                                    if self.scanner.verbose:
+                                        self.scanner.log(f"Plugin detected via JS pattern: {plugin_name}", 'success')
             except Exception as e:
                 continue
     
@@ -709,7 +1160,8 @@ class PluginDetectionModule:
                         for header in signatures['response_headers']:
                             if header in headers:
                                 self._add_detected_plugin(plugin_name, 'response_header', header)
-                                self.scanner.log(f"Plugin detected via header: {plugin_name}", 'success')
+                                if self.scanner.verbose:
+                                    self.scanner.log(f"Plugin detected via header: {plugin_name}", 'success')
         except Exception as e:
             self.scanner.log(f"Error in header detection: {e}", 'error')
     
@@ -747,7 +1199,8 @@ class PluginDetectionModule:
                             for pattern in signatures['css_patterns']:
                                 if re.search(pattern, css_content, re.IGNORECASE):
                                     self._add_detected_plugin(plugin_name, 'css_pattern', pattern)
-                                    self.scanner.log(f"Plugin detected via CSS pattern: {plugin_name}", 'success')
+                                    if self.scanner.verbose:
+                                        self.scanner.log(f"Plugin detected via CSS pattern: {plugin_name}", 'success')
             except Exception as e:
                 continue
     
@@ -767,7 +1220,8 @@ class PluginDetectionModule:
                                 meta_content = str(meta)
                                 if re.search(pattern, meta_content, re.IGNORECASE):
                                     self._add_detected_plugin(plugin_name, 'meta_pattern', pattern)
-                                    self.scanner.log(f"Plugin detected via meta pattern: {plugin_name}", 'success')
+                                    if self.scanner.verbose:
+                                        self.scanner.log(f"Plugin detected via meta pattern: {plugin_name}", 'success')
         except Exception as e:
             self.scanner.log(f"Error in meta pattern detection: {e}", 'error')
     
@@ -1339,3 +1793,210 @@ class PluginDetectionModule:
                     return match.group(1)
         
         return 'Unknown'
+    
+    def _assess_security_risks(self):
+        """Assess security risks of detected plugins"""
+        high_risk_plugins = []
+        medium_risk_plugins = []
+        total_vulnerabilities = 0
+        
+        for plugin in self.results['detected_plugins']:
+            plugin_name = plugin['name']
+            vulnerabilities = self._get_plugin_vulnerabilities(plugin_name)
+            risk_score = plugin.get('risk_score', 0)
+            
+            if vulnerabilities:
+                total_vulnerabilities += len(vulnerabilities)
+                
+                # Categorize by risk level
+                if risk_score >= 7.0:
+                    high_risk_plugins.append({
+                        'name': plugin_name,
+                        'risk_score': risk_score,
+                        'vulnerabilities': vulnerabilities,
+                        'version': plugin.get('version', 'Unknown')
+                    })
+                elif risk_score >= 4.0:
+                    medium_risk_plugins.append({
+                        'name': plugin_name,
+                        'risk_score': risk_score,
+                        'vulnerabilities': vulnerabilities,
+                        'version': plugin.get('version', 'Unknown')
+                    })
+        
+        self.results['security_assessment'] = {
+            'high_risk_plugins': high_risk_plugins,
+            'medium_risk_plugins': medium_risk_plugins,
+            'total_vulnerabilities': total_vulnerabilities,
+            'risk_summary': {
+                'critical_issues': len([p for p in high_risk_plugins if p['risk_score'] >= 9.0]),
+                'high_issues': len([p for p in high_risk_plugins if 7.0 <= p['risk_score'] < 9.0]),
+                'medium_issues': len(medium_risk_plugins)
+            }
+        }
+    
+    def _analyze_plugin_dependencies(self):
+        """Analyze plugin dependencies and conflicts"""
+        dependencies = {
+            'jQuery': [],
+            'Ember.js': [],
+            'Bootstrap': [],
+            'Font Awesome': [],
+            'Moment.js': []
+        }
+        
+        # Check which plugins depend on which libraries
+        for plugin in self.results['detected_plugins']:
+            plugin_name = plugin['name']
+            
+            # Common dependencies based on plugin type
+            if 'calendar' in plugin_name.lower():
+                dependencies['Moment.js'].append(plugin_name)
+            if 'chat' in plugin_name.lower() or 'poll' in plugin_name.lower():
+                dependencies['Ember.js'].append(plugin_name)
+            if 'voting' in plugin_name.lower() or 'reactions' in plugin_name.lower():
+                dependencies['jQuery'].append(plugin_name)
+        
+        # Check for detected libraries
+        detected_libs = [lib['name'] for lib in self.results['javascript_libraries']]
+        
+        self.results['dependency_analysis'] = {
+            'dependencies': dependencies,
+            'detected_libraries': detected_libs,
+            'potential_conflicts': self._check_dependency_conflicts(dependencies, detected_libs)
+        }
+    
+    def _check_dependency_conflicts(self, dependencies, detected_libs):
+        """Check for potential dependency conflicts"""
+        conflicts = []
+        
+        # Check if required dependencies are missing
+        for lib, dependent_plugins in dependencies.items():
+            if dependent_plugins and lib not in detected_libs:
+                conflicts.append({
+                    'type': 'missing_dependency',
+                    'library': lib,
+                    'affected_plugins': dependent_plugins,
+                    'severity': 'medium'
+                })
+        
+        return conflicts
+    
+    def _generate_performance_metrics(self):
+        """Generate performance metrics for the scan"""
+        total_plugins = len(self.results['detected_plugins'])
+        total_themes = len(self.results['detected_themes'])
+        total_js_libs = len(self.results['javascript_libraries'])
+        total_css_frameworks = len(self.results['css_frameworks'])
+        
+        # Calculate detection confidence average
+        if total_plugins > 0:
+            avg_confidence = sum(p.get('confidence', 0) for p in self.results['detected_plugins']) / total_plugins
+        else:
+            avg_confidence = 0
+        
+        # Count detection methods used
+        detection_methods = set()
+        for plugin in self.results['detected_plugins']:
+            detection_methods.update(plugin.get('detection_methods', []))
+        
+        self.results['performance_metrics'] = {
+            'total_plugins_detected': total_plugins,
+            'total_themes_detected': total_themes,
+            'total_js_libraries_detected': total_js_libs,
+            'total_css_frameworks_detected': total_css_frameworks,
+            'average_detection_confidence': round(avg_confidence, 2),
+            'detection_methods_used': list(detection_methods),
+            'scan_coverage': {
+                'plugins': 'comprehensive' if total_plugins > 5 else 'basic',
+                'themes': 'detected' if total_themes > 0 else 'none',
+                'libraries': 'comprehensive' if total_js_libs > 3 else 'basic'
+            }
+        }
+    
+    def _vulnerability_assessment(self):
+        """Vulnerability assessment with detailed analysis"""
+        # First run basic security assessment
+        self._assess_security_risks()
+        
+        # Detailed analysis
+        vulnerability_details = []
+        
+        for plugin in self.results['detected_plugins']:
+            plugin_name = plugin['name']
+            vulnerabilities = self._get_plugin_vulnerabilities(plugin_name)
+            
+            for vuln in vulnerabilities:
+                vuln_detail = {
+                    'plugin_name': plugin_name,
+                    'plugin_version': plugin.get('version', 'Unknown'),
+                    'cve_id': vuln.get('cve_id', 'N/A'),
+                    'severity': vuln.get('severity', 'Unknown'),
+                    'cvss_score': vuln.get('cvss_score', 0),
+                    'type': vuln.get('type', 'Unknown'),
+                    'description': vuln.get('description', 'No description available'),
+                    'affected_versions': vuln.get('affected_versions', []),
+                    'fixed_versions': vuln.get('fixed_versions', []),
+                    'exploit_available': vuln.get('exploit_available', False),
+                    'impact': vuln.get('impact', 'Unknown'),
+                    'remediation': self._get_remediation_advice(plugin_name, vuln)
+                }
+                vulnerability_details.append(vuln_detail)
+        
+        # Sort by CVSS score (highest first)
+        vulnerability_details.sort(key=lambda x: x['cvss_score'], reverse=True)
+        
+        self.results['vulnerability_assessment'] = {
+            'total_vulnerabilities': len(vulnerability_details),
+            'critical_vulnerabilities': len([v for v in vulnerability_details if v['cvss_score'] >= 9.0]),
+            'high_vulnerabilities': len([v for v in vulnerability_details if 7.0 <= v['cvss_score'] < 9.0]),
+            'medium_vulnerabilities': len([v for v in vulnerability_details if 4.0 <= v['cvss_score'] < 7.0]),
+            'low_vulnerabilities': len([v for v in vulnerability_details if 0 < v['cvss_score'] < 4.0]),
+            'vulnerability_details': vulnerability_details,
+            'security_recommendations': self._generate_security_recommendations(vulnerability_details)
+        }
+    
+    def _get_remediation_advice(self, plugin_name, vulnerability):
+        """Get remediation advice for specific vulnerability"""
+        fixed_versions = vulnerability.get('fixed_versions', [])
+        
+        if fixed_versions:
+            latest_fix = max(fixed_versions) if fixed_versions else 'latest'
+            return f"Update {plugin_name} to version {latest_fix} or later"
+        else:
+            return f"Consider disabling {plugin_name} until a fix is available"
+    
+    def _generate_security_recommendations(self, vulnerability_details):
+        """Generate security recommendations based on vulnerabilities"""
+        recommendations = []
+        
+        # Critical vulnerabilities
+        critical_vulns = [v for v in vulnerability_details if v['cvss_score'] >= 9.0]
+        if critical_vulns:
+            recommendations.append({
+                'priority': 'CRITICAL',
+                'action': 'Immediate action required',
+                'description': f"Found {len(critical_vulns)} critical vulnerabilities that require immediate attention",
+                'affected_plugins': list(set([v['plugin_name'] for v in critical_vulns]))
+            })
+        
+        # High vulnerabilities
+        high_vulns = [v for v in vulnerability_details if 7.0 <= v['cvss_score'] < 9.0]
+        if high_vulns:
+            recommendations.append({
+                'priority': 'HIGH',
+                'action': 'Update plugins within 24-48 hours',
+                'description': f"Found {len(high_vulns)} high-severity vulnerabilities",
+                'affected_plugins': list(set([v['plugin_name'] for v in high_vulns]))
+            })
+        
+        # General recommendations
+        if vulnerability_details:
+            recommendations.append({
+                'priority': 'GENERAL',
+                'action': 'Regular security maintenance',
+                'description': 'Implement regular plugin updates and security monitoring',
+                'affected_plugins': []
+            })
+        
+        return recommendations

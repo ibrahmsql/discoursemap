@@ -95,7 +95,7 @@ class DatabaseModule:
             self._test_error_based_sql_injection()
             self._test_boolean_based_sql_injection()
             
-            # Advanced database tests
+            # Database tests
             self._test_second_order_sql_injection()
             self._test_database_fingerprinting()
             self._test_nosql_injection()
