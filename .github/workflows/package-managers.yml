@@ -1,0 +1,160 @@
+name: Package Managers Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+        required: true
+        default: '1.2.2'
+
+jobs:
+  update-homebrew:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Update Homebrew Formula
+        run: |
+          # Calculate SHA256 for the source tarball
+          VERSION=${{ github.event.release.tag_name || github.event.inputs.version }}
+          URL="https://files.pythonhosted.org/packages/source/d/discoursemap/discoursemap-${VERSION}.tar.gz"
+          SHA256=$(curl -sL "$URL" | shasum -a 256 | cut -d' ' -f1)
+          
+          # Update the formula
+          sed -i '' "s/sha256 \"\"/sha256 \"$SHA256\"/g" Formula/discoursemap.rb
+          sed -i '' "s/discoursemap-[0-9.]\+/discoursemap-${VERSION}/g" Formula/discoursemap.rb
+          
+          echo "Updated Homebrew formula with SHA256: $SHA256"
+      
+      - name: Commit and Push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add Formula/discoursemap.rb
+          git commit -m "Update Homebrew formula to ${{ github.event.release.tag_name || github.event.inputs.version }}"
+          git push
+
+  update-aur:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Update PKGBUILD
+        run: |
+          VERSION=${{ github.event.release.tag_name || github.event.inputs.version }}
+          URL="https://files.pythonhosted.org/packages/source/d/discoursemap/discoursemap-${VERSION}.tar.gz"
+          SHA256=$(curl -sL "$URL" | sha256sum | cut -d' ' -f1)
+          
+          # Update PKGBUILD
+          sed -i "s/pkgver=.*/pkgver=${VERSION}/g" PKGBUILD
+          sed -i "s/sha256sums=.*/sha256sums=('${SHA256}')/g" PKGBUILD
+          
+          echo "Updated PKGBUILD with version: $VERSION and SHA256: $SHA256"
+      
+      - name: Commit and Push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add PKGBUILD
+          git commit -m "Update AUR PKGBUILD to ${{ github.event.release.tag_name || github.event.inputs.version }}"
+          git push
+
+  update-snap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Update Snapcraft
+        run: |
+          VERSION=${{ github.event.release.tag_name || github.event.inputs.version }}
+          sed -i "s/version: .*/version: '${VERSION}'/g" snap/snapcraft.yaml
+          
+          echo "Updated Snapcraft to version: $VERSION"
+      
+      - name: Commit and Push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add snap/snapcraft.yaml
+          git commit -m "Update Snap package to ${{ github.event.release.tag_name || github.event.inputs.version }}"
+          git push
+
+  update-flatpak:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Update Flatpak Manifest
+        run: |
+          VERSION=${{ github.event.release.tag_name || github.event.inputs.version }}
+          URL="https://files.pythonhosted.org/packages/source/d/discoursemap/discoursemap-${VERSION}.tar.gz"
+          SHA256=$(curl -sL "$URL" | sha256sum | cut -d' ' -f1)
+          
+          # Update the manifest
+          sed -i "s/discoursemap-[0-9.]\+/discoursemap-${VERSION}/g" com.github.ibrahmsql.discoursemap.yaml
+          sed -i "s/sha256: SKIP/sha256: ${SHA256}/g" com.github.ibrahmsql.discoursemap.yaml
+          
+          echo "Updated Flatpak manifest with version: $VERSION and SHA256: $SHA256"
+      
+      - name: Commit and Push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add com.github.ibrahmsql.discoursemap.yaml
+          git commit -m "Update Flatpak manifest to ${{ github.event.release.tag_name || github.event.inputs.version }}"
+          git push
+
+  update-appimage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Update AppImage Builder
+        run: |
+          VERSION=${{ github.event.release.tag_name || github.event.inputs.version }}
+          
+          # Update AppImageBuilder.yml
+          sed -i "s/version: .*/version: ${VERSION}/g" AppImageBuilder.yml
+          sed -i "s/DiscourseMap-[0-9.]\+-x86_64.AppImage/DiscourseMap-${VERSION}-x86_64.AppImage/g" AppImageBuilder.yml
+          
+          echo "Updated AppImage builder to version: $VERSION"
+      
+      - name: Commit and Push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add AppImageBuilder.yml
+          git commit -m "Update AppImage builder to ${{ github.event.release.tag_name || github.event.inputs.version }}"
+          git push
+
+  build-appimage:
+    runs-on: ubuntu-latest
+    needs: update-appimage
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Build AppImage
+        uses: AppImageCrafters/build-appimage@master
+        with:
+          recipe: AppImageBuilder.yml
+        env:
+          UPDATE_INFO: gh-releases-zsync|ibrahmsql|discoursemap|latest|DiscourseMap-*-x86_64.AppImage.zsync
+      
+      - name: Upload AppImage to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./DiscourseMap-${{ github.event.release.tag_name || github.event.inputs.version }}-x86_64.AppImage
+          asset_name: DiscourseMap-${{ github.event.release.tag_name || github.event.inputs.version }}-x86_64.AppImage
+          asset_content_type: application/octet-stream

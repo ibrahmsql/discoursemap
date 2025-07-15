@@ -63,13 +63,51 @@ discoursemap --help
 discoursemap -u https://forum.example.com
 ```
 
+### 📦 Package Manager Installation
+
+#### Homebrew (macOS)
+```bash
+# Add the tap
+brew tap ibrahmsql/discoursemap
+
+# Install DiscourseMap
+brew install discoursemap
+```
+
+#### AUR (Arch Linux)
+```bash
+# Using yay
+yay -S discoursemap
+
+# Using paru
+paru -S discoursemap
+```
+
+#### Snap (Universal Linux)
+```bash
+sudo snap install discoursemap
+```
+
+#### Flatpak (Universal Linux)
+```bash
+flatpak install flathub com.github.ibrahmsql.discoursemap
+```
+
+#### AppImage (Portable Linux)
+```bash
+# Download and run
+wget https://github.com/ibrahmsql/discoursemap/releases/latest/download/DiscourseMap-1.2.2-x86_64.AppImage
+chmod +x DiscourseMap-1.2.2-x86_64.AppImage
+./DiscourseMap-1.2.2-x86_64.AppImage --help
+```
+
 ### 📦 Alternative Installation Methods
 ```bash
 # Install with pipx for isolated environment
 pipx install discoursemap
 
 # Install specific version
-pip install discoursemap==1.1.0
+pip install discoursemap==1.2.2
 
 # Upgrade to latest version
 pip install --upgrade discoursemap
