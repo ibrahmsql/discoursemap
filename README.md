@@ -83,11 +83,6 @@ yay -S discoursemap
 paru -S discoursemap
 ```
 
-#### Snap (Universal Linux)
-```bash
-sudo snap install discoursemap
-```
-
 #### Flatpak (Universal Linux)
 ```bash
 flatpak install flathub com.github.ibrahmsql.discoursemap
