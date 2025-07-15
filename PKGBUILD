@@ -31,6 +31,22 @@ depends=('python>=3.8'
          'python-wheel')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools')
 optdepends=('ruby-nokogiri: HTML/XML parsing for Ruby exploits'
+depends=('python>=3.8' 'python-pip')
+makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools')
+optdepends=('python-pyyaml: YAML configuration support'
+            'python-requests: HTTP library for API calls'
+            'python-beautifulsoup4: HTML parsing'
+            'python-lxml: XML/HTML processing'
+            'python-colorama: Colored terminal output'
+            'python-tqdm: Progress bars'
+            'python-jinja2: Template engine'
+            'python-urllib3: HTTP client library'
+            'python-certifi: SSL certificate verification'
+            'python-chardet: Character encoding detection'
+            'python-idna: Internationalized domain names'
+            'python-cryptography: Cryptographic operations'
+            'python-pyopenssl: OpenSSL wrapper'
+            'ruby-nokogiri: HTML/XML parsing for Ruby exploits'
             'ruby-json: JSON processing for Ruby exploits'
             'ruby-openssl: SSL/TLS support for Ruby exploits')
 source=("https://files.pythonhosted.org/packages/source/d/discoursemap/discoursemap-${pkgver}.tar.gz")
@@ -71,4 +87,5 @@ package() {
         install -dm755 "$pkgdir/usr/share/$pkgname/discourse_exploits"
         cp -r discoursemap/discourse_exploits/* "$pkgdir/usr/share/$pkgname/discourse_exploits/"
     fi
+
 }
