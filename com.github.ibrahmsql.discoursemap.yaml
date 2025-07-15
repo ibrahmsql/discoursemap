@@ -1,6 +1,6 @@
 app-id: com.github.ibrahmsql.discoursemap
 runtime: org.freedesktop.Platform
-runtime-version: '22.08'
+runtime-version: '23.08'
 sdk: org.freedesktop.Sdk
 command: discoursemap
 
@@ -17,8 +17,8 @@ modules:
       - pip3 install --verbose --exists-action=i --no-index --find-links="file://${PWD}" --prefix=${FLATPAK_DEST} "pip" --no-build-isolation
     sources:
       - type: file
-        url: https://files.pythonhosted.org/packages/source/p/pip/pip-23.3.1.tar.gz
-        sha256: 1fcaa041308d01f14575f6d0d2ea4b75a3e2871fe4f9c694976f908768e14174
+        url: https://files.pythonhosted.org/packages/59/de/241caa0ca606f2ec5fe0c1f4261b0465df78d786a38da693864a116c37f4/pip-25.1.1.tar.gz
+        sha256: 3de45d411d308d5054c2168185d8da7f9a2cd753dbac8acbfa88a8909ecd9077
 
   - name: discoursemap
     buildsystem: simple
@@ -29,23 +29,54 @@ modules:
         url: https://files.pythonhosted.org/packages/source/d/discoursemap/discoursemap-1.2.2.tar.gz
         sha256: SKIP
       - type: file
-        url: https://files.pythonhosted.org/packages/source/P/PyYAML/PyYAML-6.0.2.tar.gz
+        url: https://files.pythonhosted.org/packages/54/ed/79a089b6be93607fa5cdaedf301d7dfb23af5f25c398d5ead2525b063e17/pyyaml-6.0.2.tar.gz
         sha256: d584d9ec91ad65861cc08d42e834324ef890a082e591037abe114850ff7bbc3e
       - type: file
-        url: https://files.pythonhosted.org/packages/source/r/requests/requests-2.31.0.tar.gz
-        sha256: 942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1
+        url: https://files.pythonhosted.org/packages/e1/0a/929373653770d8a0d7ea76c37de6e41f11eb07559b103b1c02cafb3f7cf8/requests-2.32.4.tar.gz
+        sha256: 27d0316682c8a29834d3264820024b62a36942083d52caf2f14c0591336d3422
       - type: file
-        url: https://files.pythonhosted.org/packages/source/b/beautifulsoup4/beautifulsoup4-4.12.2.tar.gz
-        sha256: 492bbc69dca35d12daac71c4db1bfff0c876c00ef4a2ffacce226d4638eb72da
+        url: https://files.pythonhosted.org/packages/d8/e4/0c4c39e18fd76d6a628d4dd8da40543d136ce2d1752bd6eeeab0791f4d6b/beautifulsoup4-4.13.4.tar.gz
+        sha256: dbb3c4e1ceae6aefebdaf2423247260cd062430a410e38c66f2baa50a8437195
       - type: file
-        url: https://files.pythonhosted.org/packages/source/l/lxml/lxml-4.9.3.tar.gz
-        sha256: 48628bd53a426c9eb9bc066a923acaa0878d1e86129fd5359aee99285f4eed9c
+        url: https://files.pythonhosted.org/packages/c5/ed/60eb6fa2923602fba988d9ca7c5cdbd7cf25faa795162ed538b527a35411/lxml-6.0.0.tar.gz
+        sha256: 032e65120339d44cdc3efc326c9f660f5f7205f3a535c1fdbf898b29ea01fb72
       - type: file
-        url: https://files.pythonhosted.org/packages/source/c/colorama/colorama-0.4.6.tar.gz
+        url: https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz
         sha256: 08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44
       - type: file
-        url: https://files.pythonhosted.org/packages/source/t/tqdm/tqdm-4.66.1.tar.gz
-        sha256: d88e651f9db8d8551a62556d3cff9e3034274ca5d66e93197cf2490e2dcb69c7
+        url: https://files.pythonhosted.org/packages/a8/4b/29b4ef32e036bb34e4ab51796dd745cdba7ed47ad142a9f4a1eb8e0c744d/tqdm-4.67.1.tar.gz
+        sha256: f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2
       - type: file
-        url: https://files.pythonhosted.org/packages/source/J/Jinja2/Jinja2-3.1.2.tar.gz
-        sha256: 31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852
+        url: https://files.pythonhosted.org/packages/df/bf/f7da0350254c0ed7c72f3e33cef02e048281fec7ecec5f032d4aac52226b/jinja2-3.1.6.tar.gz
+        sha256: 0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d
+      - type: file
+        url: https://files.pythonhosted.org/packages/15/22/9ee70a2574a4f4599c47dd506532914ce044817c7752a79b6a51286319bc/urllib3-2.5.0.tar.gz
+        sha256: 3fc47733c7e419d4bc3f6b3dc2b4f890bb743906a30d56ba4a5bfa4bbff92760
+      - type: file
+        url: https://files.pythonhosted.org/packages/b3/76/52c535bcebe74590f296d6c77c86dabf761c41980e1347a2422e4aa2ae41/certifi-2025.7.14.tar.gz
+        sha256: 8ea99dbdfaaf2ba2f9bac77b9249ef62ec5218e7c2b2e903378ed5fccf765995
+      - type: file
+        url: https://files.pythonhosted.org/packages/f3/0d/f7b6ab21ec75897ed80c17d79b15951a719226b9fababf1e40ea74d69079/chardet-5.2.0.tar.gz
+        sha256: 1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7
+      - type: file
+        url: https://files.pythonhosted.org/packages/f1/70/7703c29685631f5a7590aa73f1f1d3fa9a380e654b86af429e0934a32f7d/idna-3.10.tar.gz
+        sha256: 12f65c9b470abda6dc35cf8e63cc574b1c52b11df2c86030af0ac09b01b13ea9
+      - type: file
+        url: https://files.pythonhosted.org/packages/95/1e/49527ac611af559665f71cbb8f92b332b5ec9c6fbc4e88b0f8e92f5e85df/cryptography-45.0.5.tar.gz
+        sha256: 72e76caa004ab63accdf26023fccd1d087f6d90ec6048ff33ad0445abf7f605a
+      - type: file
+        url: https://files.pythonhosted.org/packages/04/8c/cd89ad05804f8e3c17dea8f178c3f40eeab5694c30e0c9f5bcd49f576fc3/pyopenssl-25.1.0.tar.gz
+        sha256: 8d031884482e0c67ee92bf9a4d8cceb08d92aba7136432ffb0703c5280fc205b
+      # Removed unused dependencies:
+      # - python-dateutil (not used in codebase)
+      # - six (not used in codebase)
+      # - soupsieve (not used in codebase, BeautifulSoup4 dependency)
+
+  # Ruby module for exploits
+  - name: ruby-gems
+    buildsystem: simple
+    build-commands:
+      - gem install --no-document nokogiri json
+    sources:
+      - type: file
+        path: /dev/null
