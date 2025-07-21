@@ -92,8 +92,8 @@ Examples:
                        help='Proxy server (e.g: http://127.0.0.1:8080)')
     parser.add_argument('--user-agent', type=str,
                        help='Custom User-Agent string')
-    parser.add_argument('--delay', type=float, default=0.5,
-                       help='Delay between requests (seconds, default: 0.5)')
+    parser.add_argument('--delay', type=float, default=0.05,
+                       help='Delay between requests (seconds, default: 0.05)')
     
     # Scanning options
     parser.add_argument('--skip-ssl-verify', action='store_true',
@@ -330,7 +330,7 @@ def main():
             args.url = args.url or config.get('target', {}).get('url')
             args.threads = args.threads or config.get('threads', 5)
             args.timeout = args.timeout or config.get('timeout', 10)
-            args.delay = args.delay or config.get('delay', 0.5)
+            args.delay = args.delay or config.get('delay', 0.05)
             args.user_agent = args.user_agent or config.get('user_agent')
             args.proxy = args.proxy or config.get('proxy')
         

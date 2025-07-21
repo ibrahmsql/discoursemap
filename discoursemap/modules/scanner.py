@@ -41,7 +41,7 @@ class DiscourseScanner:
     """Main Discourse security scanner class"""
     
     def __init__(self, target_url, threads=10, timeout=7, proxy=None,
-                 user_agent=None, delay=0.1, verify_ssl=True, verbose=False, quiet=False):
+                 user_agent=None, delay=0.05, verify_ssl=True, verbose=False, quiet=False):
         """
         Initialize the scanner with threading and memory management
         
@@ -57,7 +57,7 @@ class DiscourseScanner:
             quiet (bool): Quiet mode (minimal output)
         """
         self.target_url = clean_url(target_url)
-        self.threads = min(threads, 15)  # Limit max threads to prevent overwhelming
+        self.threads = min(threads, 50)  # Increased max threads for better performance
         self.timeout = timeout
         self.proxy = {'http': proxy, 'https': proxy} if proxy else None
         self.user_agent = user_agent or random_user_agent()
@@ -66,17 +66,22 @@ class DiscourseScanner:
         self.verbose = verbose
         self.quiet = quiet
         
-        # Threading controls
+        # Threading controls with improved concurrency
         self.thread_semaphore = BoundedSemaphore(self.threads)
         self.request_lock = Lock()
         self.active_requests = 0
-        self.max_concurrent_requests = self.threads * 2
+        self.max_concurrent_requests = self.threads * 3  # Increased multiplier
         
-        # Memory management
+        # Memory management with adaptive caching
         self.response_cache = weakref.WeakValueDictionary()
-        self.max_cache_size = 50
-        self.memory_cleanup_interval = 20  # Clean memory every 20 requests
+        self.max_cache_size = 100  # Increased cache size
+        self.memory_cleanup_interval = 50  # Less frequent cleanup
         self.request_count = 0
+        
+        # Adaptive rate limiting
+        self.success_count = 0
+        self.error_count = 0
+        self.adaptive_delay = delay
         
         # Color definitions for output formatting
         self.colors = {
@@ -127,23 +132,24 @@ class DiscourseScanner:
         self.reporter = Reporter(self.target_url)
     
     def _setup_session(self):
-        """Setup HTTP session with configuration and connection pooling"""
+        """Setup HTTP session with optimized connection pooling"""
         import requests
         self.session = requests.Session()
         
-        # Setup retry strategy
+        # Setup aggressive retry strategy for better reliability
         retry_strategy = Retry(
-            total=3,
+            total=2,  # Reduced retries for speed
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["HEAD", "GET", "OPTIONS"],
-            backoff_factor=1
+            allowed_methods=["HEAD", "GET", "OPTIONS", "POST"],
+            backoff_factor=0.5  # Faster backoff
         )
         
-        # Setup HTTP adapter with connection pooling
+        # Setup HTTP adapter with enhanced connection pooling
         adapter = HTTPAdapter(
-            pool_connections=self.threads,
-            pool_maxsize=self.threads * 2,
-            max_retries=retry_strategy
+            pool_connections=self.threads * 2,  # More connection pools
+            pool_maxsize=self.threads * 4,     # Larger pool size
+            max_retries=retry_strategy,
+            socket_options=[(6, 1, 1)]  # TCP_NODELAY for faster connections
         )
         
         self.session.mount("http://", adapter)
@@ -193,19 +199,20 @@ class DiscourseScanner:
         print(f"{color}{prefix} {message}{Style.RESET_ALL}")
     
     def make_request(self, url, method='GET', **kwargs):
-        """Make HTTP request with threading and memory management"""
+        """Make HTTP request with adaptive rate limiting and improved threading"""
         with self.thread_semaphore:
             try:
                 # Control concurrent requests
                 with self.request_lock:
                     if self.active_requests >= self.max_concurrent_requests:
-                        time.sleep(0.1)  # Brief wait if too many active requests
+                        time.sleep(0.05)  # Reduced wait time
                     self.active_requests += 1
                     self.request_count += 1
                 
-                # Add delay between requests
-                if self.delay > 0:
-                    time.sleep(self.delay)
+                # Adaptive delay based on success rate
+                current_delay = self._get_adaptive_delay()
+                if current_delay > 0:
+                    time.sleep(current_delay)
                 
                 # Use session for request
                 response = self.session.request(
@@ -215,19 +222,44 @@ class DiscourseScanner:
                     **kwargs
                 )
                 
-                # Periodic memory cleanup
+                # Track success
+                with self.request_lock:
+                    self.success_count += 1
+                
+                # Periodic memory cleanup (less frequent)
                 if self.request_count % self.memory_cleanup_interval == 0:
                     self._cleanup_memory()
                 
                 return response
                 
             except Exception as e:
+                # Track errors for adaptive rate limiting
+                with self.request_lock:
+                    self.error_count += 1
+                
                 self.log(f"Request failed for {url}: {str(e)}", 'debug')
                 return None
             finally:
                 # Decrement active request counter
                 with self.request_lock:
                     self.active_requests = max(0, self.active_requests - 1)
+    
+    def _get_adaptive_delay(self):
+        """Calculate adaptive delay based on success/error ratio"""
+        total_requests = self.success_count + self.error_count
+        if total_requests < 10:  # Not enough data yet
+            return self.adaptive_delay
+        
+        error_rate = self.error_count / total_requests
+        
+        if error_rate < 0.05:  # Less than 5% errors - speed up
+            return max(0.01, self.adaptive_delay * 0.5)
+        elif error_rate < 0.15:  # Less than 15% errors - normal speed
+            return self.adaptive_delay
+        elif error_rate < 0.30:  # High error rate - slow down
+            return self.adaptive_delay * 2
+        else:  # Very high error rate - slow down significantly
+            return self.adaptive_delay * 4
     
     def _cleanup_memory(self):
         """Clean up memory to prevent leaks"""

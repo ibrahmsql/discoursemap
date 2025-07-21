@@ -5,10 +5,10 @@
 target:
   url: "https://meta.discourse.org"  # Target Discourse forum URL
 
-# Default scan settings
-threads: 5
-timeout: 10
-delay: 0.5
+# Optimized scan settings for better performance
+threads: 20  # Increased for better concurrency
+timeout: 7   # Reduced timeout for faster scanning
+delay: 0.05  # Significantly reduced delay
 user_agent: "DiscourseMap/1.2.0"
 
 # Proxy settings (optional)
@@ -49,10 +49,13 @@ automation:
     webhook_url: ""
     slack_channel: ""
 
-# Advanced settings
+# Advanced settings optimized for performance
 advanced:
-  max_retries: 3
-  rate_limit: 10  # requests per second
+  max_retries: 2  # Reduced retries for speed
+  rate_limit: 50  # Increased requests per second
   user_agents_rotation: true
   save_partial_results: true
   auto_resume: true
+  adaptive_rate_limiting: true  # New feature
+  smart_payload_testing: true   # New feature
+  parallel_module_execution: false  # Will be enabled in future updates
