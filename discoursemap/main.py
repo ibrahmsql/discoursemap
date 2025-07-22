@@ -333,14 +333,14 @@ def main():
         if args.quick:
             print(f"{Fore.CYAN}[*] Quick Scan Mode Activated - Maximum Speed Configuration{Style.RESET_ALL}")
             # Override settings for maximum speed
-            args.threads = 50  # Maximum threads
+            args.threads = 30  # Maximum threads
             args.timeout = 5   # Faster timeout
             args.delay = 0.01  # Minimal delay
             args.quiet = True  # Force quiet mode for speed
             # Set quick scan modules
             args.modules = ['info', 'auth', 'api', 'vuln', 'waf_bypass']
             print(f"{Fore.GREEN}[+] Quick scan modules: info, auth, api, vuln, waf_bypass{Style.RESET_ALL}")
-            print(f"{Fore.GREEN}[+] Performance settings: 50 threads, 0.01s delay, 5s timeout{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}[+] Performance settings: 30 threads, 0.01s delay, 5s timeout{Style.RESET_ALL}")
             print()
         
         # Apply config defaults (only if not in quick mode)
