@@ -7,7 +7,6 @@ For educational and authorized testing purposes only
 
 Author: ibrahimsql
 Version: 1.0.0
-License: MIT
 """
 
 import time

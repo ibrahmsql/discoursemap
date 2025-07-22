@@ -76,6 +76,8 @@ Examples:
   python3 main.py -u https://forum.example.com -o json -f report.json
   python3 main.py -u https://forum.example.com -v -t 10
   python3 main.py -u https://forum.example.com -m cve -p http://127.0.0.1:8080
+  python3 main.py -u https://forum.example.com -q  # Quick scan (maximum speed)
+  python3 main.py -q -u https://forum.example.com -o json  # Quick scan with JSON output
         """
     )
     
@@ -100,8 +102,10 @@ Examples:
                        help='Skip SSL certificate verification')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Show detailed output')
-    parser.add_argument('--quiet', '-q', action='store_true',
+    parser.add_argument('--quiet', action='store_true',
                        help='Show only results')
+    parser.add_argument('-q', '--quick', action='store_true',
+                       help='Quick scan mode: Maximum speed with info, auth, api, vuln, waf_bypass modules')
     
     # Module options
     parser.add_argument('-m', '--modules', nargs='+', 
@@ -325,13 +329,31 @@ def main():
             completed_modules, resume_data = load_resume_data(args.resume)
             print(f"{Fore.GREEN}[+] Found {len(completed_modules)} completed modules{Style.RESET_ALL}")
         
-        # Apply config defaults
-        if config:
+        # Handle quick scan mode
+        if args.quick:
+            print(f"{Fore.CYAN}[*] Quick Scan Mode Activated - Maximum Speed Configuration{Style.RESET_ALL}")
+            # Override settings for maximum speed
+            args.threads = 50  # Maximum threads
+            args.timeout = 5   # Faster timeout
+            args.delay = 0.01  # Minimal delay
+            args.quiet = True  # Force quiet mode for speed
+            # Set quick scan modules
+            args.modules = ['info', 'auth', 'api', 'vuln', 'waf_bypass']
+            print(f"{Fore.GREEN}[+] Quick scan modules: info, auth, api, vuln, waf_bypass{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}[+] Performance settings: 50 threads, 0.01s delay, 5s timeout{Style.RESET_ALL}")
+            print()
+        
+        # Apply config defaults (only if not in quick mode)
+        if config and not args.quick:
             args.url = args.url or config.get('target', {}).get('url')
             args.threads = args.threads or config.get('threads', 5)
             args.timeout = args.timeout or config.get('timeout', 10)
             args.delay = args.delay or config.get('delay', 0.05)
             args.user_agent = args.user_agent or config.get('user_agent')
+            args.proxy = args.proxy or config.get('proxy')
+        elif config:
+            # In quick mode, only apply URL and proxy from config if not provided
+            args.url = args.url or config.get('target', {}).get('url')
             args.proxy = args.proxy or config.get('proxy')
         
         # Check if URL is provided
@@ -367,7 +389,10 @@ def main():
             print()
         
         # Determine modules to run
-        if args.modules:
+        if args.quick:
+            # Quick scan mode - use predefined modules
+            modules_to_run = ['info', 'auth', 'api', 'vuln', 'waf_bypass']
+        elif args.modules:
             modules_to_run = args.modules
         elif config.get('modules'):
             modules_to_run = config['modules']
