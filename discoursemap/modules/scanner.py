@@ -35,6 +35,7 @@ from .crypto_module import CryptoModule
 from .network_module import NetworkModule
 from .plugin_module import PluginModule
 from .compliance_module import ComplianceModule
+from .waf_bypass_module import WAFBypassModule
 from .reporter import Reporter
 
 class DiscourseScanner:
@@ -124,6 +125,7 @@ class DiscourseScanner:
             'crypto': CryptoModule(self),
             'network': NetworkModule(self),
             'plugin': PluginModule(self),
+            'waf_bypass': WAFBypassModule(self),
             # 'social': SocialEngineeringModule(self),
             'compliance': ComplianceModule(self)
         }
@@ -148,8 +150,7 @@ class DiscourseScanner:
         adapter = HTTPAdapter(
             pool_connections=self.threads * 2,  # More connection pools
             pool_maxsize=self.threads * 4,     # Larger pool size
-            max_retries=retry_strategy,
-            socket_options=[(6, 1, 1)]  # TCP_NODELAY for faster connections
+            max_retries=retry_strategy
         )
         
         self.session.mount("http://", adapter)
@@ -303,7 +304,7 @@ class DiscourseScanner:
         """Run the security scan"""
         if modules_to_run is None:
           modules_to_run = modules_to_run or ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
-                                             'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'compliance']
+                                             'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'waf_bypass', 'compliance']
         
         self.log("Starting Discourse Security Scan", 'success')
         self.log(f"Target: {self.target_url}")

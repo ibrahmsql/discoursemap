@@ -106,7 +106,7 @@ Examples:
     # Module options
     parser.add_argument('-m', '--modules', nargs='+', 
                        choices=['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
-                               'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'compliance'],
+                               'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'waf_bypass', 'compliance'],
                        help='Modules to run (default: all)')
     
     # Output options
@@ -373,7 +373,7 @@ def main():
             modules_to_run = config['modules']
         else:
             modules_to_run = ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
-                             'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'compliance']
+                             'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'waf_bypass', 'compliance']
         
         # Filter out completed modules if resuming
         if completed_modules:
