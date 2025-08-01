@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-DiscourseMap Quick Scan - Optimize Edilmiş Hızlı Tarama
+DiscourseMap Quick Scan - Optimized Fast Scanning
 
-Bu script, DiscourseMap'i optimize edilmiş ayarlarla hızlı tarama için kullanır.
+This script uses DiscourseMap with optimized settings for fast scanning.
 """
 
 import sys
@@ -23,7 +23,7 @@ from discoursemap.modules.banner import Banner
 init(autoreset=True)
 
 def main():
-    """Ana fonksiyon"""
+    """Main function"""
     
     print(Banner)
     print(f"{Fore.CYAN}[*] DiscourseMap Quick Scan - Optimized for Speed{Style.RESET_ALL}")

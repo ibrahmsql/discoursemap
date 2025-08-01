@@ -145,14 +145,18 @@ python3 discoursemap/scanner.py --help
 # Build Docker image
 docker build -t discoursemap .
 
-# Run scanner with Docker
+# Run scanner with Docker (performance presets)
 docker run --rm -v $(pwd)/reports:/app/reports discoursemap \
-  python3 main.py -u https://target-forum.com --modules info
+  python3 main.py -u https://target-forum.com --fast
 
-# Using Docker Compose
-docker-compose build
+# Using Docker Compose with environment variables
+export PERFORMANCE_MODE=fast
+export MAX_THREADS=50
 docker-compose run --rm discoursemap \
-  python3 main.py -u https://target-forum.com --modules info,vuln
+  python3 main.py -u https://target-forum.com --fast -m info vuln
+
+# Start scanner services
+docker-compose up -d
 
 # Interactive mode
 docker run -it --rm discoursemap bash
@@ -177,16 +181,39 @@ python3 -m pytest tests/
 
 ```bash
 # Basic security scan
-python3 discoursemap/scanner.py -u https://discourse.example.com
+python3 discoursemap/main.py -u https://discourse.example.com
 
 # Scan with specific modules
-python3 discoursemap/scanner.py -u https://discourse.example.com -m info,vulnerability,auth
+python3 discoursemap/main.py -u https://discourse.example.com -m info vulnerability auth
 
-# Aggressive scan with all modules
-python3 discoursemap/scanner.py -u https://discourse.example.com --aggressive
+# Quick scan (legacy mode)
+python3 discoursemap/main.py -u https://discourse.example.com --quick
 
 # Scan with custom output
-python3 discoursemap/scanner.py -u https://discourse.example.com -o results.json
+python3 discoursemap/main.py -u https://discourse.example.com -o json -f results.json
+```
+
+### 🚀 Performance Presets (NEW!)
+
+```bash
+# Maximum Speed Preset (50 threads, 0.01s delay)
+python3 discoursemap/main.py -u https://discourse.example.com --fast
+
+# Balanced Preset (20 threads, 0.05s delay) - Recommended
+python3 discoursemap/main.py -u https://discourse.example.com --balanced
+
+# Safe Mode Preset (10 threads, 0.1s delay)
+python3 discoursemap/main.py -u https://discourse.example.com --safe
+
+# Custom performance settings
+python3 discoursemap/main.py -u https://discourse.example.com -t 25 --delay 0.03
+
+# Fast scan with specific modules
+python3 discoursemap/main.py -u https://discourse.example.com --fast -m info vuln endpoint
+
+# Performance comparison
+time python3 discoursemap/main.py -u https://discourse.example.com --fast
+time python3 discoursemap/main.py -u https://discourse.example.com --safe
 ```
 
 ### Advanced Options

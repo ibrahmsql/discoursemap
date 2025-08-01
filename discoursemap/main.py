@@ -22,7 +22,7 @@ from colorama import init, Fore, Style
 from discoursemap.modules.scanner import DiscourseScanner
 from discoursemap.modules.reporter import Reporter
 from discoursemap.modules.utils import validate_url
-from discoursemap.modules.banner import Banner
+    from discoursemap.modules.banner import Banner
 
 init(autoreset=False)
 
@@ -106,6 +106,14 @@ Examples:
                        help='Show only results')
     parser.add_argument('-q', '--quick', action='store_true',
                        help='Quick scan mode: Maximum speed with info, auth, api, vuln, waf_bypass modules')
+    
+    # Performance presets (enhanced quick scan)
+    parser.add_argument('--fast', action='store_true',
+                       help='Maximum speed preset (50 threads, 0.01s delay)')
+    parser.add_argument('--balanced', action='store_true',
+                       help='Balanced preset (20 threads, 0.05s delay)')
+    parser.add_argument('--safe', action='store_true',
+                       help='Safe preset (10 threads, 0.1s delay)')
     
     # Module options
     parser.add_argument('-m', '--modules', nargs='+', 
@@ -329,18 +337,43 @@ def main():
             completed_modules, resume_data = load_resume_data(args.resume)
             print(f"{Fore.GREEN}[+] Found {len(completed_modules)} completed modules{Style.RESET_ALL}")
         
-        # Handle quick scan mode
-        if args.quick:
-            print(f"{Fore.CYAN}[*] Quick Scan Mode Activated - Maximum Speed Configuration{Style.RESET_ALL}")
-            # Override settings for maximum speed
-            args.threads = 30  # Maximum threads
-            args.timeout = 5   # Faster timeout
-            args.delay = 0.01  # Minimal delay
-            args.quiet = True  # Force quiet mode for speed
-            # Set quick scan modules
+        # Handle performance presets and quick scan mode
+        preset_name = None
+        performance_metrics = {}
+        
+        if args.fast:
+            preset_name = "Maximum Speed"
+            args.threads = 50
+            args.delay = 0.01
+            args.timeout = 5
+            args.quiet = True
+            performance_metrics = {'threads': 50, 'delay': 0.01, 'timeout': 5}
+        elif args.balanced:
+            preset_name = "Balanced"
+            args.threads = 20
+            args.delay = 0.05
+            args.timeout = 7
+            performance_metrics = {'threads': 20, 'delay': 0.05, 'timeout': 7}
+        elif args.safe:
+            preset_name = "Safe Mode"
+            args.threads = 10
+            args.delay = 0.1
+            args.timeout = 10
+            performance_metrics = {'threads': 10, 'delay': 0.1, 'timeout': 10}
+        elif args.quick:
+            preset_name = "Quick Scan (Legacy)"
+            args.threads = 30
+            args.timeout = 5
+            args.delay = 0.01
+            args.quiet = True
             args.modules = ['info', 'auth', 'api', 'vuln', 'waf_bypass']
-            print(f"{Fore.GREEN}[+] Quick scan modules: info, auth, api, vuln, waf_bypass{Style.RESET_ALL}")
-            print(f"{Fore.GREEN}[+] Performance settings: 30 threads, 0.01s delay, 5s timeout{Style.RESET_ALL}")
+            performance_metrics = {'threads': 30, 'delay': 0.01, 'timeout': 5}
+        
+        if preset_name:
+            print(f"{Fore.CYAN}[*] Performance Preset: {preset_name}{Style.RESET_ALL}")
+            if args.quick:
+                print(f"{Fore.GREEN}[+] Quick scan modules: info, auth, api, vuln, waf_bypass{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}[+] Performance settings: {performance_metrics['threads']} threads, {performance_metrics['delay']}s delay, {performance_metrics['timeout']}s timeout{Style.RESET_ALL}")
             print()
         
         # Apply config defaults (only if not in quick mode)
@@ -398,7 +431,8 @@ def main():
             modules_to_run = config['modules']
         else:
             modules_to_run = ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
-                             'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'waf_bypass', 'compliance']
+                             'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'waf_bypass', 'compliance',
+                             'backup_scanner', 'passive_scanner', 'file_integrity']
         
         # Filter out completed modules if resuming
         if completed_modules:
