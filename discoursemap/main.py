@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """
-DiscourseMap v1.2.0
-Comprehensive Discourse forum security assessment tool
+DiscourseMap v2.0
+Specialized Security Scanner for Discourse Forums Only
+
+This tool is specifically designed for Discourse platform security assessment.
+It is NOT a general-purpose web scanner and only works with Discourse forums.
 
 Author: ibrahimsql
-Version: 1.2.0
+Version: 2.0
 License: MIT
 
-WARNING: This tool should only be used on authorized systems.
+WARNING: This tool should only be used on authorized Discourse systems.
 Unauthorized use is prohibited and may have legal consequences.
 """
 
@@ -22,7 +25,7 @@ from colorama import init, Fore, Style
 from discoursemap.modules.scanner import DiscourseScanner
 from discoursemap.modules.reporter import Reporter
 from discoursemap.modules.utils import validate_url
-    from discoursemap.modules.banner import Banner
+from discoursemap.modules.banner import Banner
 
 init(autoreset=False)
 

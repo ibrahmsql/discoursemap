@@ -1,0 +1,203 @@
+{
+  "target": "https://meta.discourse.org",
+  "scan_info": {
+    "start_time": 1755303703.9582012,
+    "end_time": 1755303719.946858,
+    "duration": 15.988656759262085,
+    "threads_used": 5
+  },
+  "modules": {
+    "compliance": {
+      "module_name": "Compliance and Regulatory Testing",
+      "target": "https://meta.discourse.org",
+      "gdpr_compliance": [
+        {
+          "type": "Privacy Policy Analysis",
+          "severity": "info",
+          "endpoint": "/privacy",
+          "gdpr_terms_found": [
+            "gdpr",
+            "general data protection regulation",
+            "data portability"
+          ],
+          "gdpr_terms_count": 3,
+          "description": "Privacy policy found at /privacy with 3 GDPR-related terms"
+        },
+        {
+          "type": "Cookie Consent Mechanism",
+          "severity": "info",
+          "description": "Cookie consent mechanism detected"
+        },
+        {
+          "type": "Missing Data Subject Rights",
+          "severity": "high",
+          "description": "No data subject rights implementation found - GDPR compliance violation"
+        },
+        {
+          "type": "DPO Contact Information",
+          "severity": "info",
+          "endpoint": "/about",
+          "description": "DPO contact information found at /about"
+        }
+      ],
+      "ccpa_compliance": [
+        {
+          "type": "Missing Do Not Sell Link",
+          "severity": "medium",
+          "description": "No \"Do Not Sell\" link found - potential CCPA violation"
+        }
+      ],
+      "hipaa_compliance": [
+        {
+          "type": "HIPAA Compliance Analysis",
+          "severity": "medium",
+          "health_related": true,
+          "hipaa_requirements_found": [],
+          "description": "Health-related content detected. HIPAA requirements found: []"
+        }
+      ],
+      "pci_dss_compliance": [
+        {
+          "type": "Secure Transmission",
+          "severity": "info",
+          "description": "HTTPS enabled for secure transmission"
+        }
+      ],
+      "sox_compliance": [
+        {
+          "type": "SOX Compliance Check",
+          "severity": "info",
+          "financial_related": false,
+          "description": "No financial content detected - SOX may not apply"
+        }
+      ],
+      "iso27001_compliance": [],
+      "nist_compliance": [
+        {
+          "type": "NIST Framework Evidence",
+          "severity": "info",
+          "nist_indicators": [
+            "nist"
+          ],
+          "description": "NIST Framework indicators found: ['nist']"
+        }
+      ],
+      "owasp_compliance": [],
+      "privacy_policies": [
+        {
+          "type": "Privacy Policy Analysis",
+          "severity": "info",
+          "endpoint": "/privacy",
+          "found_elements": [
+            "data_collection",
+            "data_usage",
+            "data_sharing",
+            "data_retention",
+            "user_rights",
+            "contact_info",
+            "updates"
+          ],
+          "missing_elements": [],
+          "completeness_score": 1.0,
+          "description": "Privacy policy analysis for /privacy"
+        }
+      ],
+      "data_protection": [
+        {
+          "type": "Missing Data Protection Features",
+          "severity": "high",
+          "description": "No data protection features found - compliance risk"
+        }
+      ],
+      "audit_logs": [],
+      "security_headers": [
+        {
+          "type": "Missing Security Header",
+          "severity": "high",
+          "header": "strict-transport-security",
+          "description": "HSTS header for secure connections - Header missing"
+        },
+        {
+          "type": "Security Header Present",
+          "severity": "info",
+          "header": "content-security-policy",
+          "value": "upgrade-insecure-requests; base-uri 'self'; object-src 'none'; script-src 'nonce-IB76fBhc8KnTFiOZiuymoYMt6' 'strict-dynamic'; frame-ancestors 'self' https://lillinator.github.io https://blog.discourse.org https://civilized-discourse-construction-kit-inc.ghost.io; manifest-src 'self'",
+          "description": "CSP header for XSS protection - Header present"
+        },
+        {
+          "type": "Security Header Present",
+          "severity": "info",
+          "header": "x-frame-options",
+          "value": "SAMEORIGIN",
+          "description": "Clickjacking protection - Header present"
+        },
+        {
+          "type": "Security Header Present",
+          "severity": "info",
+          "header": "x-content-type-options",
+          "value": "nosniff",
+          "description": "MIME type sniffing protection - Header present"
+        },
+        {
+          "type": "Security Header Present",
+          "severity": "info",
+          "header": "referrer-policy",
+          "value": "strict-origin-when-cross-origin",
+          "description": "Referrer information control - Header present"
+        },
+        {
+          "type": "Missing Security Header",
+          "severity": "medium",
+          "header": "permissions-policy",
+          "description": "Feature policy for browser APIs - Header missing"
+        },
+        {
+          "type": "Security Header Present",
+          "severity": "info",
+          "header": "x-xss-protection",
+          "value": "0",
+          "description": "XSS filter activation - Header present"
+        },
+        {
+          "type": "Missing Security Header",
+          "severity": "medium",
+          "header": "expect-ct",
+          "description": "Certificate transparency enforcement - Header missing"
+        }
+      ],
+      "encryption_compliance": [
+        {
+          "type": "HTTPS Encryption",
+          "severity": "info",
+          "description": "HTTPS encryption enabled for data in transit"
+        }
+      ],
+      "access_controls": [
+        {
+          "type": "Authentication Endpoint",
+          "severity": "info",
+          "endpoint": "/login",
+          "description": "Authentication endpoint available at /login"
+        },
+        {
+          "type": "Authentication Endpoint",
+          "severity": "info",
+          "endpoint": "/signup",
+          "description": "Authentication endpoint available at /signup"
+        }
+      ],
+      "data_retention": [
+        {
+          "type": "Data Retention Policy",
+          "severity": "info",
+          "endpoint": "/privacy",
+          "retention_keywords": [
+            "store data"
+          ],
+          "description": "Data retention policy information found at /privacy"
+        }
+      ],
+      "breach_notification": []
+    }
+  }
+}

@@ -49,13 +49,23 @@ dependencies = [
     "typing-extensions>=4.0.0",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "flake8>=5.0.0",
-    "black>=22.0.0",
-]
+
+
+# Test and dev dependencies removed since tests folder is empty
+# [project.optional-dependencies]
+# test = [
+#     "pytest>=7.0.0",
+#     "pytest-cov>=4.0.0",
+#     "pytest-mock>=3.10.0",
+# ]
+# dev = [
+#     "pytest>=7.0.0",
+#     "pytest-cov>=4.0.0",
+#     "pytest-mock>=3.10.0",
+#     "black>=23.0.0",
+#     "flake8>=6.0.0",
+#     "mypy>=1.0.0",
+# ]
 
 [project.urls]
 "Homepage" = "https://github.com/ibrahmsql/discoursemap"
@@ -76,68 +86,4 @@ include = ["discoursemap*"]
 [tool.setuptools.package-data]
 discoursemap = [
     "data/*.yaml",
-    "discourse_exploits/**/*",
-    "ruby_exploits/*.rb",
-]
-
-[tool.black]
-line-length = 88
-target-version = ['py38']
-include = '\.pyi?$'
-extend-exclude = '''
-(
-  /(
-      \.eggs
-    | \.git
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-)
-'''
-
-[tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "-ra -q --strict-markers"
-testpaths = [
-    "tests",
-]
-python_files = "test_*.py"
-python_classes = "Test*"
-python_functions = "test_*"
-
-[tool.coverage.run]
-source = ["discoursemap"]
-omit = [
-    "*/tests/*",
-    "*/test_*",
-    "setup.py",
-]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-]
-
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203", "W503"]
-exclude = [
-    ".git",
-    "__pycache__",
-    "build",
-    "dist",
-    ".eggs",
-    "*.egg-info",
-    ".venv",
-    ".tox",
 ]

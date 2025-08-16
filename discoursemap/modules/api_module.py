@@ -45,7 +45,7 @@ class APISecurityModule:
             'api_abuse_issues': []
         }
         
-        # Common API endpoints in Discourse
+        # Common Discourse API endpoints 
         self.api_endpoints = [
             '/admin/api',
             '/admin/api/keys',

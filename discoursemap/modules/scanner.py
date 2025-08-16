@@ -36,7 +36,7 @@ from .network_module import NetworkModule
 from .plugin_module import PluginModule
 from .compliance_module import ComplianceModule
 from .waf_bypass_module import WAFBypassModule
-from .backup_scanner_module import BackupScannerModule
+# BackupScannerModule integrated into EndpointModule
 from .passive_scanner_module import PassiveScannerModule
 from .file_integrity_module import FileIntegrityModule
 from .reporter import Reporter
@@ -131,7 +131,7 @@ class DiscourseScanner:
             'waf_bypass': WAFBypassModule(self),
             # 'social': SocialEngineeringModule(self),
             'compliance': ComplianceModule(self),
-            'backup_scanner': BackupScannerModule(self),
+            # 'backup_scanner': BackupScannerModule(self), # Integrated into EndpointModule
             'passive_scanner': PassiveScannerModule(self),
             'file_integrity': FileIntegrityModule(self)
         }

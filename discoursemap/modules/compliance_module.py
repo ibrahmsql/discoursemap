@@ -16,6 +16,7 @@ import re
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+from colorama import Fore, Style
 
 class ComplianceModule:
     def __init__(self, scanner):
@@ -112,7 +113,7 @@ class ComplianceModule:
     
     def run_scan(self):
         """Run comprehensive compliance testing"""
-        print(f"[*] Starting compliance testing for {self.target_url}")
+        print(f"{Fore.BLUE}[*] Starting compliance testing for {self.target_url}{Style.RESET_ALL}")
         
         try:
             # GDPR Compliance Testing
@@ -177,7 +178,7 @@ class ComplianceModule:
     
     def _test_gdpr_compliance(self):
         """Test GDPR compliance requirements"""
-        print("[*] Testing GDPR compliance...")
+        print(f"{Fore.CYAN}[*] Testing GDPR compliance...{Style.RESET_ALL}")
         
         # Check for privacy policy
         privacy_endpoints = ['/privacy', '/privacy-policy', '/gdpr', '/data-protection']
@@ -210,10 +211,16 @@ class ComplianceModule:
                         'gdpr_terms_count': len(found_terms),
                         'description': f'Privacy policy found at {endpoint} with {len(found_terms)} GDPR-related terms'
                     })
+                    
+                    # Only print if significant GDPR terms found or missing
+                    if len(found_terms) >= 3:
+                        print(f"{Fore.GREEN}[+] Privacy policy found with good GDPR coverage: {endpoint}{Style.RESET_ALL}")
+                    elif len(found_terms) > 0:
+                        print(f"{Fore.YELLOW}[!] Privacy policy found but limited GDPR terms: {endpoint}{Style.RESET_ALL}")
                     break
             
             except Exception as e:
-                print(f"[!] Error checking privacy policy at {endpoint}: {str(e)}")
+                print(f"{Fore.RED}[!] Error checking privacy policy at {endpoint}: {str(e)}{Style.RESET_ALL}")
         
         if not privacy_found:
             self.results['gdpr_compliance'].append({
@@ -221,6 +228,7 @@ class ComplianceModule:
                 'severity': 'high',
                 'description': 'No privacy policy found - GDPR compliance violation'
             })
+            print(f"{Fore.RED}[!] CRITICAL: No privacy policy found - GDPR compliance violation{Style.RESET_ALL}")
         
         # Check for cookie consent
         self._check_cookie_consent()
@@ -339,7 +347,7 @@ class ComplianceModule:
     
     def _test_ccpa_compliance(self):
         """Test CCPA compliance requirements"""
-        print("[*] Testing CCPA compliance...")
+        print(f"{Fore.CYAN}[*] Testing CCPA compliance...{Style.RESET_ALL}")
         
         try:
             response = self.session.get(self.target_url)
@@ -388,7 +396,7 @@ class ComplianceModule:
     
     def _test_hipaa_compliance(self):
         """Test HIPAA compliance requirements"""
-        print("[*] Testing HIPAA compliance...")
+        print(f"{Fore.CYAN}[*] Testing HIPAA compliance...{Style.RESET_ALL}")
         
         # HIPAA is primarily for healthcare, but check for health-related indicators
         try:
@@ -432,7 +440,7 @@ class ComplianceModule:
     
     def _test_pci_compliance(self):
         """Test PCI-DSS compliance requirements"""
-        print("[*] Testing PCI-DSS compliance...")
+        print(f"{Fore.CYAN}[*] Testing PCI-DSS compliance...{Style.RESET_ALL}")
         
         # Check for payment processing indicators
         try:
@@ -490,7 +498,7 @@ class ComplianceModule:
     
     def _test_sox_compliance(self):
         """Test SOX compliance requirements"""
-        print("[*] Testing SOX compliance...")
+        print(f"{Fore.CYAN}[*] Testing SOX compliance...{Style.RESET_ALL}")
         
         # SOX applies to public companies - check for financial indicators
         try:
@@ -533,7 +541,7 @@ class ComplianceModule:
     
     def _test_iso27001_compliance(self):
         """Test ISO 27001 compliance requirements"""
-        print("[*] Testing ISO 27001 compliance...")
+        print(f"{Fore.CYAN}[*] Testing ISO 27001 compliance...{Style.RESET_ALL}")
         
         try:
             # Check for security policy and procedures
@@ -572,7 +580,7 @@ class ComplianceModule:
     
     def _test_nist_compliance(self):
         """Test NIST Framework compliance"""
-        print("[*] Testing NIST Framework compliance...")
+        print(f"{Fore.CYAN}[*] Testing NIST Framework compliance...{Style.RESET_ALL}")
         
         try:
             # Check for NIST framework implementation
@@ -604,7 +612,7 @@ class ComplianceModule:
     
     def _test_owasp_compliance(self):
         """Test OWASP Top 10 compliance"""
-        print("[*] Testing OWASP Top 10 compliance...")
+        print(f"{Fore.CYAN}[*] Testing OWASP Top 10 compliance...{Style.RESET_ALL}")
         
         # This would typically involve running security tests
         # For now, check for OWASP-related documentation
@@ -644,7 +652,7 @@ class ComplianceModule:
     
     def _test_security_headers(self):
         """Test security headers compliance"""
-        print("[*] Testing security headers...")
+        print(f"{Fore.CYAN}[*] Testing security headers...{Style.RESET_ALL}")
         
         try:
             response = self.session.get(self.target_url)
@@ -673,7 +681,7 @@ class ComplianceModule:
     
     def _analyze_privacy_policies(self):
         """Analyze privacy policies for compliance"""
-        print("[*] Analyzing privacy policies...")
+        print(f"{Fore.CYAN}[*] Analyzing privacy policies...{Style.RESET_ALL}")
         
         privacy_endpoints = ['/privacy', '/privacy-policy', '/terms', '/legal']
         
@@ -718,7 +726,7 @@ class ComplianceModule:
     
     def _test_data_protection(self):
         """Test data protection measures"""
-        print("[*] Testing data protection measures...")
+        print(f"{Fore.CYAN}[*] Testing data protection measures...{Style.RESET_ALL}")
         
         # Check for data protection endpoints
         protection_endpoints = [
@@ -755,7 +763,7 @@ class ComplianceModule:
     
     def _test_audit_logging(self):
         """Test audit logging capabilities"""
-        print("[*] Testing audit logging...")
+        print(f"{Fore.CYAN}[*] Testing audit logging...{Style.RESET_ALL}")
         
         # Check for audit-related endpoints
         audit_endpoints = ['/admin/logs', '/logs', '/audit', '/activity']
@@ -785,7 +793,7 @@ class ComplianceModule:
     
     def _test_encryption_compliance(self):
         """Test encryption compliance"""
-        print("[*] Testing encryption compliance...")
+        print(f"{Fore.CYAN}[*] Testing encryption compliance...{Style.RESET_ALL}")
         
         try:
             # Check HTTPS implementation
@@ -819,7 +827,7 @@ class ComplianceModule:
     
     def _test_access_controls(self):
         """Test access control compliance"""
-        print("[*] Testing access controls...")
+        print(f"{Fore.CYAN}[*] Testing access controls...{Style.RESET_ALL}")
         
         # Check for authentication endpoints
         auth_endpoints = ['/login', '/signup', '/admin', '/api']
@@ -849,7 +857,7 @@ class ComplianceModule:
     
     def _test_data_retention(self):
         """Test data retention policies"""
-        print("[*] Testing data retention policies...")
+        print(f"{Fore.CYAN}[*] Testing data retention policies...{Style.RESET_ALL}")
         
         try:
             # Check for data retention information
@@ -887,7 +895,7 @@ class ComplianceModule:
     
     def _test_breach_notification(self):
         """Test breach notification procedures"""
-        print("[*] Testing breach notification procedures...")
+        print(f"{Fore.CYAN}[*] Testing breach notification procedures...{Style.RESET_ALL}")
         
         try:
             # Check for breach notification information
