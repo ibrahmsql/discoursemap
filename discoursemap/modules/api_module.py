@@ -874,16 +874,3 @@ class APISecurityModule:
             
             except Exception as e:
                 print(Fore.RED + f"[!] Error testing GraphQL for {endpoint}: {str(e)}" + Style.RESET_ALL)
-
-if __name__ == "__main__":
-    # Test the module
-    class MockScanner:
-        def __init__(self):
-            self.target_url = "https://discourse.example.com"
-            self.session = requests.Session()
-    
-    scanner = MockScanner()
-    api_module = APISecurityModule(scanner)
-    results = api_module.run_scan()
-    
-    print(json.dumps(results, indent=2))

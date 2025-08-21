@@ -930,16 +930,3 @@ class ComplianceModule:
         
         except Exception as e:
             print(f"[!] Error testing breach notification: {str(e)}")
-
-if __name__ == "__main__":
-    # Test the module
-    class MockScanner:
-        def __init__(self):
-            self.target_url = "https://discourse.example.com"
-            self.session = requests.Session()
-    
-    scanner = MockScanner()
-    compliance_module = ComplianceModule(scanner)
-    results = compliance_module.run_scan()
-    
-    print(json.dumps(results, indent=2))
