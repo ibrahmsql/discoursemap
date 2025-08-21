@@ -110,13 +110,11 @@ pip install --upgrade discoursemap
 
 ### Prerequisites
 
-```bash
-# System Requirements
+**System Requirements:**
 - Python 3.8 or higher
 - Ruby 2.7 or higher
 - Git
 - Internet connection for dependency installation
-```
 
 ### 🔧 Manual Installation
 
@@ -132,11 +130,11 @@ pip3 install -r requirements.txt
 bundle install
 
 # Make scripts executable
-chmod +x discoursemap/scanner.py
-chmod +x ruby_exploit_runner.rb
+chmod +x discoursemap/main.py
+chmod +x ruby_exploits/run_all_cves.rb
 
 # Verify installation
-python3 discoursemap/scanner.py --help
+python3 discoursemap/main.py --help
 ```
 
 ### Docker Installation
@@ -220,19 +218,19 @@ time python3 discoursemap/main.py -u https://discourse.example.com --safe
 
 ```bash
 # Scan with authentication
-python3 discoursemap/scanner.py -u https://discourse.example.com \
+python3 discoursemap/main.py -u https://discourse.example.com \
   --username admin --password secretpass
 
 # Scan with proxy
-python3 discoursemap/scanner.py -u https://discourse.example.com \
+python3 discoursemap/main.py -u https://discourse.example.com \
   --proxy http://127.0.0.1:8080
 
 # Scan with custom headers
-python3 discoursemap/scanner.py -u https://discourse.example.com \
+python3 discoursemap/main.py -u https://discourse.example.com \
   --headers "X-Forwarded-For: 127.0.0.1" "User-Agent: CustomBot/1.0"
 
 # Stealth mode with delays
-python3 discoursemap/scanner.py -u https://discourse.example.com \
+python3 discoursemap/main.py -u https://discourse.example.com \
   --delay 2 --random-delay
 ```
 
@@ -245,10 +243,10 @@ python3 discoursemap/modules/cve_exploit_module.py \
   --cve CVE-2021-41163
 
 # Run all Ruby exploits
-ruby ruby_exploit_runner.rb https://discourse.example.com
+ruby ruby_exploits/run_all_cves.rb https://discourse.example.com
 
 # Run exploits with custom parameters
-ruby ruby_exploit_runner.rb https://discourse.example.com \
+ruby ruby_exploits/run_all_cves.rb https://discourse.example.com \
   --timeout 30 --threads 5
 ```
 
@@ -507,59 +505,56 @@ export PROXY_URL="http://127.0.0.1:8080"
 ```
 discoursemap/
 ├── discoursemap/
-│   ├── modules/
-│   │   ├── __init__.py
-│   │   ├── info_module.py
-│   │   ├── endpoint_module.py
-│   │   ├── vulnerability_module.py
-│   │   ├── auth_module.py
-│   │   ├── crypto_module.py
-│   │   ├── network_module.py
-│   │   ├── config_module.py
-│   │   ├── plugin_module.py
-│   │   ├── user_module.py
-│   │   ├── cve_exploit_module.py
-│   │   └── utils.py
-│   └── scanner.py
+│   ├── __init__.py
+│   ├── main.py
+│   ├── quick_scan.py
+│   └── modules/
+│       ├── __init__.py
+│       ├── info_module.py
+│       ├── endpoint_module.py
+│       ├── vulnerability_module.py
+│       ├── auth_module.py
+│       ├── crypto_module.py
+│       ├── network_module.py
+│       ├── config_module.py
+│       ├── plugin_module.py
+│       ├── user_module.py
+│       ├── cve_exploit_module.py
+│       ├── scanner.py
+│       ├── reporter.py
+│       ├── utils.py
+│       └── banner.py
 ├── ruby_exploits/
-│   ├── CVE-2019-11479.rb
-│   ├── CVE-2021-41163.rb
-│   ├── CVE-2022-31053.rb
-│   ├── CVE-2023-49103.rb
-│   ├── CVE-2024-28084.rb
-│   ├── CVE-2024-35198.rb
-│   ├── CVE-2024-42364.rb
-│   ├── discourse_xss.rb
-│   ├── discourse_ssrf.rb
-│   ├── discourse_rce.rb
-│   ├── discourse_sqli.rb
-│   ├── discourse_auth_bypass.rb
-│   ├── discourse_file_upload.rb
-│   ├── discourse_info_disclosure.rb
-│   ├── discourse_csrf.rb
-│   ├── discourse_xxe.rb
-│   ├── discourse_plugin_exploits.rb
-├── CVE-2023-45131.rb
-├── CVE-2021-41082.rb
-│   ├── discourse_cve_exploits.rb
-│   ├── discourse_file_upload_exploits.rb
-│   ├── discourse_api_exploits.rb
-│   └── discourse_privilege_escalation.rb
-├── tests/
-│   ├── test_modules.py
-│   ├── test_exploits.py
-│   └── test_integration.py
+│   ├── cve_2022_exploits.rb
+│   ├── cve_2023_exploits.rb
+│   ├── cve_2024_exploits.rb
+│   └── run_all_cves.rb
+├── data/
+│   └── plugin_vulnerabilities.yaml
 ├── docs/
-│   ├── API.md
-│   ├── MODULES.md
-│   └── EXPLOITS.md
-├── requirements.txt
-├── requirements-dev.txt
-├── Gemfile
+│   ├── Makefile
+│   ├── conf.py
+│   ├── index.rst
+│   ├── installation.rst
+│   ├── modules.rst
+│   ├── quickstart.rst
+│   ├── requirements.txt
+│   └── _static/
+│       └── custom.css
+├── .github/
+│   ├── dependabot.yml
+│   └── workflows/
+│       ├── ci.yml
+│       ├── dependency-update.yml
+│       ├── package-managers.yml
+│       └── publish.yml
+├── pyproject.toml
+├── config.yaml
 ├── Dockerfile
-├── config.yaml.example
-├── TODO.md
-└── README.md
+├── docker-compose.yml
+├── LICENSE
+├── README.md
+└── PKGBUILD
 ```
 
 ### Adding New Modules
@@ -645,7 +640,7 @@ docker run -d --name discourse-test \
   discourse/discourse:latest
 
 # Run tests against test instance
-python3 discoursemap/scanner.py -u http://localhost:8080 --test-mode
+python3 discoursemap/main.py -u http://localhost:8080 --test-mode
 ```
 
 ## 📚 Documentation
