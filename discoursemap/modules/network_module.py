@@ -12,7 +12,7 @@ import socket
 import threading
 from urllib.parse import urljoin, urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from ..lib.discourse_utils import make_request
+# use self.scanner.make_request throughout this module
 
 class NetworkModule:
     """Network security testing module for Discourse forums"""
