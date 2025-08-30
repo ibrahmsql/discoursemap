@@ -20,11 +20,13 @@ import os
 import time
 import json
 import yaml
+import asyncio
 from datetime import datetime
 from colorama import init, Fore, Style
 from discoursemap.modules.scanner import DiscourseScanner
 from discoursemap.modules.reporter import Reporter
-from discoursemap.modules.utils import validate_url
+from discoursemap.lib.discourse_utils import validate_url
+from discoursemap.lib.config_manager import ConfigManager
 from discoursemap.modules.banner import Banner
 
 init(autoreset=False)
@@ -109,6 +111,8 @@ Examples:
                        help='Show only results')
     parser.add_argument('-q', '--quick', action='store_true',
                        help='Quick scan mode: Maximum speed with info, auth, api, vuln, waf_bypass modules')
+    parser.add_argument('--sync', action='store_true',
+                       help='Use synchronous scanning mode (default is async for better performance)')
     
     # Performance presets (enhanced quick scan)
     parser.add_argument('--fast', action='store_true',
@@ -402,7 +406,7 @@ def main():
             print(f"{Fore.RED}Error: Invalid URL format!{Style.RESET_ALL}")
             sys.exit(1)
         
-        # Initialize scanner
+        # Initialize scanner with config file
         scanner = DiscourseScanner(
             target_url=args.url,
             threads=args.threads,
@@ -412,7 +416,8 @@ def main():
             delay=args.delay,
             verify_ssl=not args.skip_ssl_verify,
             verbose=args.verbose,
-            quiet=args.quiet
+            quiet=args.quiet,
+            config_file=args.config
         )
         
         # Show scan configuration
@@ -448,8 +453,13 @@ def main():
                 print(f"{Fore.GREEN}[+] All modules already completed!{Style.RESET_ALL}")
                 return
         
-        # Start scan
-        results = scanner.run_scan(modules_to_run)
+        # Start scan (async by default, sync only if --sync flag is used)
+        if getattr(args, 'sync', False):
+            print(f"{Fore.CYAN}[*] Running synchronous scan mode...{Style.RESET_ALL}")
+            results = scanner.run_scan(modules_to_run)
+        else:
+            print(f"{Fore.CYAN}[*] Running async scan mode...{Style.RESET_ALL}")
+            results = asyncio.run(scanner.run_async_scan(modules_to_run))
         
         # Merge with resume data if available
         if resume_data:

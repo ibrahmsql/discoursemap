@@ -11,7 +11,7 @@ import json
 import requests
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
-from .utils import make_request
+from ..lib.discourse_utils import make_request
 
 class PassiveScannerModule:
     """Passive scanning module for Discourse forums"""

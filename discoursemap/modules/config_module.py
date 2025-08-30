@@ -11,7 +11,7 @@ import json
 import yaml
 from urllib.parse import urljoin, quote
 from bs4 import BeautifulSoup
-from .utils import extract_csrf_token, make_request
+from ..lib.discourse_utils import extract_csrf_token, make_request
 
 class ConfigModule:
     """Configuration security testing module for Discourse forums"""

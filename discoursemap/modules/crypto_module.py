@@ -13,7 +13,7 @@ import hashlib
 import hmac
 from urllib.parse import urljoin, quote
 from bs4 import BeautifulSoup
-from .utils import extract_csrf_token, make_request
+from ..lib.discourse_utils import extract_csrf_token, make_request
 
 class CryptoModule:
     """Cryptographic security testing module for Discourse forums"""

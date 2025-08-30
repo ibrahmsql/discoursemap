@@ -12,12 +12,18 @@ import random
 import string
 from urllib.parse import urljoin, quote
 from bs4 import BeautifulSoup
-from .utils import extract_csrf_token
+from typing import Dict, Any, List, Optional
+from ..lib.discourse_utils import extract_csrf_token
 
 class UserModule:
     """User security testing module for Discourse forums"""
     
-    def __init__(self, scanner):
+    def __init__(self, scanner) -> None:
+        """Initialize UserModule
+        
+        Args:
+            scanner: DiscourseScanner instance
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'User Security Testing',
@@ -35,8 +41,12 @@ class UserModule:
         self.start_time = time.time()
         self.discovered_users = []
     
-    def run(self):
-        """Run user security testing module"""
+    def run(self) -> Dict[str, Any]:
+        """Run user security testing module
+        
+        Returns:
+            Dictionary containing user security test results
+        """
         self.scanner.log("Starting user security testing...")
         
         # User enumeration

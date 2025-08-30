@@ -14,7 +14,7 @@ import random
 import base64
 import urllib.parse
 from urllib.parse import urljoin, quote, unquote
-from .utils import make_request, random_user_agent
+from ..lib.discourse_utils import make_request, random_user_agent
 
 class WAFBypassModule:
     """WAF bypass testing module for Discourse forums"""

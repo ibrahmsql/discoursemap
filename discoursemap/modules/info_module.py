@@ -10,12 +10,18 @@ import json
 import time
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
-from .utils import extract_discourse_version, extract_csrf_token
+from typing import Dict, Any, List, Optional
+from ..lib.discourse_utils import extract_discourse_version, extract_csrf_token
 
 class InfoModule:
     """Information gathering module for Discourse forums"""
     
-    def __init__(self, scanner):
+    def __init__(self, scanner) -> None:
+        """Initialize InfoModule
+        
+        Args:
+            scanner: DiscourseScanner instance
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'Information Gathering',
@@ -30,8 +36,12 @@ class InfoModule:
         }
         self.start_time = time.time()
     
-    def run(self):
-        """Run information gathering module"""
+    def run(self) -> Dict[str, Any]:
+        """Run information gathering module
+        
+        Returns:
+            Dictionary containing gathered information
+        """
         self.scanner.log("Starting information gathering...")
         
         # Basic Discourse detection and version
@@ -67,7 +77,7 @@ class InfoModule:
         self.results['scan_time'] = time.time() - self.start_time
         return self.results
     
-    def _detect_discourse_version(self):
+    def _detect_discourse_version(self) -> None:
         """Detect Discourse version and basic info"""
         self.scanner.log("Detecting Discourse version...", 'debug')
         
@@ -106,7 +116,7 @@ class InfoModule:
         
         self.results['discourse_info']['indicators'] = discourse_indicators
     
-    def _gather_server_info(self):
+    def _gather_server_info(self) -> None:
         """Gather server and hosting information"""
         self.scanner.log("Gathering server information...", 'debug')
         
@@ -137,7 +147,7 @@ class InfoModule:
         server_info['security_headers'] = security_headers
         self.results['server_info'] = server_info
     
-    def _detect_plugins(self):
+    def _detect_plugins(self) -> None:
         """Detect installed Discourse plugins"""
         self.scanner.log("Detecting installed plugins...", 'debug')
         
@@ -200,7 +210,7 @@ class InfoModule:
         
         self.results['plugins'] = detected_plugins
     
-    def _check_admin_access(self):
+    def _check_admin_access(self) -> None:
         """Check if admin panel is accessible"""
         self.scanner.log("Checking admin panel access...", 'debug')
         
@@ -225,7 +235,7 @@ class InfoModule:
             
             time.sleep(0.1)
     
-    def _enumerate_users(self):
+    def _enumerate_users(self) -> None:
         """Enumerate users from public endpoints"""
         self.scanner.log("Enumerating users...", 'debug')
         
@@ -251,7 +261,7 @@ class InfoModule:
             except json.JSONDecodeError:
                 pass
     
-    def _check_discourse_features(self):
+    def _check_discourse_features(self) -> None:
         """Check Discourse-specific features"""
         self.scanner.log("Checking Discourse-specific features...", 'debug')
         
@@ -302,7 +312,7 @@ class InfoModule:
         if features['discourse_version']:
             self.scanner.log(f"Discourse version detected: {features['discourse_version']}", 'info')
     
-    def _discover_discourse_api_endpoints(self):
+    def _discover_discourse_api_endpoints(self) -> None:
         """Discover Discourse API endpoints"""
         self.scanner.log("Discovering Discourse API endpoints...", 'debug')
         
@@ -409,7 +419,7 @@ class InfoModule:
         total_accessible = len(api_endpoints['public_endpoints']) + len([e for e in api_endpoints['admin_endpoints'] if e['status'] == 'accessible'])
         self.scanner.log(f"API endpoint discovery completed. Found {total_accessible} accessible endpoints", 'info')
     
-    def _check_ssl_info(self):
+    def _check_ssl_info(self) -> None:
         """Check SSL/TLS information"""
         self.scanner.log("Checking SSL/TLS information...", 'debug')
         
@@ -505,7 +515,7 @@ class InfoModule:
         
         self.scanner.log("SSL/TLS information check completed", 'debug')
     
-    def _enumerate_categories(self):
+    def _enumerate_categories(self) -> None:
         """Enumerate forum categories"""
         self.scanner.log("Enumerating categories...", 'debug')
         
@@ -535,7 +545,7 @@ class InfoModule:
         if categories:
             self.scanner.log(f"Found {len(categories)} categories", 'success')
     
-    def _gather_site_config(self):
+    def _gather_site_config(self) -> None:
         """Gather site configuration information"""
         self.scanner.log("Gathering site configuration...", 'debug')
         

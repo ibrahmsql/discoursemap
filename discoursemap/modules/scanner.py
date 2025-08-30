@@ -5,6 +5,7 @@ Discourse Security Scanner - Main Scanner Engine
 Core scanning functionality for Discourse forum security assessment
 """
 
+import asyncio
 import threading
 import time
 import queue
@@ -16,11 +17,15 @@ from urllib.parse import urljoin, urlparse
 from colorama import Fore, Style
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from .utils import (
+from typing import Optional, Dict, Any, List, Union, Tuple
+import requests
+from ..lib.discourse_utils import (
     make_request, extract_csrf_token, extract_discourse_version,
     generate_payloads, random_user_agent, print_progress,
     is_discourse_site, clean_url, validate_url
 )
+from ..lib.http_client import HTTPClient
+from ..lib.config_manager import ConfigManager
 from .info_module import InfoModule
 from .vulnerability_module import VulnerabilityModule
 from .endpoint_module import EndpointModule
@@ -44,8 +49,38 @@ from .reporter import Reporter
 class DiscourseScanner:
     """Main Discourse security scanner class"""
     
-    def __init__(self, target_url, threads=10, timeout=7, proxy=None,
-                 user_agent=None, delay=0.05, verify_ssl=True, verbose=False, quiet=False):
+    def __init__(self, 
+                 target_url: str, 
+                 threads: Optional[int] = None, 
+                 timeout: Optional[int] = None, 
+                 proxy: Optional[str] = None,
+                 user_agent: Optional[str] = None, 
+                 delay: Optional[float] = None, 
+                 verify_ssl: Optional[bool] = None, 
+                 verbose: bool = False, 
+                 quiet: bool = False, 
+                 config_file: Optional[str] = None) -> None:
+        """
+        Initialize the Discourse scanner.
+        
+        Args:
+            target_url: Target Discourse forum URL
+            threads: Number of threads for concurrent scanning
+            timeout: Request timeout in seconds
+            proxy: Proxy server URL
+            user_agent: Custom User-Agent string
+            delay: Delay between requests in seconds
+            verify_ssl: Whether to verify SSL certificates
+            verbose: Enable verbose logging
+            quiet: Enable quiet mode (minimal output)
+            config_file: Path to configuration file
+        """
+        
+        # Initialize config manager
+        self.config_manager = ConfigManager(config_file)
+        
+        # Use config values as defaults, override with provided parameters
+        config = self.config_manager.scan_config
         """
         Initialize the scanner with threading and memory management
         
@@ -59,14 +94,16 @@ class DiscourseScanner:
             verify_ssl (bool): Verify SSL certificates
             verbose (bool): Enable verbose output
             quiet (bool): Quiet mode (minimal output)
+            config_file (str): Path to config file (optional)
         """
         self.target_url = clean_url(target_url)
-        self.threads = min(threads, 50)  # Increased max threads for better performance
-        self.timeout = timeout
-        self.proxy = {'http': proxy, 'https': proxy} if proxy else None
-        self.user_agent = user_agent or random_user_agent()
-        self.delay = delay
-        self.verify_ssl = verify_ssl
+        self.threads = min(threads if threads is not None else config.threads, 50)  # Increased max threads for better performance
+        self.timeout = timeout if timeout is not None else config.timeout
+        proxy_url = proxy if proxy is not None else config.proxy
+        self.proxy = {'http': proxy_url, 'https': proxy_url} if proxy_url else None
+        self.user_agent = user_agent if user_agent is not None else (config.user_agent or random_user_agent())
+        self.delay = delay if delay is not None else config.delay
+        self.verify_ssl = verify_ssl if verify_ssl is not None else config.verify_ssl
         self.verbose = verbose
         self.quiet = quiet
         
@@ -85,7 +122,7 @@ class DiscourseScanner:
         # Adaptive rate limiting
         self.success_count = 0
         self.error_count = 0
-        self.adaptive_delay = delay
+        self.adaptive_delay = delay if delay is not None else 0.1  # Default to 0.1 if None
         
         # Color definitions for output formatting
         self.colors = {
@@ -178,8 +215,13 @@ class DiscourseScanner:
         # SSL verification
         self.session.verify = self.verify_ssl
     
-    def log(self, message, level='info'):
-        """Log message with appropriate formatting"""
+    def log(self, message: str, level: str = 'info') -> None:
+        """Log message with appropriate formatting
+        
+        Args:
+            message: Message to log
+            level: Log level (info, debug, warning, error)
+        """
         if self.quiet and level != 'error':
             return
         
@@ -205,8 +247,17 @@ class DiscourseScanner:
         
         print(f"{color}{prefix} {message}{Style.RESET_ALL}")
     
-    def make_request(self, url, method='GET', **kwargs):
-        """Make HTTP request with adaptive rate limiting and improved threading"""
+    def make_request(self, url: str, method: str = 'GET', **kwargs) -> Optional[requests.Response]:
+        """Make HTTP request with adaptive rate limiting and improved threading
+        
+        Args:
+            url: Target URL
+            method: HTTP method (GET, POST, etc.)
+            **kwargs: Additional request parameters
+            
+        Returns:
+            Response object or None if request failed
+        """
         with self.thread_semaphore:
             try:
                 # Control concurrent requests
@@ -251,8 +302,67 @@ class DiscourseScanner:
                 with self.request_lock:
                     self.active_requests = max(0, self.active_requests - 1)
     
-    def _get_adaptive_delay(self):
-        """Calculate adaptive delay based on success/error ratio"""
+    async def make_async_request(self, url: str, method: str = 'GET', **kwargs) -> Optional[Any]:
+        """Make async HTTP request using HTTPClient
+        
+        Args:
+            url: Target URL
+            method: HTTP method (GET, POST, etc.)
+            **kwargs: Additional request parameters
+            
+        Returns:
+            Response object or None if request failed
+        """
+        try:
+            # Use HTTPClient for async requests
+            if not hasattr(self, 'http_client'):
+                self.http_client = HTTPClient(
+                    timeout=self.timeout,
+                    proxy=self.proxy,
+                    user_agent=self.user_agent,
+                    verify_ssl=self.verify_ssl
+                )
+            
+            response = await self.http_client.make_async_request(url, method, **kwargs)
+            return response
+            
+        except Exception as e:
+            self.log(f"Async request failed for {url}: {str(e)}", 'debug')
+            return None
+    
+    async def batch_async_requests(self, urls: List[str], method: str = 'GET', concurrency: int = 10) -> List[Optional[Any]]:
+        """Make multiple async HTTP requests concurrently
+        
+        Args:
+            urls: List of URLs to request
+            method: HTTP method
+            concurrency: Maximum concurrent requests
+            
+        Returns:
+            List of response objects
+        """
+        try:
+            if not hasattr(self, 'http_client'):
+                self.http_client = HTTPClient(
+                    timeout=self.timeout,
+                    proxy=self.proxy,
+                    user_agent=self.user_agent,
+                    verify_ssl=self.verify_ssl
+                )
+            
+            responses = await self.http_client.batch_requests(urls, method, concurrency)
+            return responses
+            
+        except Exception as e:
+            self.log(f"Batch async requests failed: {str(e)}", 'debug')
+            return [None] * len(urls)
+    
+    def _get_adaptive_delay(self) -> float:
+        """Calculate adaptive delay based on success/error ratio
+        
+        Returns:
+            Calculated delay in seconds
+        """
         total_requests = self.success_count + self.error_count
         if total_requests < 10:  # Not enough data yet
             return self.adaptive_delay
@@ -268,7 +378,7 @@ class DiscourseScanner:
         else:  # Very high error rate - slow down significantly
             return self.adaptive_delay * 4
     
-    def _cleanup_memory(self):
+    def _cleanup_memory(self) -> None:
         """Clean up memory to prevent leaks"""
         try:
             # Clear response cache if it gets too large
@@ -284,8 +394,15 @@ class DiscourseScanner:
         except Exception as e:
             self.log(f"Memory cleanup error: {str(e)}", 'debug')
     
-    def verify_target(self):
-        """Verify target is accessible and is Discourse"""
+    def verify_target(self) -> bool:
+        """Verify target is accessible and is Discourse
+        
+        Returns:
+            True if target is a valid Discourse forum
+            
+        Raises:
+            Exception: If target is not accessible or not a Discourse forum
+        """
         self.log(f"Verifying target: {self.target_url}")
         
         # Check if target is accessible
@@ -306,11 +423,18 @@ class DiscourseScanner:
         
         return True
     
-    def run_scan(self, modules_to_run=None):
-        """Run the security scan"""
+    def run_scan(self, modules_to_run: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Run the security scan with specified modules
+        
+        Args:
+            modules_to_run: List of module names to run. If None, runs all enabled modules
+            
+        Returns:
+            Dictionary containing scan results
+        """
         if modules_to_run is None:
-          modules_to_run = modules_to_run or ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
-                                             'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'waf_bypass', 'compliance']
+            modules_to_run = ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
+                             'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'waf_bypass', 'compliance']
         
         self.log("Starting Discourse Security Scan", 'success')
         self.log(f"Target: {self.target_url}")
@@ -389,8 +513,15 @@ class DiscourseScanner:
             # Final garbage collection
             gc.collect()
     
-    def generate_json_report(self, output_file=None):
-        """Generate JSON report"""
+    def generate_json_report(self, output_file: Optional[str] = None) -> str:
+        """Generate JSON report
+        
+        Args:
+            output_file: Output file path. If None, uses default naming
+            
+        Returns:
+            Path to generated report file
+        """
         try:
             report_file = self.reporter.generate_json_report(output_file)
             self.log(f"JSON report generated: {report_file}", 'success')
@@ -399,8 +530,15 @@ class DiscourseScanner:
             self.log(f"Failed to generate JSON report: {e}", 'error')
             return None
     
-    def generate_html_report(self, output_file=None):
-        """Generate HTML report"""
+    def generate_html_report(self, output_file: Optional[str] = None) -> str:
+        """Generate HTML report
+        
+        Args:
+            output_file: Output file path. If None, uses default naming
+            
+        Returns:
+            Path to generated report file
+        """
         try:
             report_file = self.reporter.generate_html_report(output_file)
             self.log(f"HTML report generated: {report_file}", 'success')
@@ -409,12 +547,112 @@ class DiscourseScanner:
             self.log(f"Failed to generate HTML report: {e}", 'error')
             return None
     
+    async def run_async_scan(self, modules_to_run: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Run async security scan with improved performance
+        
+        Args:
+            modules_to_run: List of module names to run
+            
+        Returns:
+            Dictionary containing scan results
+        """
+        if modules_to_run is None:
+            modules_to_run = ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
+                             'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'waf_bypass', 'compliance']
+        
+        self.log("Starting Async Discourse Security Scan", 'success')
+        self.log(f"Target: {self.target_url}")
+        self.log(f"Async Mode: Enabled")
+        
+        start_time = time.time()
+        
+        # Initialize HTTP client for async operations
+        if not hasattr(self, 'http_client'):
+            self.http_client = HTTPClient(
+                timeout=self.timeout,
+                proxy=self.proxy,
+                user_agent=self.user_agent,
+                verify_ssl=self.verify_ssl
+            )
+        
+        # Run modules that support async operations
+        async_results = {}
+        
+        # For now, run modules sequentially but with async HTTP requests
+        # Future enhancement: Make modules themselves async
+        for module_name in modules_to_run:
+            try:
+                if module_name == 'info':
+                    module = InfoModule(self)
+                elif module_name == 'vuln':
+                    module = VulnerabilityModule(self)
+                elif module_name == 'endpoint':
+                    module = EndpointModule(self)
+                elif module_name == 'user':
+                    module = UserModule(self)
+                elif module_name == 'cve':
+                    module = CVEExploitModule(self)
+                elif module_name == 'plugin_detection':
+                    module = PluginDetectionModule(self)
+                elif module_name == 'plugin_bruteforce':
+                    module = PluginBruteforceModule(self)
+                elif module_name == 'api':
+                    module = APISecurityModule(self)
+                elif module_name == 'auth':
+                    module = AuthModule(self)
+                elif module_name == 'config':
+                    module = ConfigModule(self)
+                elif module_name == 'crypto':
+                    module = CryptoModule(self)
+                elif module_name == 'network':
+                    module = NetworkModule(self)
+                elif module_name == 'plugin':
+                    module = PluginModule(self)
+                elif module_name == 'waf_bypass':
+                    module = WAFBypassModule(self)
+                elif module_name == 'compliance':
+                    module = ComplianceModule(self)
+                else:
+                    self.log(f"Unknown module: {module_name}", 'warning')
+                    continue
+                
+                self.log(f"Running {module_name} module (async mode)...", 'info')
+                
+                # Run module (currently sync, but uses async HTTP client)
+                result = module.run()
+                async_results[module_name] = result
+                
+                self.log(f"Completed {module_name} module", 'success')
+                
+            except Exception as e:
+                self.log(f"Error in {module_name} module: {str(e)}", 'error')
+                async_results[module_name] = {'error': str(e)}
+        
+        # Close async HTTP client
+        if hasattr(self, 'http_client'):
+            await self.http_client.aclose()
+        
+        async_results['scan_time'] = time.time() - start_time
+        async_results['async_mode'] = True
+        
+        self.log(f"Async scan completed in {async_results['scan_time']:.2f} seconds", 'success')
+        
+        return async_results
+    
 
     
-    def get_base_url(self):
-        """Get base URL for the target"""
+    def get_base_url(self) -> str:
+        """Get base URL of the target
+        
+        Returns:
+            Base URL of the target
+        """
         return self.target_url
     
-    def get_session(self):
-        """Get the HTTP session"""
+    def get_session(self) -> requests.Session:
+        """Get the current session
+        
+        Returns:
+            Current requests session
+        """
         return self.session

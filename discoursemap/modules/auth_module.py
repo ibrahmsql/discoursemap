@@ -12,7 +12,7 @@ import base64
 import hashlib
 from urllib.parse import urljoin, quote, parse_qs, urlparse
 from bs4 import BeautifulSoup
-from .utils import extract_csrf_token, make_request
+from ..lib.discourse_utils import extract_csrf_token, make_request
 
 class AuthModule:
     """Authentication and authorization testing module for Discourse forums"""

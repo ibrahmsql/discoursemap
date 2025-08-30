@@ -17,11 +17,17 @@ import threading
 from urllib.parse import urljoin
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from colorama import Fore, Style
+from typing import Dict, Any, List, Optional, Set, Tuple
 
 class EndpointModule:
     """Module for discovering and testing various endpoints"""
     
-    def __init__(self, scanner):
+    def __init__(self, scanner) -> None:
+        """Initialize EndpointModule
+        
+        Args:
+            scanner: DiscourseScanner instance
+        """
         self.scanner = scanner
         self.session = requests.Session()
         self.session.headers.update({
@@ -45,8 +51,12 @@ class EndpointModule:
         }
         self.lock = threading.Lock()
     
-    def run(self):
-        """Run Discourse-specific endpoint discovery"""
+    def run(self) -> Dict[str, Any]:
+        """Run Discourse-specific endpoint discovery
+        
+        Returns:
+            Dictionary containing discovered endpoints
+        """
         print(f"\n{Fore.CYAN}[*] Starting Discourse endpoint discovery...{Style.RESET_ALL}")
         start_time = time.time()
         

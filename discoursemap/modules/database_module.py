@@ -19,7 +19,7 @@ import base64
 import hashlib
 import urllib.parse
 from urllib.parse import urljoin, quote, unquote
-from modules.utils import generate_payloads, detect_waf
+from ..lib.discourse_utils import generate_payloads, detect_waf
 
 class DatabaseModule:
     def __init__(self, scanner):

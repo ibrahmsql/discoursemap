@@ -17,7 +17,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'discoursemap'))
 
 from discoursemap.modules.scanner import DiscourseScanner
 from discoursemap.modules.reporter import Reporter
-from discoursemap.modules.utils import validate_url
+from discoursemap.lib.discourse_utils import validate_url
+from discoursemap.lib.config_manager import ConfigManager
 from discoursemap.modules.banner import Banner
 
 init(autoreset=True)

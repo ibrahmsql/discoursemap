@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urljoin, quote
 from bs4 import BeautifulSoup
 from colorama import Fore, Style
-from .utils import extract_csrf_token, make_request
+from ..lib.discourse_utils import extract_csrf_token, make_request
 
 class PluginBruteforceModule:
     """Plugin vulnerability bruteforce attack module"""

@@ -15,7 +15,7 @@ import os
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from colorama import Fore, Style
-from .utils import make_request
+from ..lib.discourse_utils import make_request
 
 class PluginDetectionModule:
     """ plugin and technology detection module"""
@@ -582,46 +582,7 @@ class PluginDetectionModule:
             except Exception as e:
                 continue
     
-    def _detect_plugins_by_javascript_analysis(self):
-        """JavaScript analysis for plugin detection"""
-        js_urls = self._extract_js_urls()
-        
-        for js_url in js_urls[:20]:  # Limit to first 20 JS files
-            try:
-                response = make_request(self.scanner.session, 'GET', js_url, timeout=10)
-                if response and response.status_code == 200:
-                    self._analyze_javascript_content(response.text, js_url)
-            except Exception as e:
-                continue
-    
-    def _detect_plugins_by_css_analysis(self):
-        """CSS analysis for plugin detection"""
-        css_urls = self._extract_css_urls()
-        
-        for css_url in css_urls[:15]:  # Limit to first 15 CSS files
-            try:
-                response = make_request(self.scanner.session, 'GET', css_url, timeout=10)
-                if response and response.status_code == 200:
-                    self._analyze_css_content(response.text, css_url)
-            except Exception as e:
-                continue
-    
-    def _detect_plugins_by_admin_pages(self):
-        """Detect plugins through admin interface analysis"""
-        admin_urls = [
-            '/admin/plugins',
-            '/admin/customize/themes',
-            '/admin/site_settings'
-        ]
-        
-        for admin_url in admin_urls:
-            try:
-                url = urljoin(self.scanner.target_url, admin_url)
-                response = make_request(self.scanner.session, 'GET', url, timeout=15)
-                if response and response.status_code == 200:
-                    self._parse_admin_page_content(response.text, admin_url)
-            except Exception as e:
-                continue
+
     
     def _analyze_javascript_content(self, content, js_url):
         """Analyze JavaScript content for plugin signatures"""
@@ -1044,53 +1005,7 @@ class PluginDetectionModule:
         
         return 'Unknown'
     
-    def _detect_plugins_comprehensive(self):
-        """Comprehensive plugin detection using multiple methods"""
-        
-        # Method 1: File-based detection
-        self._detect_plugins_by_files()
-        
-        # Method 2: HTML pattern detection
-        self._detect_plugins_by_html_patterns()
-        
-        # Method 3: JavaScript pattern detection
-        self._detect_plugins_by_js_patterns()
-        
-        # Method 4: Response header detection
-        self._detect_plugins_by_headers()
-        
-        # Method 5: Admin endpoint detection
-        self._detect_plugins_by_admin_endpoints()
-        
-        # Method 6: CSS pattern detection
-        self._detect_plugins_by_css_patterns()
-        
-        # Method 7: Meta tag detection
-        self._detect_plugins_by_meta_patterns()
-        
-        # Method 8: API endpoint detection
-        self._detect_plugins_by_api_endpoints()
-        
-        # Method 9: Directory enumeration
-        self._detect_plugins_by_directory_enum()
-        
-        # Method 10: Plugin manifest detection
-        self._detect_plugins_by_manifest()
-        
-        # Method 11: Plugin asset detection
-        self._detect_plugins_by_assets()
-        
-        # Method 12: Plugin route detection
-        self._detect_plugins_by_routes()
-        
-        # Method 13: Plugin configuration detection
-        self._detect_plugins_by_config()
-        
-        # Method 14: Plugin database detection
-        self._detect_plugins_by_database()
-        
-        # Method 15: Plugin webhook detection
-        self._detect_plugins_by_webhooks()
+
     
     def _detect_plugins_by_files(self):
         """Detect plugins by checking for specific files"""
@@ -1588,27 +1503,7 @@ class PluginDetectionModule:
                     severity_color = 'critical' if vuln.get('severity') == 'Critical' else 'warning'
                     self.scanner.log(f"Vulnerability found in {plugin_name}: {vuln.get('cve_id', 'Unknown')} ({vuln.get('severity', 'Unknown')})", severity_color)
     
-    def _add_detected_plugin(self, name, detection_method, evidence):
-        """Add a detected plugin to results"""
-        # Check if plugin already detected
-        for plugin in self.results['detected_plugins']:
-            if plugin['name'] == name:
-                if detection_method not in plugin['detection_methods']:
-                    plugin['detection_methods'].append(detection_method)
-                    plugin['evidence'].append(evidence)
-                return
-        
-        # Add new plugin
-        plugin_info = {
-            'name': name,
-            'detection_methods': [detection_method],
-            'evidence': [evidence],
-            'category': self._get_plugin_category(name),
-            'risk_score': self._calculate_risk_score(name),
-            'version': self._detect_plugin_version(name)
-        }
-        
-        self.results['detected_plugins'].append(plugin_info)
+
     
     def _get_plugin_category(self, plugin_name):
         """Get plugin category from vulnerability database"""
