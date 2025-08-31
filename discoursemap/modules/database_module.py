@@ -595,7 +595,7 @@ class DatabaseModule:
                 self.scanner.log(f"SQL injection found (POST): {endpoint}", 'warning')
                 
         except Exception as e:
-            pass
+            self.scanner.log(f"Error testing SQL injection endpoint {endpoint}: {str(e)}", 'debug')
 
     def _test_time_based_endpoint(self, endpoint, param, payload):
         """Test time-based SQL injection"""
@@ -630,7 +630,7 @@ class DatabaseModule:
                 self.scanner.log(f"Time-based SQL injection found: {endpoint} (delay: {response_time:.2f}s)", 'warning')
                 
         except Exception as e:
-            pass
+            self.scanner.log(f"Error testing time-based SQL injection endpoint {endpoint}: {str(e)}", 'debug')
 
     def _test_boolean_sqli_endpoint(self, endpoint, param, true_payload, false_payload):
         """Test boolean-based SQL injection"""
@@ -677,7 +677,7 @@ class DatabaseModule:
                     self.scanner.log(f"Boolean-based SQL injection found: {endpoint}", 'warning')
                     
         except Exception as e:
-            pass
+            self.scanner.log(f"Error testing boolean-based SQL injection endpoint {endpoint}: {str(e)}", 'debug')
 
     def _test_nosql_endpoint(self, endpoint, param, payload):
         """Test NoSQL injection"""
@@ -732,7 +732,7 @@ class DatabaseModule:
                     self.scanner.log(f"NoSQL injection found (JSON): {endpoint}", 'warning')
                     
         except Exception as e:
-            pass
+            self.scanner.log(f"Error testing NoSQL injection endpoint {endpoint}: {str(e)}", 'debug')
 
     def _detect_sql_injection(self, response, payload, test_type):
         """Detect SQL injection based on response"""

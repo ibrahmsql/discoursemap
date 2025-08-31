@@ -14,10 +14,11 @@ import requests
 import re
 import time
 import threading
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from colorama import Fore, Style
 from typing import Dict, Any, List, Optional, Set, Tuple
+from bs4 import BeautifulSoup
 
 class EndpointModule:
     """Module for discovering and testing various endpoints"""
@@ -348,7 +349,7 @@ class EndpointModule:
         """Test a single endpoint"""
         try:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = self.session.get(url, timeout=10, allow_redirects=True)
+            response = self.scanner.make_request(url, method="GET", timeout=10, allow_redirects=True)
 
             with self.lock:
                 self.discovered_endpoints.add(endpoint)
@@ -604,7 +605,7 @@ class EndpointModule:
         try:
             # Check robots.txt
             robots_url = urljoin(self.scanner.target_url, '/robots.txt')
-            response = self.session.get(robots_url, timeout=10)
+            response = self.scanner.make_request(robots_url, timeout=10)
 
             if response.status_code == 200:
                 for line in response.text.split('\n'):
@@ -615,7 +616,7 @@ class EndpointModule:
 
             # Check sitemap.xml
             sitemap_url = urljoin(self.scanner.target_url, '/sitemap.xml')
-            response = self.session.get(sitemap_url, timeout=10)
+            response = self.scanner.make_request(sitemap_url, timeout=10)
 
             if response.status_code == 200:
                 # Extract URLs from sitemap
@@ -625,14 +626,17 @@ class EndpointModule:
                     if parsed.path and parsed.path != '/':
                         self._test_endpoint(parsed.path, 'sitemap')
 
+        except requests.exceptions.RequestException as e:
+            print(f"[!] Request error analyzing robots/sitemap: {e}")
         except Exception as e:
-            print(f"[!] Error analyzing robots/sitemap: {e}")
+            print(f"[!] Unexpected error analyzing robots/sitemap: {e}")
+            raise
 
     def _test_backup_endpoint(self, endpoint):
         """Test backup endpoint with additional checks"""
         try:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = self.session.get(url, timeout=10)
+            response = self.scanner.make_request(url, timeout=10)
 
             with self.lock:
                 self.discovered_endpoints.add(endpoint)
@@ -680,7 +684,7 @@ class EndpointModule:
             for payload in traversal_payloads:
                 try:
                     url = f"{self.scanner.target_url}?{param}={payload}"
-                    response = self.session.get(url, timeout=10)
+                    response = self.scanner.make_request(url, timeout=10)
 
                     if response.status_code == 200 and len(response.text) > 100:
                         # Check for signs of successful traversal
@@ -702,6 +706,8 @@ class EndpointModule:
 
                             print(f"{Fore.RED}[+] Possible directory traversal: {param}={payload}{Style.RESET_ALL}")
 
+                except requests.exceptions.RequestException:
+                    continue
                 except Exception:
                     continue
 

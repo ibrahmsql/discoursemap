@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urljoin, quote
 from bs4 import BeautifulSoup
 from colorama import Fore, Style
-from ..lib.discourse_utils import extract_csrf_token, make_request
+from ..lib.discourse_utils import extract_csrf_token
 
 class PluginBruteforceModule:
     """Plugin vulnerability bruteforce attack module"""
@@ -196,7 +196,7 @@ class PluginBruteforceModule:
             # Test SQL injection
             for payload in sql_payloads:
                 test_url = f"{url}?q={quote(payload)}"
-                response = make_request(self.scanner.session, 'GET', test_url)
+                response = self.scanner.make_request(test_url, method='GET')
 
                 if response and self._detect_sql_injection(response):
                     self.results['injection_tests'].append({
@@ -210,7 +210,7 @@ class PluginBruteforceModule:
             # Test XSS
             for payload in xss_payloads:
                 test_url = f"{url}?search={quote(payload)}"
-                response = make_request(self.scanner.session, 'GET', test_url)
+                response = self.scanner.make_request(test_url, method='GET')
 
                 if response and payload in response.text:
                     self.results['injection_tests'].append({
@@ -224,7 +224,7 @@ class PluginBruteforceModule:
             # Test command injection
             for payload in cmd_payloads:
                 test_url = f"{url}?cmd={quote(payload)}"
-                response = make_request(self.scanner.session, 'GET', test_url)
+                response = self.scanner.make_request(test_url, method='GET')
 
                 if response and self._detect_command_injection(response):
                     self.results['injection_tests'].append({
@@ -270,14 +270,14 @@ class PluginBruteforceModule:
             url = urljoin(self.scanner.target_url, endpoint)
 
             # Test normal access first
-            normal_response = make_request(self.scanner.session, 'GET', url)
+            normal_response = self.scanner.make_request(url, method='GET')
             if not normal_response or normal_response.status_code == 200:
                 continue  # Already accessible
 
             # Test bypass techniques
             for technique in bypass_techniques:
                 headers = technique['headers']
-                response = make_request(self.scanner.session, 'GET', url, headers=headers)
+                response = self.scanner.make_request(url, method='GET', headers=headers)
 
                 if response and response.status_code == 200:
                     self.results['authentication_bypasses'].append({
@@ -317,7 +317,7 @@ class PluginBruteforceModule:
             url = urljoin(self.scanner.target_url, endpoint)
 
             for method in methods:
-                response = make_request(self.scanner.session, method, url)
+                response = self.scanner.make_request(url, method=method)
 
                 if response:
                     if response.status_code == 200:
@@ -349,7 +349,7 @@ class PluginBruteforceModule:
 
         for payload in bypass_payloads:
             test_url = url.replace(endpoint, endpoint + payload['path'])
-            response = make_request(self.scanner.session, method, test_url)
+            response = self.scanner.make_request(test_url, method=method)
 
             if response and response.status_code == 200:
                 self.results['endpoint_attacks'].append({
@@ -381,7 +381,7 @@ class PluginBruteforceModule:
 
         # Test GET parameter injection
         get_url = f"{url}?test={quote(payload)}"
-        response = make_request(self.scanner.session, 'GET', get_url)
+        response = self.scanner.make_request(get_url, method='GET')
 
         if response and self._check_vulnerability_response(response, vuln_type, payload):
             self.results['vulnerability_tests'].append({
@@ -396,7 +396,7 @@ class PluginBruteforceModule:
 
         # Test POST parameter injection
         data = {'test': payload, 'param': payload}
-        response = make_request(self.scanner.session, 'POST', url, data=data)
+        response = self.scanner.make_request(url, method='POST', data=data)
 
         if response and self._check_vulnerability_response(response, vuln_type, payload):
             self.results['vulnerability_tests'].append({
@@ -427,7 +427,8 @@ class PluginBruteforceModule:
             'Gemfile.lock'
         ]
 
-        discovered_plugins = [p['plugin'] for p in self.results['discovered_plugins'] if p.get('status') == 'found']
+        discovered = self.results.get('discovered_plugins', [])
+        discovered_plugins = [p.get('plugin') for p in discovered if p.get('status') == 'found' and p.get('plugin') is not None]
 
         for plugin in discovered_plugins:
             for file in sensitive_files:
@@ -439,7 +440,7 @@ class PluginBruteforceModule:
 
                 for file_path in file_paths:
                     url = urljoin(self.scanner.target_url, file_path)
-                    response = make_request(self.scanner.session, 'GET', url)
+                    response = self.scanner.make_request(url, method='GET')
 
                     if response and response.status_code == 200:
                         if self._check_sensitive_file_content(response.text, file):
@@ -465,7 +466,7 @@ class PluginBruteforceModule:
 
         for endpoint in config_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url, method='GET')
 
             if response and response.status_code == 200:
                 try:

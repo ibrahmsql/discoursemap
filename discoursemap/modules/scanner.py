@@ -247,12 +247,13 @@ class DiscourseScanner:
         
         print(f"{color}{prefix} {message}{Style.RESET_ALL}")
     
-    def make_request(self, url: str, method: str = 'GET', **kwargs) -> Optional[requests.Response]:
+    def make_request(self, url: str, method: str = 'GET', timeout: Optional[int] = None, **kwargs) -> Optional[requests.Response]:
         """Make HTTP request with adaptive rate limiting and improved threading
         
         Args:
             url: Target URL
             method: HTTP method (GET, POST, etc.)
+            timeout: Request timeout in seconds (optional, uses self.timeout if None)
             **kwargs: Additional request parameters
             
         Returns:
@@ -273,10 +274,11 @@ class DiscourseScanner:
                     time.sleep(current_delay)
                 
                 # Use session for request
+                request_timeout = timeout if timeout is not None else self.timeout
                 response = self.session.request(
                     method=method,
                     url=url,
-                    timeout=self.timeout,
+                    timeout=request_timeout,
                     **kwargs
                 )
                 

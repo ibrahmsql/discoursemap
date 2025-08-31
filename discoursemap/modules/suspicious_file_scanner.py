@@ -108,7 +108,7 @@ class SuspiciousFileScanner:
                 # Analyze content for malicious patterns
                 content = response.text if response.headers.get('content-type', '').startswith('text') else ''
                 malicious_patterns = self.pattern_checker.check_malicious_patterns(content)
-                if malicious_patterns['has_malicious']:
+                if malicious_patterns:  # List is truthy if it contains patterns
                     file_info['malicious_patterns'] = malicious_patterns
                     file_info['risk_level'] = 'Critical'
 
@@ -134,7 +134,7 @@ class SuspiciousFileScanner:
 
         # Check for malicious patterns
         malicious_check = self.pattern_checker.check_malicious_patterns(content)
-        if malicious_check['has_malicious']:
+        if malicious_check:  # List is truthy if it contains patterns
             analysis['is_suspicious'] = True
             analysis['risk_level'] = 'Critical'
             analysis['issues'].append('Contains malicious code patterns')
@@ -142,7 +142,7 @@ class SuspiciousFileScanner:
 
         # Check for suspicious plugin content
         plugin_check = self.pattern_checker.check_suspicious_plugin_content(content)
-        if plugin_check['is_suspicious']:
+        if plugin_check:  # List is truthy if it contains patterns
             analysis['is_suspicious'] = True
             analysis['risk_level'] = 'Medium' if analysis['risk_level'] == 'Low' else analysis['risk_level']
             analysis['issues'].append('Contains suspicious plugin patterns')
