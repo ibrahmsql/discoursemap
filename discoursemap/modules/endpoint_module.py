@@ -94,15 +94,15 @@ class EndpointModule:
         self.results['total_endpoints'] = total
         self.results['scan_time'] = time.time() - start_time
 
-        print(f"\n[+] Discourse endpoint discovery completed in {self.results['scan_time']:.2f} seconds")
-        print(f"[+] Total endpoints discovered: {total}")
+        print(f"\n{Fore.GREEN}[+] Discourse endpoint discovery completed in {self.results['scan_time']:.2f} seconds{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[+] Total endpoints discovered: {total}{Style.RESET_ALL}")
 
         # Print summary by category
         for category in endpoint_categories:
             count = len(self.results.get(category, []))
             if count > 0:
                 category_name = category.replace('_endpoints', '').replace('_', ' ').title()
-                print(f"[+] {category_name}: {count} endpoints")
+                print(f"{Fore.GREEN}[+] Discourse {category_name}: {count} endpoints{Style.RESET_ALL}")
 
         return self.results
 

@@ -164,7 +164,7 @@ class ComplianceModule:
             # Breach Notification Testing
             self._test_breach_notification()
 
-            print(f"[+] Compliance testing completed")
+            print(f"{Fore.GREEN}[+] Compliance testing completed{Style.RESET_ALL}")
 
         except Exception as e:
             print(f"[!] Error during compliance testing: {str(e)}")

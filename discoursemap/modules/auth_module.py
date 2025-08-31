@@ -780,7 +780,7 @@ class AuthModule:
             }
             
             url = urljoin(self.scanner.target_url, oauth_endpoint)
-            response = make_request(self.scanner.session, 'GET', url, params=params)
+            response = self.scanner.make_request(url, method='GET', params=params)
             
             if response and response.status_code in [200, 302]:
                 if response.status_code == 302:
@@ -873,11 +873,11 @@ class AuthModule:
         }
         
         url = urljoin(self.scanner.target_url, sso_endpoint)
-        response = make_request(self.scanner.session, 'POST', url, data=sso_data)
+        response = self.scanner.make_request(url, method='POST', data=sso_data)
         
         if response and response.status_code in [200, 302]:
             # Check if we got authenticated
-            admin_check = make_request(self.scanner.session, 'GET', 
+            admin_check = self.scanner.make_request( 
                                      urljoin(self.scanner.target_url, '/admin'))
             
             if admin_check and admin_check.status_code == 200:
@@ -902,7 +902,7 @@ class AuthModule:
         }
         
         url = urljoin(self.scanner.target_url, sso_endpoint)
-        response = make_request(self.scanner.session, 'POST', url, data=sso_data)
+        response = self.scanner.make_request(url, method='POST', data=sso_data)
         
         if response and response.status_code in [200, 302]:
             if 'error' not in response.text.lower() and 'expired' not in response.text.lower():
@@ -929,7 +929,7 @@ class AuthModule:
                 }
                 
                 url = urljoin(self.scanner.target_url, sso_endpoint)
-                response = make_request(self.scanner.session, 'POST', url, data=saml_data)
+                response = self.scanner.make_request(url, method='POST', data=saml_data)
                 
                 if response and response.status_code == 200:
                     if 'root:' in response.text or 'alert(1)' in response.text:
@@ -1070,7 +1070,7 @@ class AuthModule:
         
         for endpoint in admin_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url, method='GET')
             
             if response and response.status_code == 200:
                 # Check if we can access admin functions
@@ -1094,7 +1094,7 @@ class AuthModule:
         
         for endpoint in admin_api_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url, method='GET')
             
             if response and response.status_code == 200:
                 try:
@@ -1208,7 +1208,7 @@ class AuthModule:
                 'authenticity_token': csrf_token
             }
             
-            response1 = make_request(self.scanner.session, 'POST', reset_url, data=existing_data)
+            response1 = self.scanner.make_request(reset_url, method='POST', data=existing_data)
             
             # Test with non-existing email
             nonexisting_data = {
@@ -1216,7 +1216,7 @@ class AuthModule:
                 'authenticity_token': csrf_token
             }
             
-            response2 = make_request(self.scanner.session, 'POST', reset_url, data=nonexisting_data)
+            response2 = self.scanner.make_request(reset_url, method='POST', data=nonexisting_data)
             
             if response1 and response2:
                 if response1.text != response2.text:

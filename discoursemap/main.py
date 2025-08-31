@@ -406,6 +406,18 @@ def main():
             print(f"{Fore.RED}Error: Invalid URL format!{Style.RESET_ALL}")
             sys.exit(1)
         
+        # Discourse site validation - Import is_discourse_site function
+        from discoursemap.lib.discourse_utils import is_discourse_site
+        
+        print(f"{Fore.CYAN}[*] Verifying target is a Discourse forum...{Style.RESET_ALL}")
+        if not is_discourse_site(args.url, timeout=10):
+            print(f"{Fore.RED}[!] Error: Target is not a Discourse forum!{Style.RESET_ALL}")
+            print(f"{Fore.RED}[!] This tool is specifically designed for Discourse forums only.{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}[!] Please ensure the target URL points to a valid Discourse installation.{Style.RESET_ALL}")
+            sys.exit(1)
+        else:
+            print(f"{Fore.GREEN}[+] Target confirmed as Discourse forum{Style.RESET_ALL}")
+
         # Initialize scanner with config file
         scanner = DiscourseScanner(
             target_url=args.url,
