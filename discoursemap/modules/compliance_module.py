@@ -43,7 +43,7 @@ class ComplianceModule:
             'data_retention': [],
             'breach_notification': []
         }
-        
+
         # GDPR requirements
         self.gdpr_requirements = {
             'privacy_policy': 'Privacy policy must be present and accessible',
@@ -57,7 +57,7 @@ class ComplianceModule:
             'privacy_by_design': 'Privacy by design implementation',
             'data_minimization': 'Data minimization principles'
         }
-        
+
         # CCPA requirements
         self.ccpa_requirements = {
             'privacy_notice': 'Privacy notice at collection required',
@@ -69,7 +69,7 @@ class ComplianceModule:
             'verification_process': 'Identity verification for requests',
             'non_discrimination': 'Non-discrimination policy'
         }
-        
+
         # Security headers for compliance
         self.security_headers = {
             'strict-transport-security': 'HSTS header for secure connections',
@@ -81,7 +81,7 @@ class ComplianceModule:
             'x-xss-protection': 'XSS filter activation',
             'expect-ct': 'Certificate transparency enforcement'
         }
-        
+
         # PCI-DSS requirements
         self.pci_requirements = {
             'secure_transmission': 'Secure transmission of cardholder data',
@@ -92,7 +92,7 @@ class ComplianceModule:
             'monitoring': 'Monitor and test networks regularly',
             'information_security': 'Maintain information security policy'
         }
-        
+
         # OWASP Top 10 compliance
         self.owasp_top10 = {
             'injection': 'SQL, NoSQL, OS, and LDAP injection',
@@ -106,93 +106,108 @@ class ComplianceModule:
             'vulnerable_components': 'Using components with known vulnerabilities',
             'insufficient_logging': 'Insufficient logging and monitoring'
         }
-        
+
     def run(self):
         """Run compliance and regulatory testing module (main entry point)"""
         return self.run_scan()
-    
+
     def run_scan(self):
         """Run comprehensive compliance testing"""
         print(f"{Fore.BLUE}[*] Starting compliance testing for {self.target_url}{Style.RESET_ALL}")
-        
+
         try:
             # GDPR Compliance Testing
             self._test_gdpr_compliance()
-            
+
             # CCPA Compliance Testing
             self._test_ccpa_compliance()
-            
+
             # HIPAA Compliance Testing
             self._test_hipaa_compliance()
-            
+
             # PCI-DSS Compliance Testing
             self._test_pci_compliance()
-            
+
             # SOX Compliance Testing
             self._test_sox_compliance()
-            
+
             # ISO 27001 Compliance Testing
             self._test_iso27001_compliance()
-            
+
             # NIST Framework Testing
             self._test_nist_compliance()
-            
+
             # OWASP Compliance Testing
             self._test_owasp_compliance()
-            
+
             # Security Headers Testing
             self._test_security_headers()
-            
+
             # Privacy Policy Analysis
             self._analyze_privacy_policies()
-            
+
             # Data Protection Testing
             self._test_data_protection()
-            
+
             # Audit Logging Testing
             self._test_audit_logging()
-            
+
             # Encryption Compliance
             self._test_encryption_compliance()
-            
+
             # Access Control Testing
             self._test_access_controls()
-            
+
             # Data Retention Testing
             self._test_data_retention()
-            
+
             # Breach Notification Testing
             self._test_breach_notification()
-            
-            print(f"[+] Compliance testing completed")
-            
-        except Exception as e:
-            print(f"[!] Error during compliance testing: {str(e)}")
+
+            print(f"{Fore.GREEN}[+] Compliance testing completed{Style.RESET_ALL}")
+
+        except requests.exceptions.RequestException as e:
+            print(f"[!] Request error during compliance testing: {e!s}")
             self.results['gdpr_compliance'].append({
                 'type': 'Compliance Testing Error',
                 'severity': 'info',
-                'description': f'Error during compliance testing: {str(e)}'
+                'description': f'Request error during compliance testing: {e!s}'
             })
-        
+        except json.JSONDecodeError as e:
+            print(f"[!] JSON decode error during compliance testing: {e!s}")
+            self.results['gdpr_compliance'].append({
+                'type': 'Compliance Testing Error',
+                'severity': 'info',
+                'description': f'JSON decode error during compliance testing: {e!s}'
+            })
+        except Exception as e:
+            print(f"[!] Unexpected error during compliance testing: {e!s}")
+            self.results['gdpr_compliance'].append({
+                'type': 'Compliance Testing Error',
+                'severity': 'info',
+                'description': f'Unexpected error during compliance testing: {e!s}'
+            })
+            raise
+
         return self.results
-    
+
     def _test_gdpr_compliance(self):
         """Test GDPR compliance requirements"""
         print(f"{Fore.CYAN}[*] Testing GDPR compliance...{Style.RESET_ALL}")
-        
+
         # Check for privacy policy
         privacy_endpoints = ['/privacy', '/privacy-policy', '/gdpr', '/data-protection']
         privacy_found = False
-        
+
         for endpoint in privacy_endpoints:
             try:
                 url = urljoin(self.target_url, endpoint)
-                response = self.session.get(url, timeout=10)
-                
-                if response.status_code == 200:
+                response = self.scanner.make_request(url, timeout=10)
+
+                if response and response.status_code == 200:
                     privacy_found = True
                     content = response.text.lower()
-                    
+
                     # Check for GDPR-specific terms
                     gdpr_terms = [
                         'gdpr', 'general data protection regulation',
@@ -200,9 +215,9 @@ class ComplianceModule:
                         'data portability', 'consent withdrawal',
                         'data protection officer', 'lawful basis'
                     ]
-                    
+
                     found_terms = [term for term in gdpr_terms if term in content]
-                    
+
                     self.results['gdpr_compliance'].append({
                         'type': 'Privacy Policy Analysis',
                         'severity': 'info' if found_terms else 'medium',
@@ -211,17 +226,22 @@ class ComplianceModule:
                         'gdpr_terms_count': len(found_terms),
                         'description': f'Privacy policy found at {endpoint} with {len(found_terms)} GDPR-related terms'
                     })
-                    
+
                     # Only print if significant GDPR terms found or missing
                     if len(found_terms) >= 3:
                         print(f"{Fore.GREEN}[+] Privacy policy found with good GDPR coverage: {endpoint}{Style.RESET_ALL}")
                     elif len(found_terms) > 0:
                         print(f"{Fore.YELLOW}[!] Privacy policy found but limited GDPR terms: {endpoint}{Style.RESET_ALL}")
                     break
-            
+
+            except requests.exceptions.RequestException as e:
+                print(f"{Fore.RED}[!] Request error checking privacy policy at {endpoint}: {e!s}{Style.RESET_ALL}")
+            except json.JSONDecodeError as e:
+                print(f"{Fore.RED}[!] JSON decode error checking privacy policy at {endpoint}: {e!s}{Style.RESET_ALL}")
             except Exception as e:
-                print(f"{Fore.RED}[!] Error checking privacy policy at {endpoint}: {str(e)}{Style.RESET_ALL}")
-        
+                print(f"{Fore.RED}[!] Unexpected error checking privacy policy at {endpoint}: {e!s}{Style.RESET_ALL}")
+                raise
+
         if not privacy_found:
             self.results['gdpr_compliance'].append({
                 'type': 'Missing Privacy Policy',
@@ -229,45 +249,51 @@ class ComplianceModule:
                 'description': 'No privacy policy found - GDPR compliance violation'
             })
             print(f"{Fore.RED}[!] CRITICAL: No privacy policy found - GDPR compliance violation{Style.RESET_ALL}")
-        
+
         # Check for cookie consent
         self._check_cookie_consent()
-        
+
         # Check for data subject rights
         self._check_data_subject_rights()
-        
+
         # Check for DPO contact information
         self._check_dpo_contact()
-    
+
     def _check_cookie_consent(self):
         """Check for cookie consent mechanism"""
         try:
-            response = self.session.get(self.target_url)
-            content = response.text.lower()
-            
-            cookie_indicators = [
-                'cookie consent', 'accept cookies', 'cookie policy',
-                'cookie banner', 'cookie notice', 'manage cookies'
-            ]
-            
-            consent_found = any(indicator in content for indicator in cookie_indicators)
-            
-            if consent_found:
-                self.results['gdpr_compliance'].append({
-                    'type': 'Cookie Consent Mechanism',
-                    'severity': 'info',
-                    'description': 'Cookie consent mechanism detected'
-                })
-            else:
-                self.results['gdpr_compliance'].append({
-                    'type': 'Missing Cookie Consent',
-                    'severity': 'medium',
-                    'description': 'No cookie consent mechanism found - potential GDPR violation'
-                })
-        
+            response = self.scanner.make_request(self.target_url, timeout=10)
+            if response:
+                content = response.text.lower()
+
+                cookie_indicators = [
+                    'cookie consent', 'accept cookies', 'cookie policy',
+                    'cookie banner', 'cookie notice', 'manage cookies'
+                ]
+
+                consent_found = any(indicator in content for indicator in cookie_indicators)
+
+                if consent_found:
+                    self.results['gdpr_compliance'].append({
+                        'type': 'Cookie Consent Mechanism',
+                        'severity': 'info',
+                        'description': 'Cookie consent mechanism detected'
+                    })
+                else:
+                    self.results['gdpr_compliance'].append({
+                        'type': 'Missing Cookie Consent',
+                        'severity': 'medium',
+                        'description': 'No cookie consent mechanism found - potential GDPR violation'
+                    })
+
+        except requests.exceptions.RequestException as e:
+            print(f"[!] Request error checking cookie consent: {e!s}")
+        except json.JSONDecodeError as e:
+            print(f"[!] JSON decode error checking cookie consent: {e!s}")
         except Exception as e:
-            print(f"[!] Error checking cookie consent: {str(e)}")
-    
+            print(f"[!] Unexpected error checking cookie consent: {e!s}")
+            raise
+
     def _check_data_subject_rights(self):
         """Check for data subject rights implementation"""
         data_rights_endpoints = [
@@ -275,20 +301,25 @@ class ComplianceModule:
             '/delete-account', '/data-deletion', '/erasure',
             '/account-settings', '/privacy-settings'
         ]
-        
+
         rights_found = []
-        
+
         for endpoint in data_rights_endpoints:
             try:
                 url = urljoin(self.target_url, endpoint)
-                response = self.session.get(url)
-                
-                if response.status_code == 200:
+                response = self.scanner.make_request(url, timeout=10)
+
+                if response and response.status_code == 200:
                     rights_found.append(endpoint)
-            
+
+            except requests.exceptions.RequestException as e:
+                print(f"[!] Request error checking data rights endpoint {endpoint}: {e!s}")
+            except json.JSONDecodeError as e:
+                print(f"[!] JSON decode error checking data rights endpoint {endpoint}: {e!s}")
             except Exception as e:
-                print(f"[!] Error checking data rights endpoint {endpoint}: {str(e)}")
-        
+                print(f"[!] Unexpected error checking data rights endpoint {endpoint}: {e!s}")
+                raise
+
         if rights_found:
             self.results['gdpr_compliance'].append({
                 'type': 'Data Subject Rights Implementation',
@@ -302,26 +333,26 @@ class ComplianceModule:
                 'severity': 'high',
                 'description': 'No data subject rights implementation found - GDPR compliance violation'
             })
-    
+
     def _check_dpo_contact(self):
         """Check for Data Protection Officer contact information"""
         try:
             contact_endpoints = ['/contact', '/about', '/privacy', '/legal']
             dpo_found = False
-            
+
             for endpoint in contact_endpoints:
                 try:
                     url = urljoin(self.target_url, endpoint)
-                    response = self.session.get(url)
-                    
-                    if response.status_code == 200:
+                    response = self.scanner.make_request(url, timeout=10)
+
+                    if response and response.status_code == 200:
                         content = response.text.lower()
-                        
+
                         dpo_indicators = [
                             'data protection officer', 'dpo', 'privacy officer',
                             'data controller', 'privacy contact'
                         ]
-                        
+
                         if any(indicator in content for indicator in dpo_indicators):
                             dpo_found = True
                             self.results['gdpr_compliance'].append({
@@ -331,238 +362,272 @@ class ComplianceModule:
                                 'description': f'DPO contact information found at {endpoint}'
                             })
                             break
-                
+
+                except requests.exceptions.RequestException as e:
+                    print(f"[!] Request error checking DPO contact at {endpoint}: {e!s}")
+                except json.JSONDecodeError as e:
+                    print(f"[!] JSON decode error checking DPO contact at {endpoint}: {e!s}")
                 except Exception as e:
-                    print(f"[!] Error checking DPO contact at {endpoint}: {str(e)}")
-            
+                    print(f"[!] Unexpected error checking DPO contact at {endpoint}: {e!s}")
+                    raise
+
             if not dpo_found:
                 self.results['gdpr_compliance'].append({
                     'type': 'Missing DPO Contact',
                     'severity': 'medium',
                     'description': 'No DPO contact information found - may be required for GDPR compliance'
                 })
-        
+
+        except requests.exceptions.RequestException as e:
+            print(f"[!] Request error checking DPO contact: {e!s}")
+        except json.JSONDecodeError as e:
+            print(f"[!] JSON decode error checking DPO contact: {e!s}")
         except Exception as e:
-            print(f"[!] Error checking DPO contact: {str(e)}")
-    
+            print(f"[!] Unexpected error checking DPO contact: {e!s}")
+            raise
+
     def _test_ccpa_compliance(self):
         """Test CCPA compliance requirements"""
         print(f"{Fore.CYAN}[*] Testing CCPA compliance...{Style.RESET_ALL}")
-        
+
         try:
-            response = self.session.get(self.target_url)
-            content = response.text.lower()
-            
-            # Check for "Do Not Sell" link
-            do_not_sell_indicators = [
-                'do not sell', 'do not sell my personal information',
-                'opt out of sale', 'ccpa opt out'
-            ]
-            
-            do_not_sell_found = any(indicator in content for indicator in do_not_sell_indicators)
-            
-            if do_not_sell_found:
-                self.results['ccpa_compliance'].append({
-                    'type': 'Do Not Sell Link',
-                    'severity': 'info',
-                    'description': 'Do Not Sell My Personal Information link found'
-                })
-            else:
-                self.results['ccpa_compliance'].append({
-                    'type': 'Missing Do Not Sell Link',
-                    'severity': 'medium',
-                    'description': 'No "Do Not Sell" link found - potential CCPA violation'
-                })
-            
-            # Check for CCPA-specific terms
-            ccpa_terms = [
-                'ccpa', 'california consumer privacy act',
-                'consumer rights', 'personal information categories',
-                'third party disclosure', 'opt out'
-            ]
-            
-            found_ccpa_terms = [term for term in ccpa_terms if term in content]
-            
-            if found_ccpa_terms:
-                self.results['ccpa_compliance'].append({
-                    'type': 'CCPA Terms Analysis',
-                    'severity': 'info',
-                    'ccpa_terms_found': found_ccpa_terms,
-                    'description': f'CCPA-related terms found: {found_ccpa_terms}'
-                })
-        
+            response = self.scanner.make_request(self.target_url, timeout=10)
+            if response:
+                content = response.text.lower()
+
+                # Check for "Do Not Sell" link
+                do_not_sell_indicators = [
+                    'do not sell', 'do not sell my personal information',
+                    'opt out of sale', 'ccpa opt out'
+                ]
+
+                do_not_sell_found = any(indicator in content for indicator in do_not_sell_indicators)
+
+                if do_not_sell_found:
+                    self.results['ccpa_compliance'].append({
+                        'type': 'Do Not Sell Link',
+                        'severity': 'info',
+                        'description': 'Do Not Sell My Personal Information link found'
+                    })
+                else:
+                    self.results['ccpa_compliance'].append({
+                        'type': 'Missing Do Not Sell Link',
+                        'severity': 'medium',
+                        'description': 'No "Do Not Sell" link found - potential CCPA violation'
+                    })
+
+                # Check for CCPA-specific terms
+                ccpa_terms = [
+                    'ccpa', 'california consumer privacy act',
+                    'consumer rights', 'personal information categories',
+                    'third party disclosure', 'opt out'
+                ]
+
+                found_ccpa_terms = [term for term in ccpa_terms if term in content]
+
+                if found_ccpa_terms:
+                    self.results['ccpa_compliance'].append({
+                        'type': 'CCPA Terms Analysis',
+                        'severity': 'info',
+                        'ccpa_terms_found': found_ccpa_terms,
+                        'description': f'CCPA-related terms found: {found_ccpa_terms}'
+                    })
+
+        except requests.exceptions.RequestException as e:
+            print(f"[!] Request error testing CCPA compliance: {e!s}")
+        except json.JSONDecodeError as e:
+            print(f"[!] JSON decode error testing CCPA compliance: {e!s}")
         except Exception as e:
-            print(f"[!] Error testing CCPA compliance: {str(e)}")
-    
+            print(f"[!] Unexpected error testing CCPA compliance: {e!s}")
+            raise
+
     def _test_hipaa_compliance(self):
         """Test HIPAA compliance requirements"""
         print(f"{Fore.CYAN}[*] Testing HIPAA compliance...{Style.RESET_ALL}")
-        
+
         # HIPAA is primarily for healthcare, but check for health-related indicators
         try:
-            response = self.session.get(self.target_url)
-            content = response.text.lower()
-            
-            health_indicators = [
-                'health', 'medical', 'patient', 'healthcare',
-                'hipaa', 'phi', 'protected health information'
-            ]
-            
-            health_related = any(indicator in content for indicator in health_indicators)
-            
-            if health_related:
-                # Check for HIPAA-specific requirements
-                hipaa_requirements = [
-                    'hipaa compliance', 'business associate agreement',
-                    'minimum necessary', 'administrative safeguards',
-                    'physical safeguards', 'technical safeguards'
+            response = self.scanner.make_request(self.target_url, timeout=10)
+            if response:
+                content = response.text.lower()
+
+                health_indicators = [
+                    'health', 'medical', 'patient', 'healthcare',
+                    'hipaa', 'phi', 'protected health information'
                 ]
-                
-                found_requirements = [req for req in hipaa_requirements if req in content]
-                
-                self.results['hipaa_compliance'].append({
-                    'type': 'HIPAA Compliance Analysis',
-                    'severity': 'medium' if not found_requirements else 'info',
-                    'health_related': True,
-                    'hipaa_requirements_found': found_requirements,
-                    'description': f'Health-related content detected. HIPAA requirements found: {found_requirements}'
-                })
-            else:
-                self.results['hipaa_compliance'].append({
-                    'type': 'HIPAA Compliance Check',
-                    'severity': 'info',
-                    'health_related': False,
-                    'description': 'No health-related content detected - HIPAA may not apply'
-                })
-        
+
+                health_related = any(indicator in content for indicator in health_indicators)
+
+                if health_related:
+                    # Check for HIPAA-specific requirements
+                    hipaa_requirements = [
+                        'hipaa compliance', 'business associate agreement',
+                        'minimum necessary', 'administrative safeguards',
+                        'physical safeguards', 'technical safeguards'
+                    ]
+
+                    found_requirements = [req for req in hipaa_requirements if req in content]
+
+                    self.results['hipaa_compliance'].append({
+                        'type': 'HIPAA Compliance Analysis',
+                        'severity': 'medium' if not found_requirements else 'info',
+                        'health_related': True,
+                        'hipaa_requirements_found': found_requirements,
+                        'description': f'Health-related content detected. HIPAA requirements found: {found_requirements}'
+                    })
+                else:
+                    self.results['hipaa_compliance'].append({
+                        'type': 'HIPAA Compliance Check',
+                        'severity': 'info',
+                        'health_related': False,
+                        'description': 'No health-related content detected - HIPAA may not apply'
+                    })
+
+        except requests.exceptions.RequestException as e:
+            print(f"[!] Request error testing HIPAA compliance: {e!s}")
+        except json.JSONDecodeError as e:
+            print(f"[!] JSON decode error testing HIPAA compliance: {e!s}")
         except Exception as e:
-            print(f"[!] Error testing HIPAA compliance: {str(e)}")
-    
+            print(f"[!] Unexpected error testing HIPAA compliance: {e!s}")
+            raise
+
     def _test_pci_compliance(self):
         """Test PCI-DSS compliance requirements"""
         print(f"{Fore.CYAN}[*] Testing PCI-DSS compliance...{Style.RESET_ALL}")
-        
+
         # Check for payment processing indicators
         try:
-            response = self.session.get(self.target_url)
-            content = response.text.lower()
-            
-            payment_indicators = [
-                'payment', 'credit card', 'debit card', 'paypal',
-                'stripe', 'checkout', 'billing', 'subscription'
-            ]
-            
-            payment_related = any(indicator in content for indicator in payment_indicators)
-            
-            if payment_related:
-                # Check SSL/TLS implementation
-                parsed_url = urlparse(self.target_url)
-                if parsed_url.scheme == 'https':
-                    self.results['pci_dss_compliance'].append({
-                        'type': 'Secure Transmission',
-                        'severity': 'info',
-                        'description': 'HTTPS enabled for secure transmission'
-                    })
+            response = self.scanner.make_request(self.target_url, timeout=10)
+            if response:
+                content = response.text.lower()
+
+                payment_indicators = [
+                    'payment', 'credit card', 'debit card', 'paypal',
+                    'stripe', 'checkout', 'billing', 'subscription'
+                ]
+
+                payment_related = any(indicator in content for indicator in payment_indicators)
+
+                if payment_related:
+                    # Check SSL/TLS implementation
+                    parsed_url = urlparse(self.target_url)
+                    if parsed_url.scheme == 'https':
+                        self.results['pci_dss_compliance'].append({
+                            'type': 'Secure Transmission',
+                            'severity': 'info',
+                            'description': 'HTTPS enabled for secure transmission'
+                        })
+                    else:
+                        self.results['pci_dss_compliance'].append({
+                            'type': 'Insecure Transmission',
+                            'severity': 'critical',
+                            'description': 'HTTP used for payment processing - PCI-DSS violation'
+                        })
+
+                    # Check for PCI compliance statements
+                    pci_indicators = [
+                        'pci compliant', 'pci dss', 'payment card industry',
+                        'secure payment', 'encrypted payment'
+                    ]
+
+                    found_pci = [indicator for indicator in pci_indicators if indicator in content]
+
+                    if found_pci:
+                        self.results['pci_dss_compliance'].append({
+                            'type': 'PCI Compliance Statement',
+                            'severity': 'info',
+                            'pci_indicators': found_pci,
+                            'description': f'PCI compliance indicators found: {found_pci}'
+                        })
                 else:
                     self.results['pci_dss_compliance'].append({
-                        'type': 'Insecure Transmission',
-                        'severity': 'critical',
-                        'description': 'HTTP used for payment processing - PCI-DSS violation'
-                    })
-                
-                # Check for PCI compliance statements
-                pci_indicators = [
-                    'pci compliant', 'pci dss', 'payment card industry',
-                    'secure payment', 'encrypted payment'
-                ]
-                
-                found_pci = [indicator for indicator in pci_indicators if indicator in content]
-                
-                if found_pci:
-                    self.results['pci_dss_compliance'].append({
-                        'type': 'PCI Compliance Statement',
+                        'type': 'PCI-DSS Compliance Check',
                         'severity': 'info',
-                        'pci_indicators': found_pci,
-                        'description': f'PCI compliance indicators found: {found_pci}'
+                        'payment_related': False,
+                        'description': 'No payment processing detected - PCI-DSS may not apply'
                     })
-            else:
-                self.results['pci_dss_compliance'].append({
-                    'type': 'PCI-DSS Compliance Check',
-                    'severity': 'info',
-                    'payment_related': False,
-                    'description': 'No payment processing detected - PCI-DSS may not apply'
-                })
-        
+
+        except requests.exceptions.RequestException as e:
+            print(f"[!] Request error testing PCI compliance: {e!s}")
+        except json.JSONDecodeError as e:
+            print(f"[!] JSON decode error testing PCI compliance: {e!s}")
         except Exception as e:
-            print(f"[!] Error testing PCI compliance: {str(e)}")
-    
+            print(f"[!] Unexpected error testing PCI compliance: {e!s}")
+            raise
+
     def _test_sox_compliance(self):
         """Test SOX compliance requirements"""
         print(f"{Fore.CYAN}[*] Testing SOX compliance...{Style.RESET_ALL}")
-        
+
         # SOX applies to public companies - check for financial indicators
         try:
-            response = self.session.get(self.target_url)
-            content = response.text.lower()
-            
-            financial_indicators = [
-                'financial', 'investor', 'sec filing', 'annual report',
-                'quarterly report', '10-k', '10-q', 'sox compliance',
-                'sarbanes oxley', 'internal controls', 'audit'
-            ]
-            
-            financial_related = any(indicator in content for indicator in financial_indicators)
-            
-            if financial_related:
-                sox_requirements = [
-                    'internal controls', 'financial reporting',
-                    'audit trail', 'sox compliance', 'sarbanes oxley'
+            response = self.scanner.make_request(self.target_url, timeout=10)
+            if response:
+                content = response.text.lower()
+
+                financial_indicators = [
+                    'financial', 'investor', 'sec filing', 'annual report',
+                    'quarterly report', '10-k', '10-q', 'sox compliance',
+                    'sarbanes oxley', 'internal controls', 'audit'
                 ]
-                
-                found_sox = [req for req in sox_requirements if req in content]
-                
-                self.results['sox_compliance'].append({
-                    'type': 'SOX Compliance Analysis',
-                    'severity': 'medium' if not found_sox else 'info',
-                    'financial_related': True,
-                    'sox_requirements_found': found_sox,
-                    'description': f'Financial content detected. SOX requirements found: {found_sox}'
-                })
-            else:
-                self.results['sox_compliance'].append({
-                    'type': 'SOX Compliance Check',
-                    'severity': 'info',
-                    'financial_related': False,
-                    'description': 'No financial content detected - SOX may not apply'
-                })
-        
+
+                financial_related = any(indicator in content for indicator in financial_indicators)
+
+                if financial_related:
+                    sox_requirements = [
+                        'internal controls', 'financial reporting',
+                        'audit trail', 'sox compliance', 'sarbanes oxley'
+                    ]
+
+                    found_sox = [req for req in sox_requirements if req in content]
+
+                    self.results['sox_compliance'].append({
+                        'type': 'SOX Compliance Analysis',
+                        'severity': 'medium' if not found_sox else 'info',
+                        'financial_related': True,
+                        'sox_requirements_found': found_sox,
+                        'description': f'Financial content detected. SOX requirements found: {found_sox}'
+                    })
+                else:
+                    self.results['sox_compliance'].append({
+                        'type': 'SOX Compliance Check',
+                        'severity': 'info',
+                        'financial_related': False,
+                        'description': 'No financial content detected - SOX may not apply'
+                    })
+
+        except requests.exceptions.RequestException as e:
+            print(f"[!] Request error testing SOX compliance: {e!s}")
+        except json.JSONDecodeError as e:
+            print(f"[!] JSON decode error testing SOX compliance: {e!s}")
         except Exception as e:
-            print(f"[!] Error testing SOX compliance: {str(e)}")
-    
+            print(f"[!] Unexpected error testing SOX compliance: {e!s}")
+            raise
+
     def _test_iso27001_compliance(self):
         """Test ISO 27001 compliance requirements"""
         print(f"{Fore.CYAN}[*] Testing ISO 27001 compliance...{Style.RESET_ALL}")
-        
+
         try:
             # Check for security policy and procedures
             security_endpoints = ['/security', '/security-policy', '/iso27001', '/isms']
-            
+
             for endpoint in security_endpoints:
                 try:
                     url = urljoin(self.target_url, endpoint)
-                    response = self.session.get(url)
-                    
-                    if response.status_code == 200:
+                    response = self.scanner.make_request(url, timeout=10)
+
+                    if response and response.status_code == 200:
                         content = response.text.lower()
-                        
+
                         iso_indicators = [
                             'iso 27001', 'information security management',
                             'isms', 'security policy', 'risk assessment',
                             'security controls', 'continual improvement'
                         ]
-                        
+
                         found_iso = [indicator for indicator in iso_indicators if indicator in content]
-                        
+
                         if found_iso:
                             self.results['iso27001_compliance'].append({
                                 'type': 'ISO 27001 Compliance Evidence',
@@ -571,70 +636,81 @@ class ComplianceModule:
                                 'iso_indicators': found_iso,
                                 'description': f'ISO 27001 indicators found at {endpoint}: {found_iso}'
                             })
-                
+
+                except requests.exceptions.RequestException as e:
+                    print(f"[!] Request error checking ISO 27001 at {endpoint}: {e!s}")
+                except json.JSONDecodeError as e:
+                    print(f"[!] JSON decode error checking ISO 27001 at {endpoint}: {e!s}")
                 except Exception as e:
-                    print(f"[!] Error checking ISO 27001 at {endpoint}: {str(e)}")
-        
+                    print(f"[!] Unexpected error checking ISO 27001 at {endpoint}: {e!s}")
+                    raise
+
+        except requests.exceptions.RequestException as e:
+            print(f"[!] Request error testing ISO 27001 compliance: {e!s}")
+        except json.JSONDecodeError as e:
+            print(f"[!] JSON decode error testing ISO 27001 compliance: {e!s}")
         except Exception as e:
-            print(f"[!] Error testing ISO 27001 compliance: {str(e)}")
-    
+            print(f"[!] Unexpected error testing ISO 27001 compliance: {e!s}")
+            raise
+
     def _test_nist_compliance(self):
         """Test NIST Framework compliance"""
         print(f"{Fore.CYAN}[*] Testing NIST Framework compliance...{Style.RESET_ALL}")
-        
+
         try:
             # Check for NIST framework implementation
-            response = self.session.get(self.target_url)
-            content = response.text.lower()
-            
-            nist_functions = [
-                'identify', 'protect', 'detect', 'respond', 'recover'
-            ]
-            
-            nist_indicators = [
-                'nist', 'cybersecurity framework', 'risk management',
-                'incident response', 'business continuity',
-                'vulnerability management', 'access control'
-            ]
-            
-            found_nist = [indicator for indicator in nist_indicators if indicator in content]
-            
-            if found_nist:
-                self.results['nist_compliance'].append({
-                    'type': 'NIST Framework Evidence',
-                    'severity': 'info',
-                    'nist_indicators': found_nist,
-                    'description': f'NIST Framework indicators found: {found_nist}'
-                })
-        
+            response = self.scanner.make_request(self.target_url, timeout=10)
+            if response:
+                content = response.text.lower()
+
+                nist_functions = [
+                    'identify', 'protect', 'detect', 'respond', 'recover'
+                ]
+
+                nist_indicators = [
+                    'nist', 'cybersecurity framework', 'risk management',
+                    'incident response', 'business continuity',
+                    'vulnerability management', 'access control'
+                ]
+
+                found_nist = [indicator for indicator in nist_indicators if indicator in content]
+
+                if found_nist:
+                    self.results['nist_compliance'].append({
+                        'type': 'NIST Framework Evidence',
+                        'severity': 'info',
+                        'nist_indicators': found_nist,
+                        'description': f'NIST Framework indicators found: {found_nist}'
+                    })
+
         except Exception as e:
             print(f"[!] Error testing NIST compliance: {str(e)}")
-    
+
     def _test_owasp_compliance(self):
         """Test OWASP Top 10 compliance"""
         print(f"{Fore.CYAN}[*] Testing OWASP Top 10 compliance...{Style.RESET_ALL}")
-        
+
         # This would typically involve running security tests
         # For now, check for OWASP-related documentation
         try:
             security_endpoints = ['/security', '/owasp', '/security-policy']
-            
+
             for endpoint in security_endpoints:
                 try:
                     url = urljoin(self.target_url, endpoint)
-                    response = self.session.get(url)
-                    
-                    if response.status_code == 200:
+                    response = self.scanner.make_request(url, timeout=10)
+
+                    if response and response.status_code == 200:
                         content = response.text.lower()
-                        
+
                         owasp_indicators = [
                             'owasp', 'top 10', 'injection', 'xss',
                             'broken authentication', 'sensitive data exposure',
                             'security misconfiguration', 'vulnerable components'
                         ]
-                        
+
                         found_owasp = [indicator for indicator in owasp_indicators if indicator in content]
-                        
+
                         if found_owasp:
                             self.results['owasp_compliance'].append({
                                 'type': 'OWASP Compliance Evidence',
@@ -643,56 +719,57 @@ class ComplianceModule:
                                 'owasp_indicators': found_owasp,
                                 'description': f'OWASP indicators found at {endpoint}: {found_owasp}'
                             })
-                
+
                 except Exception as e:
                     print(f"[!] Error checking OWASP at {endpoint}: {str(e)}")
-        
+
         except Exception as e:
             print(f"[!] Error testing OWASP compliance: {str(e)}")
-    
+
     def _test_security_headers(self):
         """Test security headers compliance"""
         print(f"{Fore.CYAN}[*] Testing security headers...{Style.RESET_ALL}")
-        
+
         try:
-            response = self.session.get(self.target_url)
-            headers = {k.lower(): v for k, v in response.headers.items()}
-            
-            for header, description in self.security_headers.items():
-                if header in headers:
-                    self.results['security_headers'].append({
-                        'type': 'Security Header Present',
-                        'severity': 'info',
-                        'header': header,
-                        'value': headers[header],
-                        'description': f'{description} - Header present'
-                    })
-                else:
-                    severity = 'high' if header in ['strict-transport-security', 'content-security-policy'] else 'medium'
-                    self.results['security_headers'].append({
-                        'type': 'Missing Security Header',
-                        'severity': severity,
-                        'header': header,
-                        'description': f'{description} - Header missing'
-                    })
-        
+            response = self.scanner.make_request(self.target_url, timeout=10)
+            if response:
+                headers = {k.lower(): v for k, v in response.headers.items()}
+
+                for header, description in self.security_headers.items():
+                    if header in headers:
+                        self.results['security_headers'].append({
+                            'type': 'Security Header Present',
+                            'severity': 'info',
+                            'header': header,
+                            'value': headers[header],
+                            'description': f'{description} - Header present'
+                        })
+                    else:
+                        severity = 'high' if header in ['strict-transport-security', 'content-security-policy'] else 'medium'
+                        self.results['security_headers'].append({
+                            'type': 'Missing Security Header',
+                            'severity': severity,
+                            'header': header,
+                            'description': f'{description} - Header missing'
+                        })
+
         except Exception as e:
             print(f"[!] Error testing security headers: {str(e)}")
-    
+
     def _analyze_privacy_policies(self):
         """Analyze privacy policies for compliance"""
         print(f"{Fore.CYAN}[*] Analyzing privacy policies...{Style.RESET_ALL}")
-        
+
         privacy_endpoints = ['/privacy', '/privacy-policy', '/terms', '/legal']
-        
+
         for endpoint in privacy_endpoints:
             try:
                 url = urljoin(self.target_url, endpoint)
-                response = self.session.get(url)
-                
-                if response.status_code == 200:
+                response = self.scanner.make_request(url, timeout=10)
+
+                if response and response.status_code == 200:
                     content = response.text.lower()
-                    
+
                     # Check for required privacy policy elements
                     required_elements = {
                         'data_collection': ['collect', 'gather', 'obtain'],
@@ -703,14 +780,14 @@ class ComplianceModule:
                         'contact_info': ['contact', 'email', 'address'],
                         'updates': ['update', 'change', 'modify']
                     }
-                    
+
                     found_elements = {}
                     for element, keywords in required_elements.items():
                         if any(keyword in content for keyword in keywords):
                             found_elements[element] = True
-                    
+
                     missing_elements = [elem for elem in required_elements.keys() if elem not in found_elements]
-                    
+
                     self.results['privacy_policies'].append({
                         'type': 'Privacy Policy Analysis',
                         'severity': 'medium' if missing_elements else 'info',
@@ -720,33 +797,33 @@ class ComplianceModule:
                         'completeness_score': len(found_elements) / len(required_elements),
                         'description': f'Privacy policy analysis for {endpoint}'
                     })
-            
+
             except Exception as e:
                 print(f"[!] Error analyzing privacy policy at {endpoint}: {str(e)}")
-    
+
     def _test_data_protection(self):
         """Test data protection measures"""
         print(f"{Fore.CYAN}[*] Testing data protection measures...{Style.RESET_ALL}")
-        
+
         # Check for data protection endpoints
         protection_endpoints = [
             '/data-export', '/download-data', '/delete-account',
             '/privacy-settings', '/account-settings'
         ]
-        
+
         protection_features = []
-        
+
         for endpoint in protection_endpoints:
             try:
                 url = urljoin(self.target_url, endpoint)
-                response = self.session.get(url)
-                
-                if response.status_code == 200:
+                response = self.scanner.make_request(url, timeout=10)
+
+                if response and response.status_code == 200:
                     protection_features.append(endpoint)
-            
+
             except Exception as e:
                 print(f"[!] Error testing data protection endpoint {endpoint}: {str(e)}")
-        
+
         if protection_features:
             self.results['data_protection'].append({
                 'type': 'Data Protection Features',
@@ -760,41 +837,41 @@ class ComplianceModule:
                 'severity': 'high',
                 'description': 'No data protection features found - compliance risk'
             })
-    
+
     def _test_audit_logging(self):
         """Test audit logging capabilities"""
         print(f"{Fore.CYAN}[*] Testing audit logging...{Style.RESET_ALL}")
-        
+
         # Check for audit-related endpoints
         audit_endpoints = ['/admin/logs', '/logs', '/audit', '/activity']
-        
+
         for endpoint in audit_endpoints:
             try:
                 url = urljoin(self.target_url, endpoint)
-                response = self.session.get(url)
-                
-                if response.status_code == 200:
+                response = self.scanner.make_request(url, timeout=10)
+
+                if response and response.status_code == 200:
                     self.results['audit_logs'].append({
                         'type': 'Audit Logging Interface',
                         'severity': 'info',
                         'endpoint': endpoint,
                         'description': f'Audit logging interface found at {endpoint}'
                     })
-                elif response.status_code == 403:
+                elif response and response.status_code == 403:
                     self.results['audit_logs'].append({
                         'type': 'Protected Audit Logs',
                         'severity': 'info',
                         'endpoint': endpoint,
                         'description': f'Protected audit logs at {endpoint} (access denied)'
                     })
-            
+
             except Exception as e:
                 print(f"[!] Error testing audit logging at {endpoint}: {str(e)}")
-    
+
     def _test_encryption_compliance(self):
         """Test encryption compliance"""
         print(f"{Fore.CYAN}[*] Testing encryption compliance...{Style.RESET_ALL}")
-        
+
         try:
             # Check HTTPS implementation
             parsed_url = urlparse(self.target_url)
@@ -810,74 +887,84 @@ class ComplianceModule:
                     'severity': 'critical',
                     'description': 'HTTPS not enabled - data transmitted in clear text'
                 })
-            
+
             # Check for encryption-related headers
-            response = self.session.get(self.target_url)
-            headers = response.headers
-            
-            if 'Strict-Transport-Security' in headers:
-                self.results['encryption_compliance'].append({
-                    'type': 'HSTS Header',
-                    'severity': 'info',
-                    'description': 'HTTP Strict Transport Security header present'
-                })
-        
+            response = self.scanner.make_request(self.target_url, timeout=10)
+            if response:
+                headers = response.headers
+
+                # Only check HSTS for HTTPS URLs with case-insensitive header lookup
+                if parsed_url.scheme == 'https':
+                    # Case-insensitive header lookup
+                    hsts_header = None
+                    for header_name, header_value in headers.items():
+                        if header_name.lower() == 'strict-transport-security':
+                            hsts_header = header_value
+                            break
+                    
+                    if hsts_header:
+                        self.results['encryption_compliance'].append({
+                            'type': 'HSTS Header',
+                            'severity': 'info',
+                            'description': 'HTTP Strict Transport Security header present'
+                        })
+
         except Exception as e:
             print(f"[!] Error testing encryption compliance: {str(e)}")
-    
+
     def _test_access_controls(self):
         """Test access control compliance"""
         print(f"{Fore.CYAN}[*] Testing access controls...{Style.RESET_ALL}")
-        
+
         # Check for authentication endpoints
         auth_endpoints = ['/login', '/signup', '/admin', '/api']
-        
+
         for endpoint in auth_endpoints:
             try:
                 url = urljoin(self.target_url, endpoint)
-                response = self.session.get(url)
-                
-                if response.status_code == 200:
+                response = self.scanner.make_request(url, timeout=10)
+
+                if response and response.status_code == 200:
                     self.results['access_controls'].append({
                         'type': 'Authentication Endpoint',
                         'severity': 'info',
                         'endpoint': endpoint,
                         'description': f'Authentication endpoint available at {endpoint}'
                     })
-                elif response.status_code == 403:
+                elif response and response.status_code == 403:
                     self.results['access_controls'].append({
                         'type': 'Protected Endpoint',
                         'severity': 'info',
                         'endpoint': endpoint,
                         'description': f'Protected endpoint at {endpoint} (access denied)'
                     })
-            
+
             except Exception as e:
                 print(f"[!] Error testing access controls at {endpoint}: {str(e)}")
-    
+
     def _test_data_retention(self):
         """Test data retention policies"""
         print(f"{Fore.CYAN}[*] Testing data retention policies...{Style.RESET_ALL}")
-        
+
         try:
             # Check for data retention information
             policy_endpoints = ['/privacy', '/terms', '/data-retention']
-            
+
             for endpoint in policy_endpoints:
                 try:
                     url = urljoin(self.target_url, endpoint)
-                    response = self.session.get(url)
-                    
-                    if response.status_code == 200:
+                    response = self.scanner.make_request(url, timeout=10)
+
+                    if response and response.status_code == 200:
                         content = response.text.lower()
-                        
+
                         retention_keywords = [
                             'retention', 'keep data', 'store data',
                             'delete data', 'data lifecycle', 'retention period'
                         ]
-                        
+
                         found_retention = [kw for kw in retention_keywords if kw in content]
-                        
+
                         if found_retention:
                             self.results['data_retention'].append({
                                 'type': 'Data Retention Policy',
@@ -886,36 +973,36 @@ class ComplianceModule:
                                 'retention_keywords': found_retention,
                                 'description': f'Data retention policy information found at {endpoint}'
                             })
-                
+
                 except Exception as e:
                     print(f"[!] Error checking data retention at {endpoint}: {str(e)}")
-        
+
         except Exception as e:
             print(f"[!] Error testing data retention: {str(e)}")
-    
+
     def _test_breach_notification(self):
         """Test breach notification procedures"""
         print(f"{Fore.CYAN}[*] Testing breach notification procedures...{Style.RESET_ALL}")
-        
+
         try:
             # Check for breach notification information
             notification_endpoints = ['/security', '/privacy', '/incident-response']
-            
+
             for endpoint in notification_endpoints:
                 try:
                     url = urljoin(self.target_url, endpoint)
-                    response = self.session.get(url)
-                    
-                    if response.status_code == 200:
+                    response = self.scanner.make_request(url, timeout=10)
+
+                    if response and response.status_code == 200:
                         content = response.text.lower()
-                        
+
                         breach_keywords = [
                             'data breach', 'security incident', 'breach notification',
                             'incident response', 'security breach', 'data incident'
                         ]
-                        
+
                         found_breach = [kw for kw in breach_keywords if kw in content]
-                        
+
                         if found_breach:
                             self.results['breach_notification'].append({
                                 'type': 'Breach Notification Procedures',
@@ -924,9 +1011,9 @@ class ComplianceModule:
                                 'breach_keywords': found_breach,
                                 'description': f'Breach notification procedures found at {endpoint}'
                             })
-                
+
                 except Exception as e:
                     print(f"[!] Error checking breach notification at {endpoint}: {str(e)}")
-        
+
         except Exception as e:
             print(f"[!] Error testing breach notification: {str(e)}")

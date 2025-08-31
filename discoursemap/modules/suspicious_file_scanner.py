@@ -15,16 +15,16 @@ from .malicious_pattern_checker import MaliciousPatternChecker
 
 class SuspiciousFileScanner:
     """Discourse-specific suspicious file scanner
-    
+
     Detects suspicious files that shouldn't exist in a Discourse forum
     installation, including potential backdoors, malware, and security
     threats specific to Ruby-based Discourse platform.
     """
-    
+
     def __init__(self, scanner):
         self.scanner = scanner
         self.pattern_checker = MaliciousPatternChecker()
-        
+
         # Suspicious file patterns that shouldn't exist in Discourse (Ruby-based)
         self.suspicious_patterns = [
             r'.*\.php$',  # PHP files (Discourse is Ruby-based, PHP indicates compromise)
@@ -42,7 +42,7 @@ class SuspiciousFileScanner:
             r'.*password.*\.txt$',  # Password files
             r'.*admin.*\.txt$'  # Admin files
         ]
-        
+
         # Common suspicious file names to check
         self.suspicious_files = [
             'shell.php',
@@ -84,17 +84,17 @@ class SuspiciousFileScanner:
             'decode.php',
             'obfuscated.php'
         ]
-    
+
     def scan_suspicious_files(self):
         """Scan for suspicious files that shouldn't exist in Discourse"""
         self.scanner.log("Scanning for suspicious files in Discourse installation...", 'debug')
-        
+
         suspicious_files_found = []
-        
+
         for suspicious_file in self.suspicious_files:
             url = urljoin(self.scanner.target_url, suspicious_file)
             response = self.scanner.make_request(url)
-            
+
             if response and response.status_code == 200:
                 file_info = {
                     'file': suspicious_file,
@@ -104,26 +104,26 @@ class SuspiciousFileScanner:
                     'risk_level': 'High',
                     'description': 'Suspicious file found - potential security risk'
                 }
-                
+
                 # Analyze content for malicious patterns
                 content = response.text if response.headers.get('content-type', '').startswith('text') else ''
                 malicious_patterns = self.pattern_checker.check_malicious_patterns(content)
-                if malicious_patterns['has_malicious']:
+                if malicious_patterns:  # List is truthy if it contains patterns
                     file_info['malicious_patterns'] = malicious_patterns
                     file_info['risk_level'] = 'Critical'
-                
+
                 suspicious_files_found.append(file_info)
                 self.scanner.log(f"Suspicious file found: {suspicious_file}", 'warning')
-        
+
         return suspicious_files_found
-    
+
     def check_suspicious_patterns(self, file_path):
         """Check if a file path matches suspicious patterns"""
         for pattern in self.suspicious_patterns:
             if re.match(pattern, file_path, re.IGNORECASE):
                 return True
         return False
-    
+
     def analyze_file_content(self, content, file_path):
         """Analyze file content for suspicious patterns"""
         analysis = {
@@ -131,37 +131,37 @@ class SuspiciousFileScanner:
             'risk_level': 'Low',
             'issues': []
         }
-        
+
         # Check for malicious patterns
         malicious_check = self.pattern_checker.check_malicious_patterns(content)
-        if malicious_check['has_malicious']:
+        if malicious_check:  # List is truthy if it contains patterns
             analysis['is_suspicious'] = True
             analysis['risk_level'] = 'Critical'
             analysis['issues'].append('Contains malicious code patterns')
             analysis['malicious_patterns'] = malicious_check
-        
+
         # Check for suspicious plugin content
         plugin_check = self.pattern_checker.check_suspicious_plugin_content(content)
-        if plugin_check['is_suspicious']:
+        if plugin_check:  # List is truthy if it contains patterns
             analysis['is_suspicious'] = True
             analysis['risk_level'] = 'Medium' if analysis['risk_level'] == 'Low' else analysis['risk_level']
             analysis['issues'].append('Contains suspicious plugin patterns')
             analysis['suspicious_patterns'] = plugin_check
-        
+
         # Check for suspicious JavaScript
         if self.pattern_checker.has_suspicious_js_content(content):
             analysis['is_suspicious'] = True
             analysis['risk_level'] = 'Medium' if analysis['risk_level'] == 'Low' else analysis['risk_level']
             analysis['issues'].append('Contains suspicious JavaScript code')
-        
+
         # Check file extension against Discourse platform (Ruby-based)
         if file_path.endswith('.php') and 'discourse' in content.lower():
             analysis['is_suspicious'] = True
             analysis['risk_level'] = 'High'
             analysis['issues'].append('PHP file detected in Ruby-based Discourse installation - potential security compromise')
-        
+
         return analysis
-    
+
     def get_risk_assessment(self, suspicious_files):
         """Get overall risk assessment based on found suspicious files"""
         if not suspicious_files:
@@ -170,10 +170,10 @@ class SuspiciousFileScanner:
                 'description': 'No suspicious files detected',
                 'recommendations': ['Continue regular monitoring']
             }
-        
+
         critical_files = [f for f in suspicious_files if f.get('risk_level') == 'Critical']
         high_risk_files = [f for f in suspicious_files if f.get('risk_level') == 'High']
-        
+
         if critical_files:
             return {
                 'risk_level': 'Critical',
@@ -207,7 +207,7 @@ class SuspiciousFileScanner:
                     'Monitor for additional suspicious activity'
                 ]
             }
-    
+
     def discover_discourse_backup_files(self):
         """Discover Discourse backup files"""
         discourse_backup_files = [
@@ -221,7 +221,7 @@ class SuspiciousFileScanner:
             '/admin/backups/rollback',
             '/admin/backups/upload',
             '/admin/backups/download',
-            
+
             # Configuration files
             '/config/database.yml',
             '/config/discourse.conf',
@@ -232,7 +232,7 @@ class SuspiciousFileScanner:
             '/config/puma.rb',
             '/config/nginx.conf',
             '/config/unicorn.rb',
-            
+
             # Environment and secrets
             '/.env',
             '/.env.production',
@@ -240,7 +240,7 @@ class SuspiciousFileScanner:
             '/config/secrets.yml',
             '/config/master.key',
             '/config/credentials.yml.enc',
-            
+
             # Log files
             '/log/production.log',
             '/log/unicorn.stderr.log',
@@ -249,32 +249,32 @@ class SuspiciousFileScanner:
             '/log/redis.log',
             '/log/nginx.access.log',
             '/log/nginx.error.log',
-            
+
             # SSL certificates
             '/ssl',
             '/certs',
             '/config/ssl',
             '/shared/ssl',
-            
+
             # Upload directories
             '/uploads',
             '/public/uploads',
             '/shared/uploads',
-            
+
             # Docker files
             '/Dockerfile',
             '/docker-compose.yml',
             '/.dockerignore',
             '/containers',
-            
+
             # Git repositories
             '/.git',
             '/.gitignore',
             '/.git/config'
         ]
-        
+
         return discourse_backup_files
-    
+
     def discover_discourse_config_files(self):
         """Discover Discourse configuration files"""
         discourse_config_files = [
@@ -286,7 +286,7 @@ class SuspiciousFileScanner:
             '/config/mail-receiver.template.yml',
             '/config/redis.template.yml',
             '/config/postgres.template.yml',
-            
+
             # Rails configuration
             '/config/application.rb',
             '/config/environment.rb',
@@ -298,32 +298,32 @@ class SuspiciousFileScanner:
             '/config/environments/production.rb',
             '/config/environments/development.rb',
             '/config/environments/test.rb',
-            
+
             # Environment files
             '/.env',
             '/.env.production',
             '/.env.development',
             '/.env.local',
             '/.env.example',
-            
+
             # Docker launcher paths
             '/launcher',
             '/shared/standalone/launcher',
             '/var/discourse/launcher',
-            
+
             # Nginx configuration
             '/etc/nginx/conf.d/discourse.conf',
             '/etc/nginx/sites-available/discourse',
             '/etc/nginx/sites-enabled/discourse',
-            
+
             # Systemd services
             '/etc/systemd/system/discourse.service',
             '/lib/systemd/system/discourse.service',
-            
+
             # Plugin configurations
             '/plugins/*/config',
             '/plugins/*/plugin.rb',
             '/plugins/*/settings.yml'
         ]
-        
+
         return discourse_config_files

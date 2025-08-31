@@ -12,12 +12,13 @@ import time
 from datetime import datetime
 from colorama import init, Fore, Style
 
-# Add the discoursemap module to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'discoursemap'))
+# Add the parent directory to path for relative imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from discoursemap.modules.scanner import DiscourseScanner
 from discoursemap.modules.reporter import Reporter
-from discoursemap.modules.utils import validate_url
+from discoursemap.lib.discourse_utils import validate_url
+from discoursemap.lib.config_manager import ConfigManager
 from discoursemap.modules.banner import Banner
 
 init(autoreset=True)
@@ -101,6 +102,18 @@ Examples:
     if not validate_url(args.url):
         print(f"{Fore.RED}Error: Invalid URL format!{Style.RESET_ALL}")
         sys.exit(1)
+    
+    # Discourse site validation - Import is_discourse_site function
+    from discoursemap.lib.discourse_utils import is_discourse_site
+    
+    print(f"{Fore.CYAN}[*] Verifying target is a Discourse forum...{Style.RESET_ALL}")
+    if not is_discourse_site(args.url, timeout=10):
+        print(f"{Fore.RED}[!] Error: Target is not a Discourse forum!{Style.RESET_ALL}")
+        print(f"{Fore.RED}[!] This tool is specifically designed for Discourse forums only.{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[!] Please ensure the target URL points to a valid Discourse installation.{Style.RESET_ALL}")
+        sys.exit(1)
+    else:
+        print(f"{Fore.GREEN}[+] Target confirmed as Discourse forum{Style.RESET_ALL}")
     
     # Determine performance preset
     if args.fast:

@@ -13,7 +13,7 @@ import hashlib
 import hmac
 from urllib.parse import urljoin, quote
 from bs4 import BeautifulSoup
-from .utils import extract_csrf_token, make_request
+from ..lib.discourse_utils import extract_csrf_token, make_request
 
 class CryptoModule:
     """Cryptographic security testing module for Discourse forums"""
@@ -37,7 +37,7 @@ class CryptoModule:
     
     def _get_csrf_token(self):
         """Helper method to get CSRF token"""
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = self.scanner.make_request(self.scanner.target_url)
         if response:
             return extract_csrf_token(response.text)
         return None
@@ -88,7 +88,7 @@ class CryptoModule:
         
         # Test password reset functionality
         reset_url = urljoin(self.scanner.target_url, '/password-reset')
-        response = make_request(self.scanner.session, 'GET', reset_url)
+        response = self.scanner.make_request(reset_url)
         
         if response and response.status_code == 200:
             # Look for hash patterns in response
@@ -119,7 +119,7 @@ class CryptoModule:
         
         for user_url in user_urls:
             url = urljoin(self.scanner.target_url, user_url)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200:
                 # Check for exposed password hashes
@@ -139,7 +139,7 @@ class CryptoModule:
         print(f"{self.scanner.colors['info']}[*] Testing weak encryption...{self.scanner.colors['reset']}")
         
         # Test for weak cookie encryption
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = self.scanner.make_request(self.scanner.target_url)
         
         if response:
             cookies = response.cookies
@@ -192,7 +192,7 @@ class CryptoModule:
         
         for endpoint in api_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200:
                 try:
@@ -238,7 +238,7 @@ class CryptoModule:
         print(f"{self.scanner.colors['info']}[*] Testing JWT vulnerabilities...{self.scanner.colors['reset']}")
         
         # Look for JWT tokens in responses
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = self.scanner.make_request(self.scanner.target_url)
         
         if response:
             # Search for JWT patterns
@@ -258,7 +258,7 @@ class CryptoModule:
         
         for endpoint in jwt_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200:
                 jwt_tokens = re.findall(jwt_pattern, response.text)
@@ -362,7 +362,7 @@ class CryptoModule:
             for endpoint in test_endpoints:
                 url = urljoin(self.scanner.target_url, endpoint)
                 headers = {'Authorization': f'Bearer {none_token}'}
-                response = make_request(self.scanner.session, 'GET', url, headers=headers)
+                response = self.scanner.make_request(url, headers=headers)
                 
                 if response and response.status_code == 200:
                     self.results['jwt_vulnerabilities'].append({
@@ -381,7 +381,7 @@ class CryptoModule:
         print(f"{self.scanner.colors['info']}[*] Testing session security...{self.scanner.colors['reset']}")
         
         # Get initial session
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = self.scanner.make_request(self.scanner.target_url)
         
         if response:
             session_cookies = []
@@ -485,7 +485,7 @@ class CryptoModule:
     def _test_session_fixation(self):
         """Test for session fixation vulnerabilities"""
         # Get initial session ID
-        response1 = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response1 = self.scanner.make_request(self.scanner.target_url)
         initial_session = None
         
         if response1:
@@ -505,7 +505,7 @@ class CryptoModule:
                 'authenticity_token': csrf_token
             }
             
-            response2 = make_request(self.scanner.session, 'POST', login_url, data=login_data)
+            response2 = self.scanner.make_request(login_url, method='POST', data=login_data)
             
             if response2:
                 # Check if session ID changed
@@ -533,7 +533,7 @@ class CryptoModule:
         # Change User-Agent
         self.scanner.session.headers['User-Agent'] = 'DifferentBrowser/1.0'
         
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = self.scanner.make_request(self.scanner.target_url)
         
         # Restore original User-Agent
         self.scanner.session.headers['User-Agent'] = original_ua
@@ -603,7 +603,7 @@ class CryptoModule:
                 'test_param': f'test_value_{i}'
             }
             
-            response = make_request(self.scanner.session, 'POST', test_url, data=data)
+            response = self.scanner.make_request(test_url, method='POST', data=data)
             
             if response and response.status_code == 200:
                 if i > 0:  # Second or third request
@@ -642,7 +642,7 @@ class CryptoModule:
                 'test_param': 'test_value'
             }
             
-            response = make_request(self.scanner.session, 'POST', test_url, data=data)
+            response = self.scanner.make_request(test_url, method='POST', data=data)
             
             if response and response.status_code == 200 and 'error' not in response.text.lower():
                 self.results['csrf_analysis'].append({
@@ -656,7 +656,7 @@ class CryptoModule:
         print(f"{self.scanner.colors['info']}[*] Testing crypto misconfiguration...{self.scanner.colors['reset']}")
         
         # Test SSL/TLS configuration
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = self.scanner.make_request(self.scanner.target_url)
         
         if response:
             # Check for weak SSL ciphers in headers
@@ -678,7 +678,7 @@ class CryptoModule:
         
         for endpoint in config_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200:
                 # Look for hardcoded keys/secrets
@@ -721,7 +721,7 @@ class CryptoModule:
         
         for path in key_paths:
             url = urljoin(self.scanner.target_url, path)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200:
                 content = response.text
@@ -859,15 +859,15 @@ class CryptoModule:
             url = urljoin(self.scanner.target_url, endpoint)
             
             # Test without signature
-            response1 = make_request(self.scanner.session, 'POST', url, data={'test': 'data'})
+            response1 = self.scanner.make_request(url, method='POST', data={'test': 'data'})
             
             # Test with invalid signature
             headers = {'X-Signature': 'invalid_signature'}
-            response2 = make_request(self.scanner.session, 'POST', url, data={'test': 'data'}, headers=headers)
+            response2 = self.scanner.make_request(url, method='POST', data={'test': 'data'}, headers=headers)
             
             # Test with empty signature
             headers = {'X-Signature': ''}
-            response3 = make_request(self.scanner.session, 'POST', url, data={'test': 'data'}, headers=headers)
+            response3 = self.scanner.make_request(url, method='POST', data={'test': 'data'}, headers=headers)
             
             # Analyze responses
             if response1 and response1.status_code == 200:
@@ -906,7 +906,7 @@ class CryptoModule:
                     'authenticity_token': csrf_token
                 }
                 
-                response = make_request(self.scanner.session, 'POST', login_url, data=data)
+                response = self.scanner.make_request(login_url, method='POST', data=data)
                 end_time = time.time()
                 
                 if response:
@@ -925,7 +925,7 @@ class CryptoModule:
                     'authenticity_token': csrf_token
                 }
                 
-                response = make_request(self.scanner.session, 'POST', login_url, data=data)
+                response = self.scanner.make_request(login_url, method='POST', data=data)
                 end_time = time.time()
                 
                 if response:

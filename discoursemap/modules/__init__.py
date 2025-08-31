@@ -8,10 +8,11 @@ Includes vulnerability testing, endpoint discovery, user enumeration, and more.
 __version__ = "1.0.0"
 __author__ = "ibrahimsql"
 
-from .utils import (
+from ..lib.discourse_utils import (
     validate_url, normalize_url, make_request, extract_csrf_token,
     extract_discourse_version, generate_payloads, random_user_agent,
-    format_time, print_progress, save_json, load_json, is_discourse_site, clean_url
+    format_time, print_progress, save_json, load_json, is_discourse_site,
+    clean_url, detect_waf
 )
 from .scanner import DiscourseScanner
 from .reporter import Reporter

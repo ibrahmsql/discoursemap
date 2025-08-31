@@ -1,0 +1,460 @@
+{
+  "info": {
+    "module_name": "Information Gathering",
+    "target": "https://meta.discourse.org",
+    "discourse_info": {
+      "version": "3.6.0",
+      "generator": "Discourse 3.6.0.beta1-dev - https://github.com/discourse/discourse version bb6c5c9fa1793887f6ba3a3489f2ce0d7549a6e9",
+      "site_title": "Discourse Meta - The Official Support Forum for Discourse",
+      "indicators": {
+        "ember_app": false,
+        "discourse_css": true,
+        "discourse_js": true,
+        "csrf_token": false
+      },
+      "site_config": {
+        "default_locale": null,
+        "title": null,
+        "description": null,
+        "logo_url": null,
+        "mobile_logo_url": null,
+        "favicon_url": null,
+        "apple_touch_icon_url": null,
+        "auth_providers": [
+          {
+            "can_connect": true,
+            "can_revoke": true,
+            "custom_url": null,
+            "frame_height": null,
+            "frame_width": null,
+            "icon_override": "fab-discourse",
+            "name": "discourse_id",
+            "pretty_name_override": null,
+            "provider_url": "https://id.discourse.com",
+            "title_override": null
+          },
+          {
+            "can_connect": true,
+            "can_revoke": true,
+            "custom_url": null,
+            "frame_height": 400,
+            "frame_width": 580,
+            "icon_override": "fab-facebook",
+            "name": "facebook",
+            "pretty_name_override": null,
+            "provider_url": "https://www.facebook.com",
+            "title_override": null
+          },
+          {
+            "can_connect": true,
+            "can_revoke": true,
+            "custom_url": null,
+            "frame_height": 500,
+            "frame_width": 850,
+            "icon_override": null,
+            "name": "google_oauth2",
+            "pretty_name_override": null,
+            "provider_url": "https://accounts.google.com",
+            "title_override": null
+          },
+          {
+            "can_connect": true,
+            "can_revoke": true,
+            "custom_url": null,
+            "frame_height": null,
+            "frame_width": null,
+            "icon_override": "fab-github",
+            "name": "github",
+            "pretty_name_override": null,
+            "provider_url": "https://github.com",
+            "title_override": null
+          },
+          {
+            "can_connect": true,
+            "can_revoke": true,
+            "custom_url": null,
+            "frame_height": null,
+            "frame_width": null,
+            "icon_override": "fab-x-twitter",
+            "name": "twitter",
+            "pretty_name_override": null,
+            "provider_url": "https://x.com",
+            "title_override": null
+          },
+          {
+            "can_connect": true,
+            "can_revoke": true,
+            "custom_url": null,
+            "frame_height": null,
+            "frame_width": null,
+            "icon_override": "fab-discord",
+            "name": "discord",
+            "pretty_name_override": null,
+            "provider_url": "https://discord.com",
+            "title_override": null
+          },
+          {
+            "can_connect": true,
+            "can_revoke": true,
+            "custom_url": null,
+            "frame_height": null,
+            "frame_width": null,
+            "icon_override": "fab-apple",
+            "name": "apple",
+            "pretty_name_override": null,
+            "provider_url": "https://account.apple.com",
+            "title_override": null
+          }
+        ],
+        "trust_levels": {
+          "newuser": 0,
+          "basic": 1,
+          "member": 2,
+          "regular": 3,
+          "leader": 4
+        }
+      }
+    },
+    "server_info": {
+      "server": "nginx",
+      "powered_by": "Unknown",
+      "content_type": "text/html; charset=utf-8",
+      "status_code": 200,
+      "response_time": 0.313998,
+      "security_headers": {
+        "x_frame_options": "SAMEORIGIN",
+        "x_content_type_options": "nosniff",
+        "x_xss_protection": "0",
+        "strict_transport_security": null,
+        "content_security_policy": "upgrade-insecure-requests; base-uri 'self'; object-src 'none'; script-src 'nonce-H5T42PeZNFbD71Dul0v9NMDdt' 'strict-dynamic'; frame-ancestors 'self' https://lillinator.github.io https://blog.discourse.org https://civilized-discourse-construction-kit-inc.ghost.io; manifest-src 'self'",
+        "referrer_policy": "strict-origin-when-cross-origin"
+      }
+    },
+    "plugins": [
+      {
+        "name": "chat",
+        "endpoint": "/chat",
+        "status": "detected"
+      },
+      {
+        "name": "bbcode",
+        "endpoint": "detected_in_source",
+        "status": "likely_installed"
+      },
+      {
+        "name": "math",
+        "endpoint": "detected_in_source",
+        "status": "likely_installed"
+      },
+      {
+        "name": "poll",
+        "endpoint": "detected_in_source",
+        "status": "likely_installed"
+      },
+      {
+        "name": "solved",
+        "endpoint": "detected_in_source",
+        "status": "likely_installed"
+      },
+      {
+        "name": "voting",
+        "endpoint": "detected_in_source",
+        "status": "likely_installed"
+      }
+    ],
+    "admin_access": false,
+    "users_found": [],
+    "categories": [
+      {
+        "id": 124,
+        "name": "General",
+        "slug": "general",
+        "description": "Create topics here that don\u2019t fit into any other existing category.",
+        "topic_count": 202,
+        "post_count": 1759,
+        "read_restricted": false
+      },
+      {
+        "id": 10,
+        "name": "Documentation",
+        "slug": "documentation",
+        "description": "Official documentation for how to use Discourse, install and configure sites, develop plugins and themes, and troubleshoot common issues. Includes topics for tutorials, how-tos, general reference and troubleshooting.",
+        "topic_count": 0,
+        "post_count": 0,
+        "read_restricted": false
+      },
+      {
+        "id": 177,
+        "name": "Community wiki",
+        "slug": "community-wiki",
+        "description": "This wiki includes guides, tips, and examples written by members of the Discourse community. All content is created and edited by users of Trust Level 2 and above, and is open to new community contributions.",
+        "topic_count": 0,
+        "post_count": 0,
+        "read_restricted": false
+      },
+      {
+        "id": 67,
+        "name": "Announcements",
+        "slug": "announcements",
+        "description": "Important News and Updates from Discourse",
+        "topic_count": 444,
+        "post_count": 6105,
+        "read_restricted": false
+      },
+      {
+        "id": 6,
+        "name": "Support",
+        "slug": "support",
+        "description": "The category for general support questions on using your Discourse site.",
+        "topic_count": 19347,
+        "post_count": 125117,
+        "read_restricted": false
+      },
+      {
+        "id": 1,
+        "name": "Bug",
+        "slug": "bug",
+        "description": "A bug report means something is broken, preventing normal/typical use of Discourse. Do be sure to search prior to submitting bugs. Include repro steps, and only describe one bug per topic please. If your topic is about an official plugin, include the plugin tag.",
+        "topic_count": 6191,
+        "post_count": 42631,
+        "read_restricted": false
+      },
+      {
+        "id": 9,
+        "name": "UX",
+        "slug": "ux",
+        "description": "UX topics are used for when Discourse technically works as intended, but the design, interaction, or flow creates unnecessary friction, confusion, or inefficiency for users. Also for small \u201cquality of life\u201d improvements. completed or fixed tags are applied depending on the nature of the topic.",
+        "topic_count": 3315,
+        "post_count": 21633,
+        "read_restricted": false
+      },
+      {
+        "id": 2,
+        "name": "Feature",
+        "slug": "feature",
+        "description": "Discussion about existing Discourse features, how they can be improved or enhanced, and how proposed new features could work.",
+        "topic_count": 7675,
+        "post_count": 62953,
+        "read_restricted": false
+      },
+      {
+        "id": 148,
+        "name": "Data & reporting",
+        "slug": "data-reporting",
+        "description": "This is the category for everything related to Discourse data and reporting. Here, you can discuss dashboard reports, custom badge queries, data-explorer queries and any other analytic add-ons.",
+        "topic_count": 753,
+        "post_count": 3660,
+        "read_restricted": false
+      },
+      {
+        "id": 24,
+        "name": "SSO",
+        "slug": "sso",
+        "description": "For queries specifically about SSO (single sign-on) and login using third-party providers (Google, Facebook, GitHub etc). See the official documentation on DiscourseConnect SSO.",
+        "topic_count": 623,
+        "post_count": 3203,
+        "read_restricted": false
+      },
+      {
+        "id": 65,
+        "name": "Community",
+        "slug": "community",
+        "description": "A great platform doesn\u2019t guarantee success. Community building is a science. This category is for discussions about launching, building, growing and managing a thriving community.",
+        "topic_count": 985,
+        "post_count": 10268,
+        "read_restricted": false
+      },
+      {
+        "id": 7,
+        "name": "Dev",
+        "slug": "dev",
+        "description": "The category for all things Discourse Development. Building a customization for yourself or the community? Then this is the category for you!",
+        "topic_count": 4212,
+        "post_count": 24881,
+        "read_restricted": false
+      },
+      {
+        "id": 14,
+        "name": "Marketplace",
+        "slug": "marketplace",
+        "description": "This is your hub for all Discourse-related commerce: jobs, gigs, plugins, themes, hosting, and more.",
+        "topic_count": 1288,
+        "post_count": 6521,
+        "read_restricted": false
+      },
+      {
+        "id": 22,
+        "name": "Plugin",
+        "slug": "plugin",
+        "description": "A directory of Discourse plugins, both official and third-party.",
+        "topic_count": 348,
+        "post_count": 12951,
+        "read_restricted": false
+      },
+      {
+        "id": 61,
+        "name": "Theme",
+        "slug": "theme",
+        "description": "Themes are expansive customizations that change multiple elements of the style of your forum design, and often also include additional front-end features.",
+        "topic_count": 70,
+        "post_count": 2571,
+        "read_restricted": false
+      },
+      {
+        "id": 120,
+        "name": "Theme component",
+        "slug": "theme-component",
+        "description": "Theme components are customizations that change surface elements of your forum design, or add extra front-end features.",
+        "topic_count": 366,
+        "post_count": 10091,
+        "read_restricted": false
+      },
+      {
+        "id": 31,
+        "name": "Installation",
+        "slug": "installation",
+        "description": "Getting Discourse up and running, keeping it going, updating, and any other general sysadmin maintenance.",
+        "topic_count": 4022,
+        "post_count": 34573,
+        "read_restricted": false
+      },
+      {
+        "id": 106,
+        "name": "Migration",
+        "slug": "migration",
+        "description": "You want to migrate your community to Discourse? Awesome! This is the category where you can ask questions, get help, and document your Discourse migration journey.",
+        "topic_count": 280,
+        "post_count": 1975,
+        "read_restricted": false
+      },
+      {
+        "id": 30,
+        "name": "Releases",
+        "slug": "releases",
+        "description": "Outlining each official release of Discourse, and plans for future releases.",
+        "topic_count": 24,
+        "post_count": 106,
+        "read_restricted": false
+      },
+      {
+        "id": 3,
+        "name": "Site feedback",
+        "slug": "site-feedback",
+        "description": "Discussion about meta.discourse.org itself - the organization of this forum, how it works, and how we can improve this site.",
+        "topic_count": 515,
+        "post_count": 4096,
+        "read_restricted": false
+      },
+      {
+        "id": 35,
+        "name": "Praise",
+        "slug": "praise",
+        "description": "Have something nice to say about Discourse? We would love to hear it",
+        "topic_count": 332,
+        "post_count": 1207,
+        "read_restricted": false
+      },
+      {
+        "id": 193,
+        "name": "IEEE Summer of Code 2025",
+        "slug": "ieee-summer-of-code-2025",
+        "description": "Discussion about Discourse contributions on the IEEE Summer of Code 2025.",
+        "topic_count": 2,
+        "post_count": 2,
+        "read_restricted": false
+      }
+    ],
+    "scan_time": 14.244878053665161,
+    "ssl_info": {
+      "ssl_enabled": true,
+      "certificate_info": {
+        "subject": {
+          "commonName": "meta.discourse.org"
+        },
+        "issuer": {
+          "countryName": "US",
+          "organizationName": "Amazon",
+          "commonName": "Amazon RSA 2048 M03"
+        },
+        "version": 3,
+        "serial_number": "0CAF6E07ACC91941958EC4CF793F3CEE",
+        "not_before": "May 24 00:00:00 2025 GMT",
+        "not_after": "Jun 20 23:59:59 2026 GMT",
+        "signature_algorithm": null
+      },
+      "security_headers": {
+        "content-security-policy": "upgrade-insecure-requests; base-uri 'self'; object-src 'none'; script-src 'nonce-tekHWYfFXXTUqZU4XvmNn3zRP' 'strict-dynamic'; frame-ancestors 'self' https://lillinator.github.io https://blog.discourse.org https://civilized-discourse-construction-kit-inc.ghost.io; manifest-src 'self'",
+        "x-frame-options": "SAMEORIGIN",
+        "x-content-type-options": "nosniff",
+        "x-xss-protection": "0",
+        "referrer-policy": "strict-origin-when-cross-origin"
+      },
+      "ssl_issues": [
+        {
+          "issue": "missing_security_headers",
+          "missing_headers": [
+            "strict-transport-security"
+          ],
+          "severity": "low"
+        }
+      ]
+    },
+    "discourse_features": {
+      "features_detected": [
+        "discourse_routing",
+        "discourse_routing",
+        "discourse_routing",
+        "discourse_routing",
+        "discourse_routing",
+        "discourse_routing",
+        "discourse_routing",
+        "discourse_routing"
+      ],
+      "discourse_version": null,
+      "special_endpoints": [
+        {
+          "endpoint": "/latest.json",
+          "accessible": true,
+          "content_type": "application/json; charset=utf-8"
+        },
+        {
+          "endpoint": "/top.json",
+          "accessible": true,
+          "content_type": "application/json; charset=utf-8"
+        },
+        {
+          "endpoint": "/categories.json",
+          "accessible": true,
+          "content_type": "application/json; charset=utf-8"
+        },
+        {
+          "endpoint": "/tags.json",
+          "accessible": true,
+          "content_type": "application/json; charset=utf-8"
+        },
+        {
+          "endpoint": "/groups.json",
+          "accessible": true,
+          "content_type": "application/json; charset=utf-8"
+        },
+        {
+          "endpoint": "/badges.json",
+          "accessible": true,
+          "content_type": "application/json; charset=utf-8"
+        },
+        {
+          "endpoint": "/site.json",
+          "accessible": true,
+          "content_type": "application/json; charset=utf-8"
+        },
+        {
+          "endpoint": "/about.json",
+          "accessible": true,
+          "content_type": "application/json; charset=utf-8"
+        }
+      ]
+    }
+  },
+  "scan_time": 14.245443105697632,
+  "async_mode": true
+}
