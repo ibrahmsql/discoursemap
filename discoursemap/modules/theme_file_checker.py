@@ -11,11 +11,11 @@ from .malicious_pattern_checker import MaliciousPatternChecker
 
 class ThemeFileChecker:
     """Checks Discourse theme files for security and integrity issues"""
-    
+
     def __init__(self, scanner):
         self.scanner = scanner
         self.pattern_checker = MaliciousPatternChecker()
-        
+
         # Common theme file paths to check
         self.theme_paths = [
             'stylesheets/',
@@ -26,10 +26,10 @@ class ThemeFileChecker:
             'themes/default/',
             'themes/custom/'
         ]
-        
+
         # Theme file extensions
         self.theme_extensions = ['.css', '.scss', '.sass', '.js', '.coffee', '.hbs', '.erb']
-        
+
         # Suspicious theme patterns
         self.suspicious_theme_patterns = [
             r'eval\s*\(',
@@ -59,30 +59,30 @@ class ThemeFileChecker:
             r'url\s*\(\s*["\']?data:',
             r'background\s*:\s*url\s*\(\s*["\']?javascript:'
         ]
-    
+
     def check_theme_files(self):
         """Check theme files for integrity and security issues"""
         self.scanner.log("Checking theme files...", 'debug')
-        
+
         theme_issues = []
-        
+
         # Check common theme paths
         for theme_path in self.theme_paths:
             url = urljoin(self.scanner.target_url, theme_path)
             response = self.scanner.make_request(url)
-            
+
             if response and response.status_code == 200:
                 # Try to extract theme file names from directory listing
                 theme_files = self._extract_theme_files(response.text, theme_path)
-                
+
                 for theme_file in theme_files:
                     file_url = urljoin(url, theme_file)
                     file_response = self.scanner.make_request(file_url)
-                    
+
                     if file_response and file_response.status_code == 200:
                         file_issues = self._check_theme_content(theme_file, file_response.text, file_url)
                         theme_issues.extend(file_issues)
-        
+
         # Check specific common theme files
         common_theme_files = [
             'stylesheets/application.css',
@@ -96,28 +96,28 @@ class ThemeFileChecker:
             'themes/default/mobile/mobile.scss',
             'themes/default/common/common.scss'
         ]
-        
+
         for theme_file in common_theme_files:
             url = urljoin(self.scanner.target_url, theme_file)
             response = self.scanner.make_request(url)
-            
+
             if response and response.status_code == 200:
                 file_issues = self._check_theme_content(theme_file, response.text, url)
                 theme_issues.extend(file_issues)
-        
+
         return theme_issues
-    
+
     def _extract_theme_files(self, content, base_path):
         """Extract theme file names from directory listing or HTML content"""
         theme_files = []
-        
+
         # Look for file links in directory listing
         patterns = [
             r'href=["\']([^"\']*/[^"\'/]*\.(css|scss|sass|js|coffee|hbs|erb))["\']',
             r'href=["\']([^"\']*(css|scss|sass|js|coffee|hbs|erb))["\']',
             r'([a-zA-Z0-9_-]+\.(css|scss|sass|js|coffee|hbs|erb))'
         ]
-        
+
         for pattern in patterns:
             matches = re.findall(pattern, content, re.IGNORECASE)
             for match in matches:
@@ -125,16 +125,16 @@ class ThemeFileChecker:
                     theme_files.append(match[0])
                 else:
                     theme_files.append(match)
-        
+
         # Remove duplicates and clean up
         theme_files = list(set([f.strip('/') for f in theme_files if f and not f.startswith('http')]))
-        
+
         return theme_files[:30]  # Limit to prevent excessive requests
-    
+
     def _check_theme_content(self, theme_file, content, url):
         """Check theme content for security issues"""
         issues = []
-        
+
         # Check for malicious patterns
         malicious_check = self.pattern_checker.check_malicious_patterns(content)
         if malicious_check['has_malicious']:
@@ -146,7 +146,7 @@ class ThemeFileChecker:
                 'description': 'Theme file contains malicious code patterns',
                 'patterns': malicious_check['patterns']
             })
-        
+
         # Check for suspicious JavaScript
         if self.pattern_checker.has_suspicious_js_content(content):
             issues.append({
@@ -156,7 +156,7 @@ class ThemeFileChecker:
                 'severity': 'High',
                 'description': 'Theme file contains suspicious JavaScript code'
             })
-        
+
         # Check for theme-specific suspicious patterns
         for pattern in self.suspicious_theme_patterns:
             if re.search(pattern, content, re.IGNORECASE | re.MULTILINE):
@@ -168,7 +168,7 @@ class ThemeFileChecker:
                     'description': f'Theme file contains suspicious pattern: {pattern}',
                     'pattern': pattern
                 })
-        
+
         # Check for external resource loading
         external_patterns = [
             r'@import\s+["\']https?://[^"\'\'\\n\\r]+["\']',
@@ -176,7 +176,7 @@ class ThemeFileChecker:
             r'src\s*=\s*["\']https?://[^"\'\'\\n\\r]+["\']',
             r'href\s*=\s*["\']https?://[^"\'\'\\n\\r]+["\']'
         ]
-        
+
         for pattern in external_patterns:
             matches = re.findall(pattern, content, re.IGNORECASE)
             for match in matches:
@@ -188,7 +188,7 @@ class ThemeFileChecker:
                     'description': f'Theme file loads external resource: {match}',
                     'resource': match
                 })
-        
+
         # Check for inline styles with suspicious content
         if theme_file.endswith(('.css', '.scss', '.sass')):
             suspicious_css_patterns = [
@@ -198,7 +198,7 @@ class ThemeFileChecker:
                 r'data:text/html',
                 r'@import\s+["\']data:'
             ]
-            
+
             for pattern in suspicious_css_patterns:
                 if re.search(pattern, content, re.IGNORECASE):
                     issues.append({
@@ -209,9 +209,9 @@ class ThemeFileChecker:
                         'description': f'CSS file contains suspicious pattern: {pattern}',
                         'pattern': pattern
                     })
-        
+
         return issues
-    
+
     def discover_discourse_theme_endpoints(self):
         """Discover Discourse theme endpoints"""
         # Discourse theme-related endpoints
@@ -232,7 +232,7 @@ class ThemeFileChecker:
             '/admin/customize/robots',
             '/admin/customize/embedding',
             '/admin/customize/permalinks',
-            
+
             # Theme assets
             '/theme-javascripts',
             '/theme-stylesheets',
@@ -242,37 +242,37 @@ class ThemeFileChecker:
             '/stylesheets/desktop_theme.css',
             '/stylesheets/mobile_theme.css',
             '/extra-locales',
-            
+
             # Theme uploads
             '/uploads/default',
             '/uploads/default/theme',
             '/uploads/default/theme_uploads',
             '/uploads/default/optimized',
             '/uploads/default/original',
-            
+
             # Component themes
             '/admin/customize/components',
             '/admin/customize/components.json',
-            
+
             # Theme settings
             '/admin/site_settings/category/theme',
             '/admin/site_settings/category/theming',
-            
+
             # Custom CSS/JS
             '/admin/customize/css_html/show',
             '/admin/customize/css_html/edit',
-            
+
             # Theme preview
             '/theme-preview',
             '/safe-mode',
             '/theme-qunit',
-            
+
             # Brand assets
             '/admin/customize/watched_words',
             '/admin/customize/form_templates',
             '/admin/customize/themes/bulk_destroy'
         ]
-        
+
         return discourse_theme_endpoints
 
     def get_theme_security_summary(self, all_issues):

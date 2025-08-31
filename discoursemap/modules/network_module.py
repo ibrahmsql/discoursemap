@@ -515,7 +515,7 @@ class NetworkModule:
         
         for protocol in protocols:
             url = f"{protocol}://{subdomain}"
-            response = make_request(self.scanner.session, 'GET', url, timeout=5)
+            response = self.scanner.make_request(url, timeout=5)
             
             if response:
                 # Update subdomain info with service details
@@ -540,7 +540,7 @@ class NetworkModule:
         """Detect CDN usage"""
         print(f"{self.scanner.colors['info']}[*] Performing CDN detection...{self.scanner.colors['reset']}")
         
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = self.scanner.make_request(self.scanner.target_url)
         
         if response:
             headers = response.headers
@@ -587,7 +587,7 @@ class NetworkModule:
         server_headers = []
         
         for i in range(5):
-            response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+            response = self.scanner.make_request(self.scanner.target_url)
             if response:
                 server = response.headers.get('Server', '')
                 x_served_by = response.headers.get('X-Served-By', '')
@@ -649,7 +649,7 @@ class NetworkModule:
         for payload in waf_payloads:
             # Test payload in URL parameter
             test_url = f"{self.scanner.target_url}?test={payload}"
-            response = make_request(self.scanner.session, 'GET', test_url)
+            response = self.scanner.make_request(test_url)
             
             if response:
                 # Check for WAF blocking
@@ -682,7 +682,7 @@ class NetworkModule:
         blocked_count = 0
         
         for i in range(20):  # Send 20 rapid requests
-            response = make_request(self.scanner.session, 'GET', self.scanner.target_url, timeout=5)
+            response = self.scanner.make_request(self.scanner.target_url, timeout=5)
             request_count += 1
             
             if response:
@@ -729,7 +729,7 @@ class NetworkModule:
             total_requests = pattern['count']
             
             for i in range(total_requests):
-                response = make_request(self.scanner.session, 'GET', self.scanner.target_url, timeout=5)
+                response = self.scanner.make_request(self.scanner.target_url, timeout=5)
                 
                 if response:
                     # Check for DDoS protection responses

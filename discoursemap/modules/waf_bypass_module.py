@@ -14,7 +14,7 @@ import random
 import base64
 import urllib.parse
 from urllib.parse import urljoin, quote, unquote
-from ..lib.discourse_utils import make_request, random_user_agent
+from ..lib.discourse_utils import random_user_agent
 
 class WAFBypassModule:
     """WAF bypass testing module for Discourse forums"""
@@ -90,7 +90,7 @@ class WAFBypassModule:
         
         for payload in waf_payloads:
             url = urljoin(self.scanner.target_url, f"/search?q={quote(payload)}")
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url, method='GET')
             
             if response:
                 # Check response headers for WAF signatures
@@ -141,7 +141,7 @@ class WAFBypassModule:
             try:
                 encoded_payload = encoder(base_payload)
                 url = urljoin(self.scanner.target_url, f"/search?q={encoded_payload}")
-                response = make_request(self.scanner.session, 'GET', url)
+                response = self.scanner.make_request(url, method='GET')
                 
                 if response:
                     bypass_result = {
@@ -181,7 +181,7 @@ class WAFBypassModule:
         # Test rapid requests without headers
         baseline_responses = []
         for i in range(10):
-            response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+            response = self.scanner.make_request(self.scanner.target_url, method='GET')
             if response:
                 baseline_responses.append(response.status_code)
             time.sleep(0.1)
@@ -190,7 +190,7 @@ class WAFBypassModule:
         for headers in bypass_headers:
             bypass_responses = []
             for i in range(10):
-                response = make_request(self.scanner.session, 'GET', self.scanner.target_url, headers=headers)
+                response = self.scanner.make_request(self.scanner.target_url, method='GET', headers=headers)
                 if response:
                     bypass_responses.append(response.status_code)
                 time.sleep(0.1)
@@ -230,7 +230,7 @@ class WAFBypassModule:
                 'User-Agent': random_user_agent()
             }
             
-            response = make_request(self.scanner.session, 'GET', self.scanner.target_url, headers=headers)
+            response = self.scanner.make_request(self.scanner.target_url, method='GET', headers=headers)
             
             if response:
                 rotation_result = {
@@ -254,23 +254,29 @@ class WAFBypassModule:
         advanced_techniques = [
             {
                 'name': 'HTTP Parameter Pollution',
-                'payload': 'search?q=normal&q=<script>alert(1)</script>'
+                'payload': 'search?q=normal&q=<script>alert(1)</script>',
+                'method': 'GET',
             },
             {
                 'name': 'HTTP Method Override',
                 'payload': 'search',
-                'headers': {'X-HTTP-Method-Override': 'POST'}
+                'headers': {'X-HTTP-Method-Override': 'GET'},
+                'data': 'q=<script>alert(1)</script>',
+                'method': 'POST',
             },
             {
                 'name': 'Content-Type Confusion',
                 'payload': 'search',
                 'headers': {'Content-Type': 'application/json'},
-                'data': '{"q": "<script>alert(1)</script>"}'
+                'data': '{"q":"<script>alert(1)</script>"}',
+                'method': 'POST',
             },
             {
                 'name': 'Chunked Transfer Encoding',
                 'payload': 'search',
-                'headers': {'Transfer-Encoding': 'chunked'}
+                'headers': {},
+                'data': 'q=<script>alert(1)</script>',
+                'method': 'POST',
             }
         ]
         
@@ -280,7 +286,8 @@ class WAFBypassModule:
                 headers = technique.get('headers', {})
                 data = technique.get('data')
                 
-                response = make_request(self.scanner.session, 'GET', url, headers=headers, data=data)
+                method = technique.get('method', 'GET')
+                response = self.scanner.make_request(url, method=method, headers=headers, data=data)
                 
                 if response:
                     bypass_result = {

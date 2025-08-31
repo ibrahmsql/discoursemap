@@ -14,21 +14,21 @@ from .asset_file_checker import AssetFileChecker
 
 class FileIntegrityModule:
     """Checks file integrity and detects modifications"""
-    
+
     def __init__(self, scanner):
         self.scanner = scanner
-        
+
         # Initialize specialized checkers
         self.core_checker = CoreFileChecker(scanner)
         self.suspicious_scanner = SuspiciousFileScanner(scanner)
         self.plugin_checker = PluginFileChecker(scanner)
         self.theme_checker = ThemeFileChecker(scanner)
         self.asset_checker = AssetFileChecker(scanner)
-    
+
     def run(self):
         """Run file integrity checks"""
         self.scanner.log("Starting file integrity checks...", 'info')
-        
+
         results = {
             'core_files': self.core_checker.check_core_files(),
             'suspicious_files': self.suspicious_scanner.scan_suspicious_files(),
@@ -37,20 +37,20 @@ class FileIntegrityModule:
             'asset_files': self.asset_checker.check_asset_files(),
             'modifications': self.core_checker.analyze_modifications()
         }
-        
+
         # Calculate overall integrity score
         results['integrity_score'] = self._calculate_integrity_score(results)
-        
-        self.scanner.log(f"File integrity check completed. Score: {results['integrity_score']}/100", 'info')
-        
-        return results
-    
 
-    
+        self.scanner.log(f"File integrity check completed. Score: {results['integrity_score']}/100", 'info')
+
+        return results
+
+
+
     def _calculate_integrity_score(self, results):
         """Calculate overall integrity score"""
         total_score = 100
-        
+
         # Deduct points for core file issues
         for file_info in results.get('core_files', []):
             if isinstance(file_info, dict):
@@ -64,17 +64,17 @@ class FileIntegrityModule:
                             total_score -= 10
                         elif issue.get('severity') == 'Medium':
                             total_score -= 5
-        
+
         # Deduct points for suspicious files
         suspicious_files = results.get('suspicious_files', [])
         if isinstance(suspicious_files, list):
             total_score -= len(suspicious_files) * 25
-        
+
         # Deduct points for modifications
         modifications = results.get('modifications', [])
         if isinstance(modifications, list):
             total_score -= len(modifications) * 15
-        
+
         # Deduct points for plugin/theme/asset issues
         for file_category in ['plugin_files', 'theme_files', 'asset_files']:
             file_list = results.get(file_category, [])
@@ -88,5 +88,5 @@ class FileIntegrityModule:
                                 total_score -= 5
                             elif issue.get('severity') == 'Medium':
                                 total_score -= 2
-        
+
         return max(0, total_score)

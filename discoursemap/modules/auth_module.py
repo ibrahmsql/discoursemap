@@ -12,7 +12,7 @@ import base64
 import hashlib
 from urllib.parse import urljoin, quote, parse_qs, urlparse
 from bs4 import BeautifulSoup
-from ..lib.discourse_utils import extract_csrf_token, make_request
+from ..lib.discourse_utils import extract_csrf_token
 
 class AuthModule:
     """Authentication and authorization testing module for Discourse forums"""
@@ -36,7 +36,7 @@ class AuthModule:
     
     def _get_csrf_token(self):
         """Helper method to get CSRF token"""
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = self.scanner.make_request(self.scanner.target_url)
         if response:
             return extract_csrf_token(response.text)
         return None
@@ -101,7 +101,7 @@ class AuthModule:
         
         for endpoint in protected_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url)
             
             if response:
                 if response.status_code == 200 and 'login' not in response.text.lower():
@@ -144,7 +144,7 @@ class AuthModule:
         methods = ['POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS', 'TRACE']
         
         for method in methods:
-            response = make_request(self.scanner.session, method, url)
+            response = self.scanner.make_request(url, method=method)
             
             if response and response.status_code == 200:
                 self.results['auth_bypass'].append({
@@ -180,7 +180,7 @@ class AuthModule:
         ]
         
         for headers in bypass_headers:
-            response = make_request(self.scanner.session, 'GET', url, headers=headers)
+            response = self.scanner.make_request(url, headers=headers)
             
             if response and response.status_code == 200 and 'login' not in response.text.lower():
                 self.results['auth_bypass'].append({
@@ -196,7 +196,7 @@ class AuthModule:
         login_url = urljoin(self.scanner.target_url, '/session')
         
         # Get CSRF token from login page
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = self.scanner.make_request(self.scanner.target_url)
         csrf_token = None
         if response:
             csrf_token = extract_csrf_token(response.text)
@@ -220,13 +220,11 @@ class AuthModule:
             
             for test in pollution_tests:
                 headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-                response = make_request(self.scanner.session, 'POST', login_url, 
-                                      data=test['data'], headers=headers)
+                response = self.scanner.make_request(login_url, method='POST', data=test['data'], headers=headers)
                 
                 if response and response.status_code == 200:
                     # Check if we got admin access
-                    admin_check = make_request(self.scanner.session, 'GET', 
-                                             urljoin(self.scanner.target_url, '/admin'))
+                    admin_check = self.scanner.make_request(urljoin(self.scanner.target_url, '/admin'))
                     
                     if admin_check and admin_check.status_code == 200:
                         self.results['auth_bypass'].append({
@@ -253,7 +251,7 @@ class AuthModule:
         
         for payload in traversal_payloads:
             url = urljoin(self.scanner.target_url, payload)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200 and 'login' not in response.text.lower():
                 self.results['auth_bypass'].append({
@@ -290,7 +288,7 @@ class AuthModule:
         ]
         
         # Get CSRF token from login page
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = self.scanner.make_request(self.scanner.target_url)
         csrf_token = None
         if response:
             csrf_token = extract_csrf_token(response.text)
@@ -317,12 +315,11 @@ class AuthModule:
                 if csrf_token:
                     payload['authenticity_token'] = csrf_token
                 
-                response = make_request(self.scanner.session, 'POST', url, data=payload)
+                response = self.scanner.make_request(url, method='POST', data=payload)
                 
                 if response and response.status_code in [200, 302]:
                     # Check if we gained admin access
-                    admin_check = make_request(self.scanner.session, 'GET', 
-                                             urljoin(self.scanner.target_url, '/admin'))
+                    admin_check = self.scanner.make_request(urljoin(self.scanner.target_url, '/admin'))
                     
                     if admin_check and admin_check.status_code == 200:
                         self.results['privilege_escalation'].append({
@@ -363,12 +360,11 @@ class AuthModule:
                 if csrf_token:
                     payload['authenticity_token'] = csrf_token
                 
-                response = make_request(self.scanner.session, 'POST', url, data=payload)
+                response = self.scanner.make_request(url, method='POST', data=payload)
                 
                 if response and response.status_code in [200, 302]:
                     # Check if we gained elevated privileges
-                    admin_check = make_request(self.scanner.session, 'GET', 
-                                             urljoin(self.scanner.target_url, '/admin'))
+                    admin_check = self.scanner.make_request(urljoin(self.scanner.target_url, '/admin'))
                     
                     if admin_check and admin_check.status_code == 200:
                         self.results['privilege_escalation'].append({
@@ -413,7 +409,7 @@ class AuthModule:
                 
                 # Test both POST and PUT methods
                 for method in ['POST', 'PUT']:
-                    response = make_request(self.scanner.session, method, url, data=flag)
+                    response = self.scanner.make_request(url, method=method, data=flag)
                     
                     if response and response.status_code in [200, 201, 302]:
                         # Check response for admin indicators
@@ -469,7 +465,7 @@ class AuthModule:
                     payload['authenticity_token'] = csrf_token
                 
                 headers = {'Content-Type': 'application/json'}
-                response = make_request(self.scanner.session, 'POST', url, headers=headers, data=json.dumps(payload))
+                response = self.scanner.make_request(url, method='POST', headers=headers, data=json.dumps(payload))
                 
                 if response and response.status_code in [200, 201]:
                     try:
@@ -503,7 +499,7 @@ class AuthModule:
     def _test_session_fixation(self):
         """Test for session fixation vulnerabilities"""
         # Get initial session
-        response1 = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response1 = self.scanner.make_request(self.scanner.target_url)
         initial_session_id = None
         
         if response1:
@@ -524,7 +520,7 @@ class AuthModule:
                     'authenticity_token': csrf_token
                 }
                 
-                response2 = make_request(self.scanner.session, 'POST', login_url, data=login_data)
+                response2 = self.scanner.make_request(login_url, method='POST', data=login_data)
                 
                 if response2:
                     # Check if session ID changed
@@ -549,7 +545,7 @@ class AuthModule:
         # Change User-Agent
         self.scanner.session.headers['User-Agent'] = 'AttackerBrowser/1.0'
         
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = self.scanner.make_request(self.scanner.target_url)
         
         # Restore original User-Agent
         self.scanner.session.headers['User-Agent'] = original_ua
@@ -581,15 +577,13 @@ class AuthModule:
             }
             
             # Login with both sessions
-            response1 = make_request(self.scanner.session, 'POST', login_url, data=login_data)
-            response2 = make_request(session2, 'POST', login_url, data=login_data)
+            response1 = self.scanner.make_request(login_url, method='POST', data=login_data)
+            response2 = self.scanner.make_request(login_url, method='POST', data=login_data)
             
             if response1 and response2:
                 # Check if both sessions are active
-                check1 = make_request(self.scanner.session, 'GET', 
-                                    urljoin(self.scanner.target_url, '/my/preferences'))
-                check2 = make_request(session2, 'GET', 
-                                    urljoin(self.scanner.target_url, '/my/preferences'))
+                check1 = self.scanner.make_request(urljoin(self.scanner.target_url, '/my/preferences'))
+                check2 = self.scanner.make_request(urljoin(self.scanner.target_url, '/my/preferences'))
                 
                 if (check1 and check1.status_code == 200 and 
                     check2 and check2.status_code == 200):
@@ -602,7 +596,7 @@ class AuthModule:
     def _test_session_timeout(self):
         """Test session timeout implementation"""
         # This is a simplified test - in reality, you'd wait for actual timeout
-        response = make_request(self.scanner.session, 'GET', self.scanner.target_url)
+        response = self.scanner.make_request(self.scanner.target_url)
         
         if response:
             # Check for session timeout configuration in response
@@ -710,7 +704,7 @@ class AuthModule:
                     'authenticity_token': csrf_token
                 }
                 
-                response = make_request(self.scanner.session, 'POST', login_url, data=login_data)
+                response = self.scanner.make_request(login_url, method='POST', data=login_data)
                 
                 if response:
                     if response.status_code == 429:  # Rate limited
@@ -759,7 +753,7 @@ class AuthModule:
         
         for endpoint in oauth_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url)
             
             if response and response.status_code in [200, 302]:
                 # Test OAuth vulnerabilities
@@ -832,11 +826,11 @@ class AuthModule:
             'state': 'test_state'
         }
         
-        response = make_request(self.scanner.session, 'GET', callback_url, params=params)
+        response = self.scanner.make_request(callback_url, params=params)
         
         if response and response.status_code == 200:
             # Try to reuse the same code
-            response2 = make_request(self.scanner.session, 'GET', callback_url, params=params)
+            response2 = self.scanner.make_request(callback_url, params=params)
             
             if response2 and response2.status_code == 200:
                 self.results['oauth_vulnerabilities'].append({
@@ -862,7 +856,7 @@ class AuthModule:
         
         for endpoint in sso_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url)
             
             if response and response.status_code in [200, 302]:
                 # Test SSO vulnerabilities
@@ -966,7 +960,7 @@ class AuthModule:
             url = urljoin(self.scanner.target_url, endpoint)
             
             # Test without authentication
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200:
                 try:
@@ -991,7 +985,7 @@ class AuthModule:
                     'X-Api-Key': key
                 }
                 
-                response = make_request(self.scanner.session, 'GET', url, headers=headers)
+                response = self.scanner.make_request(url, headers=headers)
                 
                 if response and response.status_code == 200:
                     try:
@@ -1044,12 +1038,11 @@ class AuthModule:
                     'authenticity_token': csrf_token
                 }
                 
-                response = make_request(self.scanner.session, 'POST', login_url, data=login_data)
+                response = self.scanner.make_request(login_url, method='POST', data=login_data)
                 
                 if response and response.status_code in [200, 302]:
                     # Check if login was successful
-                    admin_check = make_request(self.scanner.session, 'GET', 
-                                             urljoin(self.scanner.target_url, '/admin'))
+                    admin_check = self.scanner.make_request(urljoin(self.scanner.target_url, '/admin'))
                     
                     if admin_check and admin_check.status_code == 200:
                         self.results['admin_access'].append({
@@ -1145,7 +1138,7 @@ class AuthModule:
                 'authenticity_token': csrf_token
             }
             
-            response1 = make_request(self.scanner.session, 'POST', login_url, data=existing_user_data)
+            response1 = self.scanner.make_request(login_url, method='POST', data=existing_user_data)
             
             # Test with non-existing username
             nonexisting_user_data = {
@@ -1154,7 +1147,7 @@ class AuthModule:
                 'authenticity_token': csrf_token
             }
             
-            response2 = make_request(self.scanner.session, 'POST', login_url, data=nonexisting_user_data)
+            response2 = self.scanner.make_request(login_url, method='POST', data=nonexisting_user_data)
             
             if response1 and response2:
                 # Compare responses
@@ -1181,7 +1174,7 @@ class AuthModule:
                 'authenticity_token': csrf_token
             }
             
-            response1 = make_request(self.scanner.session, 'POST', register_url, data=existing_data)
+            response1 = self.scanner.make_request(register_url, method='POST', data=existing_data)
             
             # Test with new username
             new_data = {
@@ -1191,7 +1184,7 @@ class AuthModule:
                 'authenticity_token': csrf_token
             }
             
-            response2 = make_request(self.scanner.session, 'POST', register_url, data=new_data)
+            response2 = self.scanner.make_request(register_url, method='POST', data=new_data)
             
             if response1 and response2:
                 if ('taken' in response1.text.lower() or 
@@ -1248,11 +1241,11 @@ class AuthModule:
             
             # Test with existing username
             params1 = {'username': 'admin'}
-            response1 = make_request(self.scanner.session, 'GET', url, params=params1)
+            response1 = self.scanner.make_request(url, params=params1)
             
             # Test with non-existing username
             params2 = {'username': 'nonexistentuser12345'}
-            response2 = make_request(self.scanner.session, 'GET', url, params=params2)
+            response2 = self.scanner.make_request(url, params=params2)
             
             if response1 and response2:
                 if response1.text != response2.text:

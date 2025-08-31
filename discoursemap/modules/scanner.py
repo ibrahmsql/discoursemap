@@ -20,7 +20,7 @@ from urllib3.util.retry import Retry
 from typing import Optional, Dict, Any, List, Union, Tuple
 import requests
 from ..lib.discourse_utils import (
-    make_request, extract_csrf_token, extract_discourse_version,
+    extract_csrf_token, extract_discourse_version,
     generate_payloads, random_user_agent, print_progress,
     is_discourse_site, clean_url, validate_url
 )

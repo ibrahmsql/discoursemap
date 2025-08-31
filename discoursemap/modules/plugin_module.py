@@ -11,7 +11,7 @@ import json
 import base64
 from urllib.parse import urljoin, quote
 from bs4 import BeautifulSoup
-from ..lib.discourse_utils import extract_csrf_token, make_request
+from ..lib.discourse_utils import extract_csrf_token
 
 class PluginModule:
     """Plugin security testing module for Discourse forums"""
@@ -74,7 +74,7 @@ class PluginModule:
         
         # Admin plugins sayfası
         admin_plugins_url = urljoin(self.scanner.target_url, '/admin/plugins')
-        response = make_request(self.scanner.session, 'GET', admin_plugins_url)
+        response = self.scanner.make_request(admin_plugins_url)
         
         if response and response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -88,7 +88,7 @@ class PluginModule:
         
         # API üzerinden plugin listesi
         api_plugins_url = urljoin(self.scanner.target_url, '/admin/plugins.json')
-        response = make_request(self.scanner.session, 'GET', api_plugins_url)
+        response = self.scanner.make_request(api_plugins_url)
         
         if response and response.status_code == 200:
             try:
@@ -126,7 +126,7 @@ class PluginModule:
         
         for plugin in common_plugins:
             plugin_url = urljoin(self.scanner.target_url, f'/plugins/{plugin}')
-            response = make_request(self.scanner.session, 'GET', plugin_url)
+            response = self.scanner.make_request(plugin_url)
             
             if response and response.status_code == 200:
                 self.results['plugins_found'].append({
@@ -142,7 +142,7 @@ class PluginModule:
         
         # Admin themes sayfası
         admin_themes_url = urljoin(self.scanner.target_url, '/admin/customize/themes')
-        response = make_request(self.scanner.session, 'GET', admin_themes_url)
+        response = self.scanner.make_request(admin_themes_url)
         
         if response and response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -156,7 +156,7 @@ class PluginModule:
         
         # API üzerinden theme listesi
         api_themes_url = urljoin(self.scanner.target_url, '/admin/themes.json')
-        response = make_request(self.scanner.session, 'GET', api_themes_url)
+        response = self.scanner.make_request(api_themes_url)
         
         if response and response.status_code == 200:
             try:
@@ -231,7 +231,7 @@ class PluginModule:
         if plugin_name in plugin_endpoints:
             for endpoint in plugin_endpoints[plugin_name]:
                 url = urljoin(self.scanner.target_url, endpoint)
-                response = make_request(self.scanner.session, 'GET', url)
+                response = self.scanner.make_request(url)
                 
                 if response:
                     if response.status_code == 200:
@@ -287,7 +287,7 @@ class PluginModule:
             # Test CSS upload/modification
             css_url = urljoin(self.scanner.target_url, f'/admin/themes/{theme_id}/css')
             data = {'css': payload}
-            response = make_request(self.scanner.session, 'POST', css_url, data=data)
+            response = self.scanner.make_request(css_url, method='POST', data=data)
             
             if response and 'success' in response.text.lower():
                 self.results['theme_vulnerabilities'].append({
@@ -311,7 +311,7 @@ class PluginModule:
             # Test JS upload/modification
             js_url = urljoin(self.scanner.target_url, f'/admin/themes/{theme_id}/javascript')
             data = {'javascript': payload}
-            response = make_request(self.scanner.session, 'POST', js_url, data=data)
+            response = self.scanner.make_request(js_url, method='POST', data=data)
             
             if response and 'success' in response.text.lower():
                 self.results['theme_vulnerabilities'].append({
@@ -335,7 +335,7 @@ class PluginModule:
             # Test template modification
             template_url = urljoin(self.scanner.target_url, f'/admin/themes/{theme_id}/templates')
             data = {'template': payload}
-            response = make_request(self.scanner.session, 'POST', template_url, data=data)
+            response = self.scanner.make_request(template_url, method='POST', data=data)
             
             if response and 'success' in response.text.lower():
                 self.results['theme_vulnerabilities'].append({
@@ -389,7 +389,7 @@ class PluginModule:
             
             # Check plugin manifest for permissions
             manifest_url = urljoin(self.scanner.target_url, f'/plugins/{plugin_name}/plugin.rb')
-            response = make_request(self.scanner.session, 'GET', manifest_url)
+            response = self.scanner.make_request(manifest_url)
             
             if response and response.status_code == 200:
                 for permission in dangerous_permissions:
@@ -415,7 +415,7 @@ class PluginModule:
         
         for path in file_access_paths:
             url = urljoin(self.scanner.target_url, path)
-            response = make_request(self.scanner.session, 'GET', url)
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200:
                 if any(keyword in response.text.lower() for keyword in ['root:', 'daemon:', 'bin:', 'sys:']):
@@ -445,7 +445,7 @@ class PluginModule:
                 # Test theme settings injection
                 settings_url = urljoin(self.scanner.target_url, f'/admin/themes/{theme_id}/settings')
                 data = {'setting_value': payload}
-                response = make_request(self.scanner.session, 'POST', settings_url, data=data)
+                response = self.scanner.make_request(settings_url, method='POST', data=data)
                 
                 if response and 'success' in response.text.lower():
                     self.results['theme_injection'].append({

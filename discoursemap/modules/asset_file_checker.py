@@ -18,7 +18,7 @@ from .malicious_pattern_checker import MaliciousPatternChecker
 
 class AssetFileChecker:
     """Checks asset files for security vulnerabilities and malicious content"""
-    
+
     def __init__(self, scanner):
         self.scanner = scanner
         self.session = requests.Session()
@@ -38,33 +38,33 @@ class AssetFileChecker:
             'total_files_checked': 0,
             'scan_time': 0
         }
-    
+
     def run(self):
         """Run  asset file security check"""
         print("\n[*] Starting  asset file security check...")
-        
+
         try:
             # Get main page content
             response = self.session.get(self.scanner.target_url, timeout=10)
             if response.status_code != 200:
                 print(f"[!] Could not access target URL: {response.status_code}")
                 return self.results
-            
+
             # Extract asset files from main page
             asset_files = self._extract_asset_files(response.text, self.scanner.target_url)
-            
+
             # Check each asset file
             for asset_file in asset_files:
                 self._check_asset_file(asset_file)
-            
+
             # Generate summary
             self.results['summary'] = self._generate_summary()
-            
+
         except Exception as e:
             print(f"[!] Error in asset file checker: {e}")
-        
+
         return self.results
-    
+
     def check_asset_files(self):
         """Check  asset files for security issues"""
         try:
@@ -72,21 +72,21 @@ class AssetFileChecker:
             response = self.session.get(self.scanner.target_url, timeout=10)
             if not response or response.status_code != 200:
                 return []
-            
+
             # Extract asset files
             asset_files = self._extract_asset_files(response.text, self.scanner.target_url)
-            
+
             all_issues = []
-            
+
             for asset_file in asset_files:
                 try:
                     asset_url = urljoin(self.scanner.target_url, asset_file)
                     asset_response = self.session.get(asset_url, timeout=10)
-                    
+
                     if asset_response.status_code == 200:
                         issues = self._check_asset_content(asset_file, asset_response.text, asset_url)
                         all_issues.extend(issues)
-                        
+
                         self.results['asset_files'].append({
                             'file': asset_file,
                             'url': asset_url,
@@ -94,46 +94,46 @@ class AssetFileChecker:
                             'content_type': asset_response.headers.get('Content-Type', ''),
                             'issues_found': len(issues)
                         })
-                        
+
                         self.results['total_files_checked'] += 1
-                        
+
                 except Exception as e:
                     print(f"[!] Error checking asset file {asset_file}: {e}")
                     continue
-            
+
             self.results['security_issues'] = all_issues
             return all_issues
-            
+
         except Exception as e:
             print(f"[!] Error in asset file checking: {e}")
             return []
-    
+
     def _extract_asset_files(self, content, base_path):
         """Extract  asset file URLs from HTML content"""
         asset_files = set()
-        
+
         # JavaScript files
         js_pattern = r'<script[^>]+src=["\']([^"\'>]+)["\'][^>]*>'
         js_matches = re.findall(js_pattern, content, re.IGNORECASE)
         asset_files.update(js_matches)
-        
+
         # CSS files
         css_pattern = r'<link[^>]+href=["\']([^"\'>]+\.css[^"\'>]*)["\'][^>]*>'
         css_matches = re.findall(css_pattern, content, re.IGNORECASE)
         asset_files.update(css_matches)
-        
+
         # Filter out external URLs and keep only relative paths
         filtered_assets = []
         for asset in asset_files:
             if not asset.startswith(('http://', 'https://', '//', 'data:')):
                 filtered_assets.append(asset)
-        
+
         return filtered_assets
-    
+
     def _check_asset_content(self, asset_file, content, url):
         """Check asset file content for security issues"""
         issues = []
-        
+
         # Check for malicious patterns
         malicious_results = self.malicious_checker.check_content(content)
         for result in malicious_results:
@@ -146,7 +146,7 @@ class AssetFileChecker:
                     'description': result['description'],
                     'pattern': result['pattern_type']
                 })
-        
+
         # Check for obfuscated code
         obfuscation_indicators = [
             r'[a-zA-Z0-9]{50,}',
@@ -157,12 +157,12 @@ class AssetFileChecker:
             r'Function\s*\(',
             r'[a-zA-Z_$][a-zA-Z0-9_$]*\[\s*["\'][^"\'\'\n\r]{1,3}["\']\s*\]'
         ]
-        
+
         obfuscation_score = 0
         for pattern in obfuscation_indicators:
             matches = re.findall(pattern, content)
             obfuscation_score += len(matches)
-        
+
         if obfuscation_score > 10:
             issues.append({
                 'type': 'obfuscated_code',
@@ -172,7 +172,7 @@ class AssetFileChecker:
                 'description': f'Asset file appears to contain obfuscated code (score: {obfuscation_score})',
                 'obfuscation_score': obfuscation_score
             })
-        
+
         # Check for external resource loading
         external_patterns = [
             r'src\s*=\s*["\']https?://[^"\'\'\\n\\r]+["\']',
@@ -180,7 +180,7 @@ class AssetFileChecker:
             r'url\s*\(\s*["\']?https?://[^"\')\\n\\r]+["\']?\)',
             r'@import\s+["\']https?://[^"\'\'\\n\\r]+["\']'
         ]
-        
+
         for pattern in external_patterns:
             matches = re.findall(pattern, content, re.IGNORECASE)
             for match in matches:
@@ -192,7 +192,7 @@ class AssetFileChecker:
                     'description': f'Asset file loads external resource: {match}',
                     'resource': match
                 })
-        
+
         # Check for hardcoded credentials or sensitive data
         sensitive_patterns = [
             r'password\s*[=:]\s*["\'][^"\'\'\\n\\r]{6,}["\']',
@@ -201,7 +201,7 @@ class AssetFileChecker:
             r'token\s*[=:]\s*["\'][^"\'\'\\n\\r]{16,}["\']',
             r'key\s*[=:]\s*["\'][^"\'\'\\n\\r]{16,}["\']'
         ]
-        
+
         for pattern in sensitive_patterns:
             matches = re.findall(pattern, content, re.IGNORECASE)
             for match in matches:
@@ -213,7 +213,7 @@ class AssetFileChecker:
                     'description': f'Asset file contains potential sensitive data: {match[:50]}...',
                     'data_type': 'credentials'
                 })
-        
+
         # Check for suspicious function calls
         suspicious_functions = [
             r'eval\s*\(',
@@ -223,7 +223,7 @@ class AssetFileChecker:
             r'document\.write\s*\(',
             r'innerHTML\s*=\s*[^;]+'
         ]
-        
+
         for pattern in suspicious_functions:
             matches = re.findall(pattern, content, re.IGNORECASE)
             if matches:
@@ -235,15 +235,15 @@ class AssetFileChecker:
                     'description': f'Asset file uses potentially dangerous function: {pattern}',
                     'function_count': len(matches)
                 })
-        
+
         return issues
-    
+
     def _check_asset_file(self, asset_file):
         """Check individual asset file"""
         try:
             asset_url = urljoin(self.scanner.target_url, asset_file)
             response = self.session.get(asset_url, timeout=10)
-            
+
             if response.status_code == 200:
                 # Basic file info
                 file_info = {
@@ -253,21 +253,21 @@ class AssetFileChecker:
                     'content_type': response.headers.get('Content-Type', ''),
                     'status_code': response.status_code
                 }
-                
+
                 # Security checks
                 issues = self._check_asset_content(asset_file, response.text, asset_url)
                 file_info['issues'] = issues
                 file_info['issue_count'] = len(issues)
-                
+
                 self.results['asset_files'].append(file_info)
                 self.results['total_files_checked'] += 1
-                
+
                 if issues:
                     print(f"[!] Found {len(issues)} issues in {asset_file}")
-                
+
         except Exception as e:
             print(f"[!] Error checking asset file {asset_file}: {e}")
-    
+
     def get_asset_security_summary(self, all_issues):
         """Generate security summary for asset files"""
         summary = {
@@ -284,9 +284,9 @@ class AssetFileChecker:
                 'suspicious_functions': len([i for i in all_issues if i.get('type') == 'suspicious_function'])
             }
         }
-        
+
         return summary
-    
+
     def analyze_javascript_endpoints(self):
         """Analyze JavaScript files for endpoint references"""
         js_files = [
@@ -294,14 +294,14 @@ class AssetFileChecker:
             '/assets/js/app.js', '/static/js/main.js',
             '/public/js/app.js', '/dist/js/app.js'
         ]
-        
+
         found_endpoints = []
-        
+
         for js_file in js_files:
             try:
                 url = urljoin(self.scanner.target_url, js_file)
                 js_response = self.session.get(url, timeout=10)
-            
+
                 if js_response and js_response.status_code == 200:
                     # Look for API endpoints in JavaScript
                     endpoint_patterns = [
@@ -311,7 +311,7 @@ class AssetFileChecker:
                         r'url:\s*["\']([^"\'\'\\]+)["\']',
                         r'endpoint:\s*["\']([^"\'\'\\]+)["\']'
                     ]
-                    
+
                     for pattern in endpoint_patterns:
                         endpoints = re.findall(pattern, js_response.text)
                         for endpoint in endpoints[:10]:  # Limit endpoints per script
@@ -321,26 +321,26 @@ class AssetFileChecker:
                                     'source_file': js_file,
                                     'url': url
                                 })
-            
+
             except Exception:
                 continue
-        
+
         return found_endpoints
-    
+
     def analyze_discourse_robots_sitemap(self):
         """Analyze Discourse robots.txt and sitemap for additional endpoints"""
         found_endpoints = []
-        
+
         # Check robots.txt for Discourse-specific paths
         try:
             robots_url = urljoin(self.scanner.target_url, '/robots.txt')
             robots_response = self.session.get(robots_url, timeout=10)
-            
+
             if robots_response.status_code == 200:
                 # Extract disallowed paths from robots.txt
                 disallow_pattern = r'Disallow:\s*([^\s]+)'
                 disallowed_paths = re.findall(disallow_pattern, robots_response.text)
-                
+
                 for path in disallowed_paths[:20]:  # Limit to first 20
                     if path.startswith('/') and len(path) > 1:
                         found_endpoints.append({
@@ -348,11 +348,11 @@ class AssetFileChecker:
                             'source': 'robots.txt',
                             'type': 'disallowed'
                         })
-                
+
                 # Look for sitemap references
                 sitemap_pattern = r'Sitemap:\s*([^\s]+)'
                 sitemaps = re.findall(sitemap_pattern, robots_response.text)
-                
+
                 for sitemap_url in sitemaps[:5]:  # Limit to first 5
                     try:
                         sitemap_response = self.session.get(sitemap_url, timeout=10)
@@ -360,7 +360,7 @@ class AssetFileChecker:
                             # Extract URLs from sitemap
                             url_pattern = r'<loc>([^<]+)</loc>'
                             urls = re.findall(url_pattern, sitemap_response.text)
-                            
+
                             for url in urls[:50]:  # Limit to first 50
                                 parsed_url = urlparse(url)
                                 if parsed_url.path and parsed_url.path != '/':
@@ -371,10 +371,10 @@ class AssetFileChecker:
                                     })
                     except Exception:
                         continue
-        
+
         except Exception:
             pass
-        
+
         return found_endpoints
 
     def _generate_summary(self):
@@ -382,7 +382,7 @@ class AssetFileChecker:
         all_issues = []
         for asset_file in self.results['asset_files']:
             all_issues.extend(asset_file.get('issues', []))
-        
+
         return {
             'total_files_checked': self.results['total_files_checked'],
             'total_issues_found': len(all_issues),

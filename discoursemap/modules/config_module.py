@@ -11,7 +11,7 @@ import json
 import yaml
 from urllib.parse import urljoin, quote
 from bs4 import BeautifulSoup
-from ..lib.discourse_utils import extract_csrf_token, make_request
+from ..lib.discourse_utils import extract_csrf_token
 
 class ConfigModule:
     """Configuration security testing module for Discourse forums"""
@@ -257,7 +257,7 @@ class ConfigModule:
         
         for config_file in config_files:
             url = urljoin(self.scanner.target_url, config_file)
-            response = make_request(url, 'GET')
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200:
                 content_type = response.headers.get('content-type', '').lower()
@@ -311,7 +311,7 @@ class ConfigModule:
         
         # Admin site settings
         admin_settings_url = urljoin(self.scanner.target_url, '/admin/site_settings')
-        response = make_request(admin_settings_url, 'GET')
+        response = self.scanner.make_request(admin_settings_url)
         
         if response and response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -429,7 +429,7 @@ class ConfigModule:
         
         for endpoint in config_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(url, 'GET')
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200:
                 try:
@@ -556,7 +556,7 @@ class ConfigModule:
         
         for endpoint in debug_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(url, 'GET')
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200:
                 debug_indicators = [
@@ -701,7 +701,7 @@ class ConfigModule:
         
         for backup_file in backup_files:
             url = urljoin(self.scanner.target_url, backup_file)
-            response = make_request(url, 'GET')
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200:
                 self.results['backup_files'].append({
@@ -718,7 +718,7 @@ class ConfigModule:
             for ext in backup_extensions:
                 backup_file = f'/{file_base}{ext}'
                 url = urljoin(self.scanner.target_url, backup_file)
-                response = make_request(url, 'GET')
+                response = self.scanner.make_request(url)
                 
                 if response and response.status_code == 200:
                     self.results['backup_files'].append({
@@ -745,7 +745,7 @@ class ConfigModule:
         
         for endpoint in env_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(url, 'GET')
+            response = self.scanner.make_request(url)
             
             if response and response.status_code == 200:
                 env_indicators = [
@@ -776,7 +776,7 @@ class ConfigModule:
         
         # Check if HTTPS is enforced
         http_url = self.scanner.target_url.replace('https://', 'http://')
-        response = make_request(http_url, 'GET', allow_redirects=False)
+        response = self.scanner.make_request(http_url, allow_redirects=False)
         
         if response:
             if response.status_code not in [301, 302, 308]:
@@ -838,7 +838,7 @@ class ConfigModule:
         from colorama import Fore, Style
         print(f"{Fore.CYAN}[*] Checking security headers...{Style.RESET_ALL}")
         
-        response = make_request(self.scanner.target_url, 'GET')
+        response = self.scanner.make_request(self.scanner.target_url)
         
         if response:
             headers = response.headers
@@ -909,7 +909,7 @@ class ConfigModule:
         
         for origin in test_origins:
             headers = {'Origin': origin}
-            response = make_request(self.scanner.target_url, 'GET', headers=headers)
+            response = self.scanner.make_request(self.scanner.target_url, headers=headers)
             
             if response:
                 cors_headers = {
@@ -958,7 +958,7 @@ class ConfigModule:
         
         for endpoint in admin_endpoints:
             url = urljoin(self.scanner.target_url, endpoint)
-            response = make_request(url, 'GET')
+            response = self.scanner.make_request(url)
             
             if response:
                 if response.status_code == 200:
@@ -1002,7 +1002,7 @@ class ConfigModule:
         
         for username, password in default_creds:
             # Get CSRF token first
-            response = make_request(self.scanner.target_url, 'GET')
+            response = self.scanner.make_request(self.scanner.target_url)
             csrf_token = extract_csrf_token(response.text) if response else None
             
             login_data = {
@@ -1011,13 +1011,13 @@ class ConfigModule:
                 'authenticity_token': csrf_token
             }
             
-            response = make_request(login_url, 'POST', data=login_data)
+            response = self.scanner.make_request(login_url, method='POST', data=login_data)
             
             if response:
                 if response.status_code == 200 and 'error' not in response.text.lower():
                     # Check if login was successful
                     dashboard_url = urljoin(self.scanner.target_url, '/admin')
-                    dashboard_response = make_request(dashboard_url, 'GET')
+                    dashboard_response = self.scanner.make_request(dashboard_url)
                     
                     if dashboard_response and dashboard_response.status_code == 200:
                         self.results['default_credentials'].append({

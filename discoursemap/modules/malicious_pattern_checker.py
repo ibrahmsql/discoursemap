@@ -9,7 +9,7 @@ import re
 
 class MaliciousPatternChecker:
     """Utility class for detecting malicious patterns in content"""
-    
+
     def __init__(self):
         self.malicious_patterns = [
             r'eval\s*\(',
@@ -32,7 +32,7 @@ class MaliciousPatternChecker:
             r'/bin/sh',
             r'/bin/bash'
         ]
-        
+
         self.suspicious_js_patterns = [
             r'document\.write\s*\(',
             r'innerHTML\s*=',
@@ -46,7 +46,7 @@ class MaliciousPatternChecker:
             r'localStorage',
             r'sessionStorage'
         ]
-        
+
         self.suspicious_js_indicators = [
             'eval(',
             'document.write(',
@@ -57,7 +57,7 @@ class MaliciousPatternChecker:
             'setTimeout(',
             'setInterval('
         ]
-    
+
     def check_malicious_patterns(self, content):
         """Check content for malicious patterns"""
         found_patterns = []
@@ -65,7 +65,7 @@ class MaliciousPatternChecker:
             if re.search(pattern, content, re.IGNORECASE):
                 found_patterns.append(pattern)
         return found_patterns
-    
+
     def check_suspicious_plugin_content(self, content):
         """Check plugin content for suspicious patterns"""
         found_patterns = []
@@ -73,7 +73,7 @@ class MaliciousPatternChecker:
             if re.search(pattern, content, re.IGNORECASE):
                 found_patterns.append(pattern)
         return found_patterns
-    
+
     def has_suspicious_js_content(self, content):
         """Check if JavaScript content has suspicious characteristics"""
         count = sum(1 for indicator in self.suspicious_js_indicators if indicator in content)
