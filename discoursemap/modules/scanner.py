@@ -216,36 +216,86 @@ class DiscourseScanner:
         self.session.verify = self.verify_ssl
     
     def log(self, message: str, level: str = 'info') -> None:
-        """Log message with appropriate formatting
+        """Standardized and configurable logging system
         
         Args:
             message: Message to log
-            level: Log level (info, debug, warning, error)
+            level: Log level (info, debug, warning, error, success)
         """
-        if self.quiet and level != 'error':
+        # Initialize logging configuration if not exists
+        if not hasattr(self, '_log_config'):
+            self._log_config = {
+                'enabled_levels': ['info', 'success', 'warning', 'error'] + (['debug'] if self.verbose else []),
+                'quiet_mode': self.quiet,
+                'colors': {
+                    'info': Fore.CYAN,
+                    'success': Fore.GREEN,
+                    'warning': Fore.YELLOW,
+                    'error': Fore.RED,
+                    'debug': Fore.MAGENTA
+                },
+                'prefixes': {
+                    'info': '[*]',
+                    'success': '[+]',
+                    'warning': '[!]',
+                    'error': '[!]',
+                    'debug': '[DEBUG]'
+                },
+                'format': '{color}{prefix} {message}{reset}'
+            }
+        
+        # Filter based on configuration
+        if self._log_config['quiet_mode'] and level not in ['error', 'warning']:
             return
         
-        colors = {
-            'info': Fore.CYAN,
-            'success': Fore.GREEN,
-            'warning': Fore.YELLOW,
-            'error': Fore.RED,
-            'debug': Fore.MAGENTA
-        }
-        
-        if level == 'debug' and not self.verbose:
+        if level not in self._log_config['enabled_levels']:
             return
         
-        color = colors.get(level, Fore.WHITE)
-        prefix = {
-            'info': '[*]',
-            'success': '[+]',
-            'warning': '[!]',
-            'error': '[!]',
-            'debug': '[DEBUG]'
-        }.get(level, '[*]')
+        # Format and output message
+        color = self._log_config['colors'].get(level, Fore.WHITE)
+        prefix = self._log_config['prefixes'].get(level, '[*]')
         
-        print(f"{color}{prefix} {message}{Style.RESET_ALL}")
+        formatted_message = self._log_config['format'].format(
+            color=color,
+            prefix=prefix,
+            message=message,
+            reset=Style.RESET_ALL
+        )
+        
+        print(formatted_message)
+    
+    def configure_logging(self, **kwargs) -> None:
+        """Configure logging system dynamically
+        
+        Args:
+            enabled_levels: List of enabled log levels
+            quiet_mode: Enable/disable quiet mode
+            colors: Custom color mapping
+            prefixes: Custom prefix mapping
+            format: Custom format string
+        """
+        if not hasattr(self, '_log_config'):
+            self.log('', 'info')  # Initialize config
+        
+        for key, value in kwargs.items():
+            if key in self._log_config:
+                self._log_config[key] = value
+    
+    def log_debug(self, message: str) -> None:
+        """Convenience method for debug logging"""
+        self.log(message, 'debug')
+    
+    def log_success(self, message: str) -> None:
+        """Convenience method for success logging"""
+        self.log(message, 'success')
+    
+    def log_warning(self, message: str) -> None:
+        """Convenience method for warning logging"""
+        self.log(message, 'warning')
+    
+    def log_error(self, message: str) -> None:
+        """Convenience method for error logging"""
+        self.log(message, 'error')
     
     def make_request(self, url: str, method: str = 'GET', timeout: Optional[int] = None, **kwargs) -> Optional[requests.Response]:
         """Make HTTP request with adaptive rate limiting and improved threading
@@ -286,18 +336,28 @@ class DiscourseScanner:
                 with self.request_lock:
                     self.success_count += 1
                 
-                # Periodic memory cleanup (less frequent)
-                if self.request_count % self.memory_cleanup_interval == 0:
+                # Optimized memory cleanup (even less frequent for better performance)
+                if self.request_count % (self.memory_cleanup_interval * 2) == 0:
                     self._cleanup_memory()
                 
                 return response
                 
-            except Exception as e:
+            except (requests.exceptions.RequestException, 
+                    requests.exceptions.Timeout,
+                    requests.exceptions.ConnectionError,
+                    requests.exceptions.HTTPError) as e:
                 # Track errors for adaptive rate limiting
                 with self.request_lock:
                     self.error_count += 1
                 
                 self.log(f"Request failed for {url}: {str(e)}", 'debug')
+                return None
+            except Exception as e:
+                # Catch any other unexpected errors
+                with self.request_lock:
+                    self.error_count += 1
+                
+                self.log(f"Unexpected error for {url}: {str(e)}", 'error')
                 return None
             finally:
                 # Decrement active request counter
@@ -328,8 +388,11 @@ class DiscourseScanner:
             response = await self.http_client.make_async_request(url, method, **kwargs)
             return response
             
-        except Exception as e:
+        except (asyncio.TimeoutError, ConnectionError, OSError) as e:
             self.log(f"Async request failed for {url}: {str(e)}", 'debug')
+            return None
+        except Exception as e:
+            self.log(f"Unexpected async error for {url}: {str(e)}", 'error')
             return None
     
     async def batch_async_requests(self, urls: List[str], method: str = 'GET', concurrency: int = 10) -> List[Optional[Any]]:
@@ -355,8 +418,11 @@ class DiscourseScanner:
             responses = await self.http_client.batch_requests(urls, method, concurrency)
             return responses
             
-        except Exception as e:
+        except (asyncio.TimeoutError, ConnectionError, OSError) as e:
             self.log(f"Batch async requests failed: {str(e)}", 'debug')
+            return [None] * len(urls)
+        except Exception as e:
+            self.log(f"Unexpected batch async error: {str(e)}", 'error')
             return [None] * len(urls)
     
     def _get_adaptive_delay(self) -> float:
@@ -381,20 +447,28 @@ class DiscourseScanner:
             return self.adaptive_delay * 4
     
     def _cleanup_memory(self) -> None:
-        """Clean up memory to prevent leaks"""
+        """Clean up memory to prevent leaks - optimized for performance"""
         try:
             # Clear response cache if it gets too large
             if len(self.response_cache) > self.max_cache_size:
-                self.response_cache.clear()
+                # Use more efficient cache clearing strategy
+                oldest_keys = list(self.response_cache.keys())[:len(self.response_cache)//2]
+                for key in oldest_keys:
+                    self.response_cache.pop(key, None)
             
-            # Force garbage collection
-            gc.collect()
+            # Force garbage collection only when necessary
+            if self.request_count % (self.memory_cleanup_interval * 5) == 0:
+                gc.collect()
             
-            if self.verbose:
-                self.log(f"Memory cleanup performed (request #{self.request_count})", 'debug')
+            # Reduce verbose logging for performance
+            # Memory cleanup logging removed for better performance
                 
-        except Exception as e:
-            self.log(f"Memory cleanup error: {str(e)}", 'debug')
+        except (MemoryError, OSError):
+            # Silent handling for better performance
+            pass
+        except Exception:
+            # Silent handling for better performance
+            pass
     
     def verify_target(self) -> bool:
         """Verify target is accessible and is Discourse
@@ -473,8 +547,13 @@ class DiscourseScanner:
                     else:
                         self.log(f"{module_name.upper()} module completed", 'success')
                         
+                except (ImportError, AttributeError, TypeError) as e:
+                    self.log(f"Module error in {module_name}: {str(e)}", 'error')
+                    if self.verbose:
+                        import traceback
+                        traceback.print_exc()
                 except Exception as e:
-                    self.log(f"Error in {module_name} module: {str(e)}", 'error')
+                    self.log(f"Unexpected error in {module_name} module: {str(e)}", 'error')
                     if self.verbose:
                         import traceback
                         traceback.print_exc()
@@ -498,8 +577,17 @@ class DiscourseScanner:
             
             return self.results
             
+        except KeyboardInterrupt:
+            self.log("Scan interrupted by user", 'warning')
+            return self.results
+        except (ConnectionError, TimeoutError) as e:
+            self.log(f"Network error during scan: {str(e)}", 'error')
+            return self.results
         except Exception as e:
-            self.log(f"Scan failed: {str(e)}", 'error')
+            self.log(f"Unexpected scan failure: {str(e)}", 'error')
+            if self.verbose:
+                import traceback
+                traceback.print_exc()
             raise
         
         finally:
@@ -510,8 +598,10 @@ class DiscourseScanner:
             if self.session:
                 try:
                     self.session.close()
-                except Exception as e:
+                except (AttributeError, OSError) as e:
                     self.log(f"Error closing session: {str(e)}", 'debug')
+                except Exception as e:
+                    self.log(f"Unexpected session close error: {str(e)}", 'warning')
             
             # Final garbage collection
             gc.collect()
@@ -529,8 +619,11 @@ class DiscourseScanner:
             report_file = self.reporter.generate_json_report(output_file)
             self.log(f"JSON report generated: {report_file}", 'success')
             return report_file
+        except (IOError, OSError, PermissionError) as e:
+            self.log(f"File error generating JSON report: {e}", 'error')
+            return None
         except Exception as e:
-            self.log(f"Failed to generate JSON report: {e}", 'error')
+            self.log(f"Unexpected error generating JSON report: {e}", 'error')
             return None
     
     def generate_html_report(self, output_file: Optional[str] = None) -> str:
@@ -546,8 +639,11 @@ class DiscourseScanner:
             report_file = self.reporter.generate_html_report(output_file)
             self.log(f"HTML report generated: {report_file}", 'success')
             return report_file
+        except (IOError, OSError, PermissionError) as e:
+            self.log(f"File error generating HTML report: {e}", 'error')
+            return None
         except Exception as e:
-            self.log(f"Failed to generate HTML report: {e}", 'error')
+            self.log(f"Unexpected error generating HTML report: {e}", 'error')
             return None
     
     async def run_async_scan(self, modules_to_run: Optional[List[str]] = None) -> Dict[str, Any]:
@@ -627,8 +723,11 @@ class DiscourseScanner:
                 
                 self.log(f"Completed {module_name} module", 'success')
                 
+            except (ImportError, AttributeError, TypeError) as e:
+                self.log(f"Module error in {module_name}: {str(e)}", 'error')
+                async_results[module_name] = {'error': str(e)}
             except Exception as e:
-                self.log(f"Error in {module_name} module: {str(e)}", 'error')
+                self.log(f"Unexpected error in {module_name} module: {str(e)}", 'error')
                 async_results[module_name] = {'error': str(e)}
         
         # Close async HTTP client

@@ -36,7 +36,7 @@ class WAFBypassModule:
     
     def run(self):
         """Run WAF bypass tests"""
-        print(f"{self.scanner.colors['info']}[*] Starting WAF bypass testing...{self.scanner.colors['reset']}")
+        self.scanner.log("Starting WAF bypass testing...", 'info')
         start_time = time.time()
         
         try:
@@ -66,7 +66,7 @@ class WAFBypassModule:
     
     def _detect_waf(self):
         """Detect Web Application Firewall"""
-        print(f"{self.scanner.colors['info']}[*] Detecting WAF presence...{self.scanner.colors['reset']}")
+        self.scanner.log("Detecting WAF presence...", 'debug')
         
         # Common WAF detection payloads
         waf_payloads = [
@@ -104,7 +104,7 @@ class WAFBypassModule:
                                 'payload': payload
                             }
                             self.results['waf_detected'].append(waf_info)
-                            print(f"{self.scanner.colors['warning']}[!] WAF detected: {waf_name}{self.scanner.colors['reset']}")
+                            self.scanner.log(f"WAF detected: {waf_name}", 'warning')
                 
                 # Check for common WAF response patterns
                 if response.status_code in [403, 406, 429, 503]:
@@ -122,7 +122,7 @@ class WAFBypassModule:
     
     def _test_payload_encodings(self):
         """Test various payload encoding techniques"""
-        print(f"{self.scanner.colors['info']}[*] Testing payload encoding bypasses...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing payload encoding bypasses...", 'debug')
         
         base_payload = "<script>alert('xss')</script>"
         
@@ -155,7 +155,7 @@ class WAFBypassModule:
                     self.results['payload_encodings'].append(bypass_result)
                     
                     if bypass_result['bypassed']:
-                        print(f"{self.scanner.colors['success']}[+] Bypass successful: {technique_name}{self.scanner.colors['reset']}")
+                        self.scanner.log(f"Bypass successful: {technique_name}", 'success')
                         self.results['successful_bypasses'].append(bypass_result)
                 
                 time.sleep(self.scanner.delay)
@@ -166,7 +166,7 @@ class WAFBypassModule:
     
     def _test_rate_limit_bypass(self):
         """Test rate limiting bypass techniques"""
-        print(f"{self.scanner.colors['info']}[*] Testing rate limit bypasses...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing rate limit bypasses...", 'debug')
         
         bypass_headers = [
             {'X-Forwarded-For': '127.0.0.1'},
@@ -209,13 +209,13 @@ class WAFBypassModule:
             self.results['rate_limit_bypasses'].append(bypass_result)
             
             if bypass_result['successful']:
-                print(f"{self.scanner.colors['success']}[+] Rate limit bypass successful with: {headers}{self.scanner.colors['reset']}")
+                self.scanner.log(f"Rate limit bypass successful with: {headers}", 'success')
             
             self.results['tests_performed'] += 1
     
     def _test_ip_rotation(self):
         """Test IP rotation techniques"""
-        print(f"{self.scanner.colors['info']}[*] Testing IP rotation bypasses...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing IP rotation bypasses...", 'debug')
         
         # Generate random IP addresses
         fake_ips = []
@@ -242,14 +242,14 @@ class WAFBypassModule:
                 self.results['ip_rotation_tests'].append(rotation_result)
                 
                 if rotation_result['successful']:
-                    print(f"{self.scanner.colors['success']}[+] IP rotation successful: {ip}{self.scanner.colors['reset']}")
+                    self.scanner.log(f"IP rotation successful: {ip}", 'success')
             
             time.sleep(self.scanner.delay)
             self.results['tests_performed'] += 1
     
     def _test_advanced_bypasses(self):
         """Test advanced WAF bypass techniques"""
-        print(f"{self.scanner.colors['info']}[*] Testing advanced bypass techniques...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing advanced bypass techniques...", 'debug')
         
         advanced_techniques = [
             {
@@ -299,7 +299,7 @@ class WAFBypassModule:
                     self.results['bypass_techniques'].append(bypass_result)
                     
                     if bypass_result['bypassed']:
-                        print(f"{self.scanner.colors['success']}[+] Advanced bypass successful: {technique['name']}{self.scanner.colors['reset']}")
+                        self.scanner.log(f"Advanced bypass successful: {technique['name']}", 'success')
                         self.results['successful_bypasses'].append(bypass_result)
                 
                 time.sleep(self.scanner.delay)

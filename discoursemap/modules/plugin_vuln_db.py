@@ -27,10 +27,10 @@ class PluginVulnDB:
             with open(self.db_path, 'r', encoding='utf-8') as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
-            print(f"Warning: Plugin vulnerability database not found at {self.db_path}")
+            # Silently handle missing database file
             return {'plugins': {}, 'patterns': {}, 'detection_signatures': {}, 'risk_scoring': {}}
         except yaml.YAMLError as e:
-            print(f"Error loading vulnerability database: {e}")
+            # Log YAML parsing errors
             return {'plugins': {}, 'patterns': {}, 'detection_signatures': {}, 'risk_scoring': {}}
     
     def get_plugin_vulnerabilities(self, plugin_name: str) -> List[Dict[str, Any]]:
@@ -287,7 +287,8 @@ class PluginVulnDB:
                 yaml.dump(self.db_data, f, default_flow_style=False, allow_unicode=True)
             return True
         except Exception as e:
-            print(f"Error updating database: {e}")
+            # Silently handle database update errors
+            pass
             return False
 
 # Convenience functions

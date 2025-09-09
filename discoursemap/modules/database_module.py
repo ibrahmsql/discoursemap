@@ -120,13 +120,13 @@ class DatabaseModule:
             start_time = time.time()
             response = self.scanner.make_request(url)
             self.baseline_time = time.time() - start_time
-            self.scanner.log(f"Baseline response time: {self.baseline_time:.2f}s", 'debug')
+            # Baseline response time calculated silently
         except:
             self.baseline_time = 1.0  # Default fallback
 
     def _test_sql_injection(self):
         """Test for basic SQL injection vulnerabilities"""
-        self.scanner.log("Testing for SQL injection vulnerabilities...", 'debug')
+        self.scanner.log("Testing for SQL injection vulnerabilities...", 'info')
         
         # Basic SQL injection payloads
         sql_payloads = [
@@ -166,7 +166,7 @@ class DatabaseModule:
 
     def _test_blind_sql_injection(self):
         """Test for blind SQL injection vulnerabilities"""
-        self.scanner.log("Testing for blind SQL injection...", 'debug')
+        # Testing blind SQL injection silently
         
         blind_payloads = [
             "' AND (SELECT COUNT(*) FROM users)>0--",
@@ -188,7 +188,7 @@ class DatabaseModule:
 
     def _test_time_based_sql_injection(self):
         """Test for time-based SQL injection vulnerabilities"""
-        self.scanner.log("Testing for time-based SQL injection...", 'debug')
+        # Testing time-based SQL injection silently
         
         time_payloads = [
             # MySQL
@@ -221,7 +221,7 @@ class DatabaseModule:
 
     def _test_union_based_sql_injection(self):
         """Test for UNION-based SQL injection vulnerabilities"""
-        self.scanner.log("Testing for UNION-based SQL injection...", 'debug')
+        # Testing UNION-based SQL injection silently
         
         # First, determine number of columns
         column_payloads = [
@@ -260,7 +260,7 @@ class DatabaseModule:
 
     def _test_error_based_sql_injection(self):
         """Test for error-based SQL injection vulnerabilities"""
-        self.scanner.log("Testing for error-based SQL injection...", 'debug')
+        # Testing error-based SQL injection silently
         
         error_payloads = [
             # MySQL
@@ -293,7 +293,7 @@ class DatabaseModule:
 
     def _test_boolean_based_sql_injection(self):
         """Test for boolean-based SQL injection vulnerabilities"""
-        self.scanner.log("Testing for boolean-based SQL injection...", 'debug')
+        # Testing boolean-based SQL injection silently
         
         boolean_payloads = [
             ("' AND 1=1--", "' AND 1=2--"),  # True/False pair
@@ -312,7 +312,7 @@ class DatabaseModule:
 
     def _test_second_order_sql_injection(self):
         """Test for second-order SQL injection vulnerabilities"""
-        self.scanner.log("Testing for second-order SQL injection...", 'debug')
+        # Testing second-order SQL injection silently
         
         # Payloads that might be stored and executed later
         second_order_payloads = [
@@ -335,7 +335,7 @@ class DatabaseModule:
 
     def _test_database_fingerprinting(self):
         """Test database fingerprinting techniques"""
-        self.scanner.log("Testing database fingerprinting...", 'debug')
+        # Testing database fingerprinting silently
         
         fingerprint_payloads = {
             'mysql': [
@@ -370,7 +370,7 @@ class DatabaseModule:
 
     def _test_nosql_injection(self):
         """Test for NoSQL injection vulnerabilities"""
-        self.scanner.log("Testing for NoSQL injection...", 'debug')
+        # Testing NoSQL injection silently
         
         nosql_payloads = [
             # MongoDB
@@ -399,7 +399,7 @@ class DatabaseModule:
 
     def _test_database_enumeration(self):
         """Test database enumeration techniques"""
-        self.scanner.log("Testing database enumeration...", 'debug')
+        # Testing database enumeration silently
         
         enum_payloads = [
             # Table enumeration
@@ -426,7 +426,7 @@ class DatabaseModule:
 
     def _test_data_extraction(self):
         """Test data extraction techniques"""
-        self.scanner.log("Testing data extraction...", 'debug')
+        # Testing data extraction silently
         
         extraction_payloads = [
             # User data
@@ -454,7 +454,7 @@ class DatabaseModule:
 
     def _test_privilege_escalation(self):
         """Test privilege escalation techniques"""
-        self.scanner.log("Testing privilege escalation...", 'debug')
+        # Testing privilege escalation silently
         
         privesc_payloads = [
             # User privilege modification
@@ -479,7 +479,7 @@ class DatabaseModule:
 
     def _test_file_operations(self):
         """Test file operation techniques"""
-        self.scanner.log("Testing file operations...", 'debug')
+        # Testing file operations silently
         
         file_payloads = [
             # PostgreSQL file operations
@@ -502,7 +502,7 @@ class DatabaseModule:
 
     def _test_command_execution(self):
         """Test command execution techniques"""
-        self.scanner.log("Testing command execution...", 'debug')
+        # Testing command execution silently
         
         cmd_payloads = [
             # PostgreSQL command execution

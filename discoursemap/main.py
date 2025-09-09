@@ -21,13 +21,14 @@ import time
 import json
 import yaml
 import asyncio
+import requests
 from datetime import datetime
 from colorama import init, Fore, Style
-from discoursemap.modules.scanner import DiscourseScanner
-from discoursemap.modules.reporter import Reporter
-from discoursemap.lib.discourse_utils import validate_url
-from discoursemap.lib.config_manager import ConfigManager
-from discoursemap.modules.banner import Banner
+from .modules.scanner import DiscourseScanner
+from .modules.reporter import Reporter
+from .lib.discourse_utils import validate_url
+from .lib.config_manager import ConfigManager
+from .modules.banner import Banner
 
 init(autoreset=False)
 
@@ -39,8 +40,14 @@ def load_config(config_file):
             with open(config_file, 'r') as f:
                 return yaml.safe_load(f)
         return {}
+    except (FileNotFoundError, PermissionError) as e:
+        print(f"{Fore.YELLOW}[!] Warning: Could not access config file {config_file}: {e}{Style.RESET_ALL}")
+        return {}
+    except (yaml.YAMLError, json.JSONDecodeError) as e:
+        print(f"{Fore.YELLOW}[!] Warning: Invalid config file format {config_file}: {e}{Style.RESET_ALL}")
+        return {}
     except Exception as e:
-        print(f"{Fore.YELLOW}[!] Warning: Could not load config file {config_file}: {e}{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}[!] Warning: Unexpected error loading config file {config_file}: {e}{Style.RESET_ALL}")
         return {}
 
 
@@ -51,8 +58,14 @@ def load_resume_data(resume_file):
             data = json.load(f)
             completed_modules = list(data.get('modules', {}).keys())
             return completed_modules, data
+    except (FileNotFoundError, PermissionError) as e:
+        print(f"{Fore.RED}[!] Error: Cannot access resume file {resume_file}: {e}{Style.RESET_ALL}")
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"{Fore.RED}[!] Error: Invalid JSON in resume file {resume_file}: {e}{Style.RESET_ALL}")
+        sys.exit(1)
     except Exception as e:
-        print(f"{Fore.RED}[!] Error loading resume file {resume_file}: {e}{Style.RESET_ALL}")
+        print(f"{Fore.RED}[!] Unexpected error loading resume file {resume_file}: {e}{Style.RESET_ALL}")
         sys.exit(1)
 
 
@@ -65,8 +78,11 @@ def save_partial_results(results, filename=None):
         with open(filename, 'w') as f:
             json.dump(results, f, indent=2)
         return filename
+    except (IOError, OSError, PermissionError) as e:
+        print(f"{Fore.RED}[!] File error saving partial results: {e}{Style.RESET_ALL}")
+        return None
     except Exception as e:
-        print(f"{Fore.RED}[!] Error saving partial results: {e}{Style.RESET_ALL}")
+        print(f"{Fore.RED}[!] Unexpected error saving partial results: {e}{Style.RESET_ALL}")
         return None
 
 
@@ -162,7 +178,6 @@ def main():
             
             try:
                 import subprocess
-                import requests
                 
                 # Check current version
                 print(f"{Fore.CYAN}[*] Checking current version...{Style.RESET_ALL}")
@@ -194,8 +209,10 @@ def main():
                                         pip_version = line.split(':')[1].strip()
                                         print(f"    Pip installed version: {pip_version}")
                                         break
-                        except Exception:
-                            print(f"    Could not check pip installed version")
+                        except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+                            print(f"    Could not check pip installed version: {e}")
+                        except Exception as e:
+                            print(f"    Unexpected error checking pip version: {e}")
                         
                         # Determine update strategy
                         should_update = True
@@ -229,8 +246,10 @@ def main():
                                         update_success = True
                                 else:
                                     print(f"{Fore.YELLOW}[!] python -m pip failed: {result.stderr[:50]}...{Style.RESET_ALL}")
+                            except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+                                print(f"{Fore.YELLOW}[!] python -m pip subprocess error: {str(e)[:50]}...{Style.RESET_ALL}")
                             except Exception as e:
-                                print(f"{Fore.YELLOW}[!] python -m pip error: {str(e)[:50]}...{Style.RESET_ALL}")
+                                print(f"{Fore.YELLOW}[!] python -m pip unexpected error: {str(e)[:50]}...{Style.RESET_ALL}")
                             
                             # Method 2: Direct pip command
                             if not update_success:
@@ -249,8 +268,10 @@ def main():
                                             update_success = True
                                     else:
                                         print(f"{Fore.YELLOW}[!] pip failed: {result.stderr[:50]}...{Style.RESET_ALL}")
+                                except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+                                    print(f"{Fore.YELLOW}[!] pip subprocess error: {str(e)[:50]}...{Style.RESET_ALL}")
                                 except Exception as e:
-                                    print(f"{Fore.YELLOW}[!] pip error: {str(e)[:50]}...{Style.RESET_ALL}")
+                                    print(f"{Fore.YELLOW}[!] pip unexpected error: {str(e)[:50]}...{Style.RESET_ALL}")
                             
                             # Method 3: pip3 command
                             if not update_success:
@@ -269,8 +290,10 @@ def main():
                                             update_success = True
                                     else:
                                         print(f"{Fore.YELLOW}[!] pip3 failed: {result.stderr[:50]}...{Style.RESET_ALL}")
+                                except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+                                    print(f"{Fore.YELLOW}[!] pip3 subprocess error: {str(e)[:50]}...{Style.RESET_ALL}")
                                 except Exception as e:
-                                    print(f"{Fore.YELLOW}[!] pip3 error: {str(e)[:50]}...{Style.RESET_ALL}")
+                                    print(f"{Fore.YELLOW}[!] pip3 unexpected error: {str(e)[:50]}...{Style.RESET_ALL}")
                             
                             # Method 4: Git fallback for development
                             if not update_success:
@@ -287,8 +310,10 @@ def main():
                                             update_success = True
                                         else:
                                             print(f"{Fore.RED}[!] Git update failed: {git_result.stderr[:100]}{Style.RESET_ALL}")
+                                    except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+                                        print(f"{Fore.RED}[!] Git subprocess error: {str(e)[:50]}...{Style.RESET_ALL}")
                                     except Exception as e:
-                                        print(f"{Fore.RED}[!] Git error: {str(e)[:50]}...{Style.RESET_ALL}")
+                                        print(f"{Fore.RED}[!] Git unexpected error: {str(e)[:50]}...{Style.RESET_ALL}")
                                 else:
                                     print(f"{Fore.RED}[!] Not a git repository - manual update required{Style.RESET_ALL}")
                             
@@ -328,8 +353,18 @@ def main():
                 
                 print(f"{Fore.GREEN}[+] Update process completed!{Style.RESET_ALL}")
                 
+            except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+                print(f"{Fore.RED}[!] Update subprocess error: {e}{Style.RESET_ALL}")
+                if args.verbose if 'args' in locals() else False:
+                    import traceback
+                    traceback.print_exc()
+            except (requests.RequestException, ConnectionError) as e:
+                print(f"{Fore.RED}[!] Update network error: {e}{Style.RESET_ALL}")
+                if args.verbose if 'args' in locals() else False:
+                    import traceback
+                    traceback.print_exc()
             except Exception as e:
-                print(f"{Fore.RED}[!] Update failed: {e}{Style.RESET_ALL}")
+                print(f"{Fore.RED}[!] Update unexpected error: {e}{Style.RESET_ALL}")
                 if args.verbose if 'args' in locals() else False:
                     import traceback
                     traceback.print_exc()
@@ -519,14 +554,32 @@ def main():
                 if partial_file:
                     print(f"{Fore.GREEN}[+] Partial results saved: {partial_file}{Style.RESET_ALL}")
                     print(f"{Fore.CYAN}[*] Use --resume {partial_file} to continue scan{Style.RESET_ALL}")
+        except (IOError, OSError, PermissionError) as e:
+            print(f"{Fore.RED}[!] Could not save partial results (file error): {e}{Style.RESET_ALL}")
         except Exception as e:
-            print(f"{Fore.RED}[!] Could not save partial results: {e}{Style.RESET_ALL}")
+            print(f"{Fore.RED}[!] Could not save partial results (unexpected error): {e}{Style.RESET_ALL}")
         
         sys.exit(0)
+    except (ConnectionError, TimeoutError, requests.RequestException) as e:
+        end_time = time.time()
+        duration = end_time - start_time
+        print(f"{Fore.RED}[!] Network error after {duration:.2f} seconds: {str(e)}{Style.RESET_ALL}")
+        if args.verbose if 'args' in locals() else False:
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
+    except (IOError, OSError, PermissionError) as e:
+        end_time = time.time()
+        duration = end_time - start_time
+        print(f"{Fore.RED}[!] File system error after {duration:.2f} seconds: {str(e)}{Style.RESET_ALL}")
+        if args.verbose if 'args' in locals() else False:
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
     except Exception as e:
         end_time = time.time()
         duration = end_time - start_time
-        print(f"{Fore.RED}[!] Error after {duration:.2f} seconds: {str(e)}{Style.RESET_ALL}")
+        print(f"{Fore.RED}[!] Unexpected error after {duration:.2f} seconds: {str(e)}{Style.RESET_ALL}")
         if args.verbose if 'args' in locals() else False:
             import traceback
             traceback.print_exc()

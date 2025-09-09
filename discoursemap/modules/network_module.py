@@ -303,7 +303,7 @@ class NetworkModule:
         return vulns
     
     def _ssl_analysis(self):
-        """Analyze SSL/TLS configuration"""
+        """Analyze SSL/TLS configuration with comprehensive security assessment"""
         print(f"{self.scanner.colors['info']}[*] Performing SSL/TLS analysis...{self.scanner.colors['reset']}")
         
         try:
@@ -323,6 +323,9 @@ class NetworkModule:
                 ssl_versions['TLSv1.3'] = ssl.PROTOCOL_TLSv1_3
             
             supported_versions = []
+            cipher_suites = []
+            vulnerabilities = []
+            recommendations = []
             
             for version_name, protocol in ssl_versions.items():
                 try:
@@ -333,39 +336,77 @@ class NetworkModule:
                     with socket.create_connection((self.target_host, 443), timeout=10) as sock:
                         with context.wrap_socket(sock) as ssock:
                             supported_versions.append(version_name)
+                            cipher = ssock.cipher()
                             
-                            # Get cipher info for first successful connection
+                            # Collect cipher suite information
+                            if cipher:
+                                cipher_info = {
+                                    'protocol': version_name,
+                                    'cipher_suite': cipher[0],
+                                    'tls_version': cipher[1],
+                                    'key_length': cipher[2]
+                                }
+                                cipher_suites.append(cipher_info)
+                                
+                                # Analyze cipher strength
+                                if cipher[2] < 128:
+                                    vulnerabilities.append({
+                                        'type': 'weak_cipher',
+                                        'description': f'Weak cipher strength: {cipher[2]} bits in {version_name}',
+                                        'severity': 'High',
+                                        'cipher': cipher[0]
+                                    })
+                            
+                            # Get certificate info for first successful connection
                             if not self.results['ssl_analysis']:
-                                cipher = ssock.cipher()
                                 cert = ssock.getpeercert()
+                                cert_analysis = self._analyze_certificate(cert)
                                 
                                 self.results['ssl_analysis'].append({
-                                    'cipher_suite': cipher[0] if cipher else 'Unknown',
-                                    'protocol_version': cipher[1] if cipher else 'Unknown',
-                                    'key_length': cipher[2] if cipher else 'Unknown',
-                                    'certificate': self._analyze_certificate(cert)
+                                    'certificate_analysis': cert_analysis,
+                                    'primary_cipher': {
+                                        'cipher_suite': cipher[0] if cipher else 'Unknown',
+                                        'protocol_version': cipher[1] if cipher else 'Unknown',
+                                        'key_length': cipher[2] if cipher else 'Unknown'
+                                    }
                                 })
                 except Exception:
                     pass
             
-            # Check for weak SSL versions
-            weak_versions = ['SSLv2', 'SSLv3', 'TLSv1.0', 'TLSv1.1']
-            for weak_version in weak_versions:
-                if weak_version in supported_versions:
-                    self.results['ssl_analysis'].append({
-                        'vulnerability': f'Weak SSL/TLS version supported: {weak_version}',
-                        'severity': 'High' if weak_version in ['SSLv2', 'SSLv3'] else 'Medium'
-                    })
+            # Comprehensive security analysis
+            security_analysis = self._analyze_ssl_security(supported_versions, cipher_suites)
+            
+            # Add security analysis to results
+            self.results['ssl_analysis'].extend([
+                {
+                    'supported_protocols': supported_versions,
+                    'cipher_suites': cipher_suites,
+                    'security_analysis': security_analysis,
+                    'vulnerabilities': vulnerabilities
+                }
+            ])
                     
         except ImportError:
             self.results['ssl_analysis'].append({
-                'error': 'SSL module not available for detailed analysis'
+                'error': 'SSL module not available for detailed analysis',
+                'recommendations': ['Install SSL/TLS analysis tools', 'Manual SSL configuration review recommended']
+            })
+        except Exception as e:
+            self.results['ssl_analysis'].append({
+                'error': f'SSL analysis failed: {str(e)}',
+                'recommendations': ['Check SSL/TLS configuration', 'Verify certificate installation']
             })
     
     def _analyze_certificate(self, cert):
-        """Analyze SSL certificate"""
+        """Analyze SSL certificate with comprehensive security assessment"""
         if not cert:
-            return {'error': 'No certificate information available'}
+            return {
+                'error': 'No certificate information available',
+                'security_rating': 'CRITICAL',
+                'recommendations': ['Ensure valid SSL certificate is installed']
+            }
+        
+        from datetime import datetime
         
         cert_info = {
             'subject': dict(x[0] for x in cert.get('subject', [])),
@@ -377,14 +418,113 @@ class NetworkModule:
             'signature_algorithm': cert.get('signatureAlgorithm')
         }
         
-        # Check for weak signature algorithms
-        weak_algorithms = ['md5', 'sha1']
+        # Security analysis
+        issues = []
+        recommendations = []
+        security_rating = 'GOOD'
+        
+        # Check signature algorithm
         if cert_info['signature_algorithm']:
-            for weak_alg in weak_algorithms:
-                if weak_alg in cert_info['signature_algorithm'].lower():
-                    cert_info['vulnerability'] = f'Weak signature algorithm: {cert_info["signature_algorithm"]}'
+            sig_alg = cert_info['signature_algorithm'].lower()
+            if 'md5' in sig_alg:
+                issues.append('Critical: MD5 signature algorithm detected')
+                recommendations.append('Replace certificate with SHA-256 or stronger')
+                security_rating = 'CRITICAL'
+            elif 'sha1' in sig_alg:
+                issues.append('High: SHA-1 signature algorithm detected')
+                recommendations.append('Upgrade to SHA-256 or stronger signature algorithm')
+                security_rating = 'HIGH' if security_rating == 'GOOD' else security_rating
+        
+        # Check certificate expiry
+        try:
+            if cert_info['not_after']:
+                expiry_date = datetime.strptime(cert_info['not_after'], '%b %d %H:%M:%S %Y %Z')
+                days_until_expiry = (expiry_date - datetime.now()).days
+                
+                if days_until_expiry < 0:
+                    issues.append('Critical: Certificate has expired')
+                    recommendations.append('Renew SSL certificate immediately')
+                    security_rating = 'CRITICAL'
+                elif days_until_expiry <= 7:
+                    issues.append(f'Critical: Certificate expires in {days_until_expiry} days')
+                    recommendations.append('Renew SSL certificate immediately')
+                    security_rating = 'CRITICAL'
+                elif days_until_expiry <= 30:
+                    issues.append(f'Warning: Certificate expires in {days_until_expiry} days')
+                    recommendations.append('Schedule certificate renewal soon')
+                    security_rating = 'MEDIUM' if security_rating == 'GOOD' else security_rating
+                
+                cert_info['days_until_expiry'] = days_until_expiry
+        except Exception:
+            issues.append('Unable to parse certificate expiry date')
+            recommendations.append('Manual certificate expiry verification recommended')
+        
+        # Check for SAN (Subject Alternative Names)
+        if 'subjectAltName' in cert:
+            cert_info['subject_alt_names'] = [name[1] for name in cert['subjectAltName']]
+        
+        # Add security assessment
+        cert_info.update({
+            'security_rating': security_rating,
+            'security_issues': issues,
+            'recommendations': recommendations
+        })
         
         return cert_info
+    
+    def _analyze_ssl_security(self, supported_versions, cipher_suites):
+        """Comprehensive SSL/TLS security analysis"""
+        issues = []
+        recommendations = []
+        overall_rating = 'GOOD'
+        
+        # Check for weak protocol versions
+        weak_versions = ['SSLv2', 'SSLv3', 'TLSv1.0', 'TLSv1.1']
+        critical_versions = ['SSLv2', 'SSLv3']
+        
+        for version in supported_versions:
+            if version in critical_versions:
+                issues.append(f'Critical: Insecure protocol {version} supported')
+                recommendations.append(f'Disable {version} immediately')
+                overall_rating = 'CRITICAL'
+            elif version in weak_versions:
+                issues.append(f'High: Outdated protocol {version} supported')
+                recommendations.append(f'Disable {version} and use TLS 1.2+')
+                overall_rating = 'HIGH' if overall_rating == 'GOOD' else overall_rating
+        
+        # Check if modern TLS is supported
+        modern_tls = ['TLSv1.2', 'TLSv1.3']
+        if not any(version in supported_versions for version in modern_tls):
+            issues.append('Critical: No modern TLS versions supported')
+            recommendations.append('Enable TLS 1.2 and TLS 1.3')
+            overall_rating = 'CRITICAL'
+        
+        # Analyze cipher suites
+        weak_ciphers = []
+        for cipher_info in cipher_suites:
+            if cipher_info['key_length'] < 128:
+                weak_ciphers.append(cipher_info)
+                issues.append(f'High: Weak cipher {cipher_info["cipher_suite"]} ({cipher_info["key_length"]} bits)')
+        
+        if weak_ciphers:
+            recommendations.append('Disable weak ciphers and use strong encryption (256-bit preferred)')
+            overall_rating = 'HIGH' if overall_rating in ['GOOD', 'MEDIUM'] else overall_rating
+        
+        # Best practice recommendations
+        if overall_rating == 'GOOD':
+            recommendations.extend([
+                'SSL/TLS configuration appears secure',
+                'Consider implementing HSTS headers',
+                'Regular certificate monitoring recommended'
+            ])
+        
+        return {
+            'overall_rating': overall_rating,
+            'supported_protocols': supported_versions,
+            'security_issues': issues,
+            'recommendations': recommendations,
+            'weak_ciphers': weak_ciphers
+        }
     
     def _dns_analysis(self):
         """Analyze DNS configuration"""

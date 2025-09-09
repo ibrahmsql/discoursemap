@@ -12,7 +12,7 @@ import base64
 import hashlib
 from urllib.parse import urljoin, quote, parse_qs, urlparse
 from bs4 import BeautifulSoup
-from ..lib.discourse_utils import extract_csrf_token
+from ..lib.discourse_utils import extract_csrf_token, make_request
 
 class AuthModule:
     """Authentication and authorization testing module for Discourse forums"""
@@ -47,7 +47,7 @@ class AuthModule:
     
     def run_scan(self):
         """Run complete authentication and authorization scan"""
-        print(f"\n{self.scanner.colors['info']}[*] Starting authentication and authorization scan...{self.scanner.colors['reset']}")
+        self.scanner.log("Starting authentication and authorization scan...", 'info')
         
         # Authentication bypass tests
         self._test_auth_bypass()
@@ -83,7 +83,7 @@ class AuthModule:
     
     def _test_auth_bypass(self):
         """Test for authentication bypass vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Testing authentication bypass...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing authentication bypass...", 'debug')
         
         # Test direct access to protected endpoints
         protected_endpoints = [
@@ -263,7 +263,7 @@ class AuthModule:
     
     def _test_privilege_escalation(self):
         """Test for privilege escalation vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Testing privilege escalation...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing privilege escalation...", 'debug')
         
         # Test role manipulation
         self._test_role_manipulation()
@@ -482,7 +482,7 @@ class AuthModule:
     
     def _test_session_management(self):
         """Test session management security"""
-        print(f"{self.scanner.colors['info']}[*] Testing session management...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing session management...", 'debug')
         
         # Test session fixation
         self._test_session_fixation()
@@ -617,7 +617,7 @@ class AuthModule:
     
     def _test_password_policy(self):
         """Test password policy enforcement"""
-        print(f"{self.scanner.colors['info']}[*] Testing password policy...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing password policy...", 'debug')
         
         # Test user registration with weak passwords
         register_url = urljoin(self.scanner.target_url, '/u/create')
@@ -687,7 +687,7 @@ class AuthModule:
     
     def _test_account_lockout(self):
         """Test account lockout policy"""
-        print(f"{self.scanner.colors['info']}[*] Testing account lockout policy...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing account lockout policy...", 'debug')
         
         login_url = urljoin(self.scanner.target_url, '/session')
         csrf_token = self._get_csrf_token()
@@ -736,7 +736,7 @@ class AuthModule:
     
     def _test_oauth_vulnerabilities(self):
         """Test OAuth implementation vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Testing OAuth vulnerabilities...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing OAuth vulnerabilities...", 'debug')
         
         # Look for OAuth endpoints
         oauth_endpoints = [
@@ -842,7 +842,7 @@ class AuthModule:
     
     def _test_sso_issues(self):
         """Test Single Sign-On implementation issues"""
-        print(f"{self.scanner.colors['info']}[*] Testing SSO vulnerabilities...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing SSO vulnerabilities...", 'debug')
         
         # Look for SSO endpoints
         sso_endpoints = [
@@ -944,7 +944,7 @@ class AuthModule:
     
     def _test_api_authentication(self):
         """Test API authentication mechanisms"""
-        print(f"{self.scanner.colors['info']}[*] Testing API authentication...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing API authentication...", 'debug')
         
         # Test API endpoints without authentication
         api_endpoints = [
@@ -1004,7 +1004,7 @@ class AuthModule:
     
     def _test_admin_access(self):
         """Test admin access controls"""
-        print(f"{self.scanner.colors['info']}[*] Testing admin access controls...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing admin access controls...", 'debug')
         
         # Test default admin credentials
         self._test_default_credentials()
@@ -1111,7 +1111,7 @@ class AuthModule:
     
     def _test_user_enumeration(self):
         """Test user enumeration vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Testing user enumeration...{self.scanner.colors['reset']}")
+        self.scanner.log("Testing user enumeration...", 'debug')
         
         # Test user enumeration via login
         self._test_login_user_enumeration()

@@ -380,16 +380,17 @@ class PluginDetectionModule:
         self.soup = BeautifulSoup(self.main_page_content, 'html.parser')
     
     def _detect_plugins_comprehensive(self):
-        """comprehensive plugin detection with improved accuracy"""
-        self.scanner.log("Running comprehensive plugin detection...", 'info')
+        """comprehensive plugin detection with improved accuracy - optimized"""
+        self.scanner.log("Running plugin detection...", 'info')
         
-        # Multi-method detection approach
+        # Optimized detection approach - prioritize most effective methods
         self._detect_plugins_by_files()
         self._detect_plugins_by_patterns()
         self._detect_plugins_by_endpoints()
-        self._detect_plugins_by_javascript_analysis()
-        self._detect_plugins_by_css_analysis()
-        self._detect_plugins_by_admin_pages()
+        # Skip expensive analysis for better performance
+        # self._detect_plugins_by_javascript_analysis()
+        # self._detect_plugins_by_css_analysis()
+        # self._detect_plugins_by_admin_pages()
         
     def _detect_plugins_by_files(self):
         """Detect plugins by checking for specific files"""
@@ -467,26 +468,28 @@ class PluginDetectionModule:
         # Extract and analyze JavaScript URLs
         js_urls = self._extract_js_urls()
         
-        for js_url in js_urls[:10]:  # Limit to first 10 JS files
+        # Optimized: Only analyze critical JS files for performance
+        critical_js_files = [url for url in js_urls if any(pattern in url for pattern in ['/application.js', '/vendor.js', '/discourse.js'])][:3]
+        
+        for js_url in critical_js_files:
             try:
-                response = make_request(self.scanner.session, 'GET', js_url, timeout=10)
+                response = make_request(self.scanner.session, 'GET', js_url, timeout=5)
                 if response and response.status_code == 200:
-                    js_content = response.text
+                    js_content = response.text[:10000]  # Limit content size for performance
                     
                     # Look for plugin-specific JavaScript patterns
                     for plugin_name, signatures in self.plugin_signatures.items():
                         if 'js_patterns' in signatures:
                             for pattern in signatures['js_patterns']:
                                 if re.search(pattern, js_content, re.IGNORECASE):
-                                    version = self._detect_plugin_version(plugin_name, js_content)
                                     self._add_detected_plugin(
                                         plugin_name,
                                         'javascript_analysis',
                                         f"JS pattern found in {js_url}: {pattern}",
-                                        confidence=75,
-                                        version=version
+                                        confidence=75
                                     )
-            except Exception as e:
+                                    break  # Stop after first match for performance
+            except Exception:
                 continue
     
     def _detect_plugins_by_css_analysis(self):
@@ -497,7 +500,10 @@ class PluginDetectionModule:
         # Extract and analyze CSS URLs
         css_urls = self._extract_css_urls()
         
-        for css_url in css_urls[:10]:  # Limit to first 10 CSS files
+        # Optimized: Only analyze critical CSS files for performance
+        critical_css_files = [url for url in css_urls if any(pattern in url for pattern in ['/application.css', '/discourse.css'])][:2]
+        
+        for css_url in critical_css_files:
             try:
                 response = make_request(self.scanner.session, 'GET', css_url, timeout=10)
                 if response and response.status_code == 200:

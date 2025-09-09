@@ -58,7 +58,7 @@ class EndpointModule:
         Returns:
             Dictionary containing discovered endpoints
         """
-        print(f"\n{Fore.CYAN}[*] Starting Discourse endpoint discovery...{Style.RESET_ALL}")
+        self.scanner.log("Starting Discourse endpoint discovery...", 'info')
         start_time = time.time()
 
         # Run Discourse-specific discovery methods
@@ -81,7 +81,7 @@ class EndpointModule:
                 try:
                     future.result()
                 except Exception as e:
-                    print(f"[!] Error in endpoint discovery: {e}")
+                    self.scanner.log(f"Error in endpoint discovery: {e}", 'error')
 
         # Calculate total endpoints found
         endpoint_categories = [
@@ -95,15 +95,15 @@ class EndpointModule:
         self.results['total_endpoints'] = total
         self.results['scan_time'] = time.time() - start_time
 
-        print(f"\n{Fore.GREEN}[+] Discourse endpoint discovery completed in {self.results['scan_time']:.2f} seconds{Style.RESET_ALL}")
-        print(f"{Fore.GREEN}[+] Total endpoints discovered: {total}{Style.RESET_ALL}")
+        self.scanner.log(f"Discourse endpoint discovery completed in {self.results['scan_time']:.2f} seconds", 'success')
+        self.scanner.log(f"Total endpoints discovered: {total}", 'success')
 
         # Print summary by category
         for category in endpoint_categories:
             count = len(self.results.get(category, []))
             if count > 0:
                 category_name = category.replace('_endpoints', '').replace('_', ' ').title()
-                print(f"{Fore.GREEN}[+] Discourse {category_name}: {count} endpoints{Style.RESET_ALL}")
+                self.scanner.log(f"Discourse {category_name}: {count} endpoints", 'info')
 
         return self.results
 
@@ -397,12 +397,12 @@ class EndpointModule:
                     else:
                         color = Fore.YELLOW
 
-                    print(f"{color}[+] Found {category} endpoint: {endpoint} [{response.status_code}]{Style.RESET_ALL}")
+                    self.scanner.log(f"Found {category} endpoint: {endpoint} [{response.status_code}]", 'success')
 
         except requests.exceptions.RequestException:
             pass  # Silently ignore connection errors
         except Exception as e:
-            print(f"[!] Error testing endpoint {endpoint}: {e}")
+            self.scanner.log(f"Error testing endpoint {endpoint}: {e}", 'debug')
 
     def _is_valid_discourse_endpoint(self, response, endpoint, category):
         """Enhanced validation to reduce false positives for Discourse endpoints"""
@@ -627,9 +627,9 @@ class EndpointModule:
                         self._test_endpoint(parsed.path, 'sitemap')
 
         except requests.exceptions.RequestException as e:
-            print(f"[!] Request error analyzing robots/sitemap: {e}")
+            self.scanner.log(f"Request error analyzing robots/sitemap: {e}", 'debug')
         except Exception as e:
-            print(f"[!] Unexpected error analyzing robots/sitemap: {e}")
+            self.scanner.log(f"Unexpected error analyzing robots/sitemap: {e}", 'error')
             raise
 
     def _test_backup_endpoint(self, endpoint):
@@ -661,12 +661,12 @@ class EndpointModule:
                     with self.lock:
                         self.results['backup_files'].append(result)
 
-                    print(f"{Fore.RED}[+] Found sensitive file: {endpoint} [{response.status_code}]{Style.RESET_ALL}")
+                    self.scanner.log(f"Found sensitive file: {endpoint} [{response.status_code}]", 'warning')
 
         except requests.exceptions.RequestException:
             pass
         except Exception as e:
-            print(f"{Fore.RED}[!] Error testing backup endpoint {endpoint}: {e}{Style.RESET_ALL}")
+            self.scanner.log(f"Error testing backup endpoint {endpoint}: {e}", 'debug')
 
     def _attempt_directory_traversal(self):
         """Attempt directory traversal attacks"""
@@ -704,7 +704,7 @@ class EndpointModule:
                             with self.lock:
                                 self.results['directory_traversal'].append(result)
 
-                            print(f"{Fore.RED}[+] Possible directory traversal: {param}={payload}{Style.RESET_ALL}")
+                            self.scanner.log(f"Possible directory traversal: {param}={payload}", 'warning')
 
                 except requests.exceptions.RequestException:
                     continue

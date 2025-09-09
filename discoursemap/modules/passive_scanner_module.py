@@ -144,7 +144,7 @@ class PassiveScannerModule:
                     self.results['server_info'][header.lower().replace('-', '_')] = headers[header]
 
     def _check_security_headers(self):
-        """Check security-related headers"""
+        """Check security-related headers with enhanced analysis"""
         self.scanner.log("Checking security headers...", 'debug')
 
         response = self.scanner.make_request(self.scanner.target_url)
@@ -152,28 +152,137 @@ class PassiveScannerModule:
             headers = dict(response.headers)
 
             security_headers = {
-                'X-Frame-Options': 'Clickjacking protection',
-                'X-Content-Type-Options': 'MIME type sniffing protection',
-                'X-XSS-Protection': 'XSS protection',
-                'Strict-Transport-Security': 'HTTPS enforcement',
-                'Content-Security-Policy': 'Content injection protection',
-                'Referrer-Policy': 'Referrer information control',
-                'Permissions-Policy': 'Feature policy control'
+                'X-Frame-Options': {
+                    'description': 'Clickjacking protection',
+                    'severity': 'high',
+                    'secure_values': ['DENY', 'SAMEORIGIN']
+                },
+                'X-Content-Type-Options': {
+                    'description': 'MIME type sniffing protection',
+                    'severity': 'medium',
+                    'secure_values': ['nosniff']
+                },
+                'X-XSS-Protection': {
+                    'description': 'XSS protection (deprecated but still useful)',
+                    'severity': 'low',
+                    'secure_values': ['1; mode=block']
+                },
+                'Strict-Transport-Security': {
+                    'description': 'HTTPS enforcement',
+                    'severity': 'critical',
+                    'secure_values': ['max-age=']
+                },
+                'Content-Security-Policy': {
+                    'description': 'Content injection protection',
+                    'severity': 'critical',
+                    'secure_values': ["default-src 'self'"]
+                },
+                'Referrer-Policy': {
+                    'description': 'Referrer information control',
+                    'severity': 'medium',
+                    'secure_values': ['strict-origin-when-cross-origin', 'no-referrer']
+                },
+                'Permissions-Policy': {
+                    'description': 'Feature policy control',
+                    'severity': 'medium',
+                    'secure_values': ['geolocation=', 'microphone=', 'camera=']
+                },
+                'Cross-Origin-Embedder-Policy': {
+                    'description': 'Cross-origin isolation',
+                    'severity': 'medium',
+                    'secure_values': ['require-corp']
+                },
+                'Cross-Origin-Opener-Policy': {
+                    'description': 'Cross-origin window isolation',
+                    'severity': 'medium',
+                    'secure_values': ['same-origin']
+                },
+                'Cross-Origin-Resource-Policy': {
+                    'description': 'Cross-origin resource sharing control',
+                    'severity': 'medium',
+                    'secure_values': ['same-origin', 'cross-origin']
+                }
             }
 
-            for header, description in security_headers.items():
+            for header, config in security_headers.items():
                 if header in headers:
+                    header_value = headers[header]
+                    is_secure = self._analyze_header_security(header, header_value, config['secure_values'])
+                    
                     self.results['security_headers'][header] = {
                         'present': True,
-                        'value': headers[header],
-                        'description': description
+                        'value': header_value,
+                        'description': config['description'],
+                        'severity': config['severity'],
+                        'is_secure': is_secure,
+                        'analysis': self._get_header_analysis(header, header_value)
                     }
                 else:
                     self.results['security_headers'][header] = {
                         'present': False,
-                        'description': description,
-                        'risk': 'Missing security header'
+                        'description': config['description'],
+                        'severity': config['severity'],
+                        'risk': f'Missing {config["severity"]} security header',
+                        'recommendation': self._get_header_recommendation(header)
                     }
+
+    def _analyze_header_security(self, header_name, header_value, secure_values):
+        """Analyze if header value is secure"""
+        header_lower = header_value.lower()
+        
+        for secure_val in secure_values:
+            if secure_val.lower() in header_lower:
+                return True
+        return False
+
+    def _get_header_analysis(self, header_name, header_value):
+        """Get detailed analysis for specific headers"""
+        analysis = []
+        
+        if header_name == 'Strict-Transport-Security':
+            if 'max-age=' in header_value:
+                try:
+                    max_age = int(header_value.split('max-age=')[1].split(';')[0])
+                    if max_age < 31536000:  # Less than 1 year
+                        analysis.append('HSTS max-age is less than recommended 1 year')
+                    if 'includeSubDomains' not in header_value:
+                        analysis.append('HSTS should include subdomains')
+                    if 'preload' not in header_value:
+                        analysis.append('Consider adding preload directive')
+                except ValueError:
+                    analysis.append('Invalid max-age value')
+        
+        elif header_name == 'Content-Security-Policy':
+            if "'unsafe-inline'" in header_value:
+                analysis.append('CSP allows unsafe-inline which reduces security')
+            if "'unsafe-eval'" in header_value:
+                analysis.append('CSP allows unsafe-eval which reduces security')
+            if 'data:' in header_value:
+                analysis.append('CSP allows data: URIs which may be risky')
+            if "default-src 'none'" not in header_value and "default-src 'self'" not in header_value:
+                analysis.append('CSP should have restrictive default-src')
+        
+        elif header_name == 'X-Frame-Options':
+            if header_value.upper() not in ['DENY', 'SAMEORIGIN']:
+                analysis.append('X-Frame-Options should be DENY or SAMEORIGIN')
+        
+        return analysis if analysis else ['Header configuration appears secure']
+
+    def _get_header_recommendation(self, header_name):
+        """Get recommendation for missing headers"""
+        recommendations = {
+            'X-Frame-Options': 'Add "X-Frame-Options: DENY" or "X-Frame-Options: SAMEORIGIN"',
+            'X-Content-Type-Options': 'Add "X-Content-Type-Options: nosniff"',
+            'X-XSS-Protection': 'Add "X-XSS-Protection: 1; mode=block"',
+            'Strict-Transport-Security': 'Add "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload"',
+            'Content-Security-Policy': 'Add "Content-Security-Policy: default-src \'self\'; script-src \'self\'; style-src \'self\'"',
+            'Referrer-Policy': 'Add "Referrer-Policy: strict-origin-when-cross-origin"',
+            'Permissions-Policy': 'Add "Permissions-Policy: geolocation=(), microphone=(), camera=()"',
+            'Cross-Origin-Embedder-Policy': 'Add "Cross-Origin-Embedder-Policy: require-corp"',
+            'Cross-Origin-Opener-Policy': 'Add "Cross-Origin-Opener-Policy: same-origin"',
+            'Cross-Origin-Resource-Policy': 'Add "Cross-Origin-Resource-Policy: same-origin"'
+        }
+        return recommendations.get(header_name, 'Configure this security header appropriately')
 
     def _analyze_robots_txt(self):
         """Analyze robots.txt file"""
@@ -334,7 +443,7 @@ class PassiveScannerModule:
                 })
 
     def _analyze_ssl_info(self):
-        """Analyze SSL/TLS information"""
+        """Analyze SSL/TLS information with comprehensive security assessment"""
         self.scanner.log("Analyzing SSL information...", 'debug')
 
         if self.scanner.target_url.startswith('https://'):
@@ -342,6 +451,7 @@ class PassiveScannerModule:
                 import ssl
                 import socket
                 from urllib.parse import urlparse
+                from datetime import datetime, timezone
 
                 parsed_url = urlparse(self.scanner.target_url)
                 hostname = parsed_url.hostname
@@ -352,22 +462,173 @@ class PassiveScannerModule:
                 with socket.create_connection((hostname, port), timeout=10) as sock:
                     with context.wrap_socket(sock, server_hostname=hostname) as ssock:
                         cert = ssock.getpeercert()
+                        protocol_version = ssock.version()
+                        cipher_suite = ssock.cipher()
 
-                        self.results['ssl_info'] = {
+                        # Basic certificate information
+                        ssl_info = {
                             'subject': dict(x[0] for x in cert['subject']),
                             'issuer': dict(x[0] for x in cert['issuer']),
                             'version': cert['version'],
                             'serial_number': cert['serialNumber'],
                             'not_before': cert['notBefore'],
                             'not_after': cert['notAfter'],
-                            'signature_algorithm': cert.get('signatureAlgorithm', 'unknown')
+                            'signature_algorithm': cert.get('signatureAlgorithm', 'unknown'),
+                            'protocol_version': protocol_version,
+                            'cipher_suite': {
+                                'name': cipher_suite[0] if cipher_suite else 'unknown',
+                                'version': cipher_suite[1] if cipher_suite else 'unknown',
+                                'bits': cipher_suite[2] if cipher_suite else 0
+                            }
                         }
 
                         # Check for SAN (Subject Alternative Names)
                         if 'subjectAltName' in cert:
-                            self.results['ssl_info']['subject_alt_names'] = [name[1] for name in cert['subjectAltName']]
+                            ssl_info['subject_alt_names'] = [name[1] for name in cert['subjectAltName']]
 
+                        # Security analysis
+                        ssl_info['security_analysis'] = self._analyze_ssl_security(cert, protocol_version, cipher_suite)
+                        
+                        # Certificate expiry analysis
+                        ssl_info['expiry_analysis'] = self._analyze_certificate_expiry(cert)
+                        
+                        self.results['ssl_info'] = ssl_info
+
+            except ssl.SSLError as e:
+                self.results['ssl_info'] = {
+                    'error': f'SSL Error: {str(e)}',
+                    'security_analysis': {
+                        'overall_rating': 'CRITICAL',
+                        'issues': ['SSL/TLS connection failed'],
+                        'recommendations': ['Fix SSL/TLS configuration', 'Ensure valid certificate is installed']
+                    }
+                }
+            except socket.timeout:
+                self.results['ssl_info'] = {
+                    'error': 'Connection timeout during SSL analysis',
+                    'security_analysis': {
+                        'overall_rating': 'WARNING',
+                        'issues': ['SSL handshake timeout'],
+                        'recommendations': ['Check server SSL configuration', 'Verify network connectivity']
+                    }
+                }
             except Exception as e:
-                self.results['ssl_info']['error'] = str(e)
+                self.results['ssl_info'] = {
+                    'error': f'Unexpected error: {str(e)}',
+                    'security_analysis': {
+                        'overall_rating': 'ERROR',
+                        'issues': ['SSL analysis failed'],
+                        'recommendations': ['Manual SSL verification recommended']
+                    }
+                }
         else:
-            self.results['ssl_info']['status'] = 'HTTP only - no SSL/TLS'
+            self.results['ssl_info'] = {
+                'status': 'HTTP only - no SSL/TLS',
+                'security_analysis': {
+                    'overall_rating': 'CRITICAL',
+                    'issues': ['No SSL/TLS encryption', 'Data transmitted in plaintext'],
+                    'recommendations': ['Implement HTTPS', 'Redirect HTTP to HTTPS', 'Use HSTS headers']
+                }
+            }
+
+    def _analyze_ssl_security(self, cert, protocol_version, cipher_suite):
+        """Analyze SSL/TLS security configuration"""
+        issues = []
+        recommendations = []
+        rating = 'GOOD'
+        
+        # Check protocol version
+        if protocol_version in ['SSLv2', 'SSLv3']:
+            issues.append(f'Insecure protocol version: {protocol_version}')
+            recommendations.append('Upgrade to TLS 1.2 or higher')
+            rating = 'CRITICAL'
+        elif protocol_version == 'TLSv1':
+            issues.append('Outdated TLS version 1.0')
+            recommendations.append('Upgrade to TLS 1.2 or higher')
+            rating = 'HIGH' if rating == 'GOOD' else rating
+        elif protocol_version == 'TLSv1.1':
+            issues.append('Outdated TLS version 1.1')
+            recommendations.append('Upgrade to TLS 1.2 or higher')
+            rating = 'MEDIUM' if rating == 'GOOD' else rating
+        
+        # Check cipher suite strength
+        if cipher_suite and cipher_suite[2] < 128:
+            issues.append(f'Weak cipher strength: {cipher_suite[2]} bits')
+            recommendations.append('Use ciphers with at least 128-bit encryption')
+            rating = 'HIGH' if rating in ['GOOD', 'MEDIUM'] else rating
+        
+        # Check signature algorithm
+        sig_alg = cert.get('signatureAlgorithm', '').lower()
+        if 'md5' in sig_alg:
+            issues.append('Weak signature algorithm: MD5')
+            recommendations.append('Use SHA-256 or stronger signature algorithm')
+            rating = 'CRITICAL'
+        elif 'sha1' in sig_alg:
+            issues.append('Weak signature algorithm: SHA-1')
+            recommendations.append('Use SHA-256 or stronger signature algorithm')
+            rating = 'HIGH' if rating in ['GOOD', 'MEDIUM'] else rating
+        
+        # Check key length (if available in subject)
+        subject = dict(x[0] for x in cert['subject'])
+        if 'rsaEncryption' in str(cert.get('subjectPublicKeyInfo', '')):
+            # This is a simplified check - in practice, you'd need to parse the key properly
+            pass
+        
+        if not issues:
+            recommendations.append('SSL/TLS configuration appears secure')
+        
+        return {
+            'overall_rating': rating,
+            'protocol_version': protocol_version,
+            'cipher_info': cipher_suite,
+            'issues': issues,
+            'recommendations': recommendations
+        }
+    
+    def _analyze_certificate_expiry(self, cert):
+        """Analyze certificate expiry and validity"""
+        from datetime import datetime
+        
+        try:
+            # Parse certificate dates
+            not_before = datetime.strptime(cert['notBefore'], '%b %d %H:%M:%S %Y %Z')
+            not_after = datetime.strptime(cert['notAfter'], '%b %d %H:%M:%S %Y %Z')
+            now = datetime.now()
+            
+            days_until_expiry = (not_after - now).days
+            
+            status = 'VALID'
+            issues = []
+            recommendations = []
+            
+            if now < not_before:
+                status = 'NOT_YET_VALID'
+                issues.append('Certificate is not yet valid')
+                recommendations.append('Check system clock and certificate validity period')
+            elif now > not_after:
+                status = 'EXPIRED'
+                issues.append('Certificate has expired')
+                recommendations.append('Renew SSL certificate immediately')
+            elif days_until_expiry <= 7:
+                status = 'EXPIRING_SOON'
+                issues.append(f'Certificate expires in {days_until_expiry} days')
+                recommendations.append('Renew SSL certificate soon')
+            elif days_until_expiry <= 30:
+                status = 'EXPIRING_WITHIN_MONTH'
+                recommendations.append(f'Certificate expires in {days_until_expiry} days - consider renewal')
+            
+            return {
+                'status': status,
+                'not_before': cert['notBefore'],
+                'not_after': cert['notAfter'],
+                'days_until_expiry': days_until_expiry,
+                'issues': issues,
+                'recommendations': recommendations
+            }
+        except Exception as e:
+            return {
+                'status': 'ERROR',
+                'error': f'Failed to parse certificate dates: {str(e)}',
+                'issues': ['Certificate date parsing failed'],
+                'recommendations': ['Manual certificate verification recommended']
+            }

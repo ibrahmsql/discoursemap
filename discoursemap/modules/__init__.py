@@ -9,10 +9,7 @@ __version__ = "1.0.0"
 __author__ = "ibrahimsql"
 
 from ..lib.discourse_utils import (
-    validate_url, normalize_url, make_request, extract_csrf_token,
-    extract_discourse_version, generate_payloads, random_user_agent,
-    format_time, print_progress, save_json, load_json, is_discourse_site,
-    clean_url, detect_waf
+    validate_url, normalize_url, extract_csrf_token, is_discourse_forum
 )
 from .scanner import DiscourseScanner
 from .reporter import Reporter
@@ -23,9 +20,7 @@ from .user_module import UserModule
 from .cve_exploit_module import CVEExploitModule
 from .banner import Banner
 __all__ = [
-    'validate_url', 'normalize_url', 'make_request', 'extract_csrf_token',
-    'extract_discourse_version', 'generate_payloads', 'random_user_agent',
-    'format_time', 'print_progress', 'save_json', 'load_json', 'is_discourse_site',
-    'clean_url', 'DiscourseScanner', 'Reporter', 'InfoModule', 'VulnerabilityModule',
-    'EndpointModule', 'UserModule', 'CVEExploitModule'
+    'validate_url', 'normalize_url', 'extract_csrf_token', 'is_discourse_forum',
+    'DiscourseScanner', 'Reporter', 'InfoModule', 'VulnerabilityModule',
+    'EndpointModule', 'UserModule', 'CVEExploitModule', 'Banner'
 ]
