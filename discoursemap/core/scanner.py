@@ -46,6 +46,18 @@ from ..analysis.passive import PassiveScannerModule
 from ..analysis.files import FileIntegrityModule
 from .reporter import Reporter
 
+# Discourse-specific security modules
+from ..discourse_specific.badges import BadgeSecurityModule
+from ..discourse_specific.categories import CategorySecurityModule
+from ..discourse_specific.trust_levels import TrustLevelSecurityModule
+from ..discourse_specific.rate_limiting import RateLimitModule
+from ..discourse_specific.session import SessionSecurityModule
+from ..discourse_specific.admin import AdminPanelModule
+from ..discourse_specific.webhooks import WebhookModule
+from ..discourse_specific.email import EmailSecurityModule
+from ..discourse_specific.search import SearchSecurityModule
+from ..discourse_specific.cache import CacheSecurityModule
+
 class DiscourseScanner:
     """Main Discourse security scanner class"""
     
@@ -685,7 +697,9 @@ class DiscourseScanner:
         """
         if modules_to_run is None:
             modules_to_run = ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
-                             'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'waf_bypass', 'compliance']
+                             'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'waf_bypass', 'compliance',
+                             'badge', 'category', 'trust_level', 'rate_limit', 'session', 
+                             'admin', 'webhook', 'email', 'search', 'cache']
         
         self.log("Starting Async Discourse Security Scan", 'success')
         self.log(f"Target: {self.target_url}")
@@ -745,6 +759,27 @@ class DiscourseScanner:
                         module = WAFBypassModule(self)
                     elif module_name == 'compliance':
                         module = ComplianceModule(self)
+                    # Discourse-specific modules
+                    elif module_name == 'badge':
+                        module = BadgeSecurityModule(self.target_url, verbose=self.verbose)
+                    elif module_name == 'category':
+                        module = CategorySecurityModule(self.target_url, verbose=self.verbose)
+                    elif module_name == 'trust_level':
+                        module = TrustLevelSecurityModule(self.target_url, verbose=self.verbose)
+                    elif module_name == 'rate_limit':
+                        module = RateLimitModule(self.target_url, verbose=self.verbose)
+                    elif module_name == 'session':
+                        module = SessionSecurityModule(self.target_url, verbose=self.verbose)
+                    elif module_name == 'admin':
+                        module = AdminPanelModule(self.target_url, verbose=self.verbose)
+                    elif module_name == 'webhook':
+                        module = WebhookModule(self.target_url, verbose=self.verbose)
+                    elif module_name == 'email':
+                        module = EmailSecurityModule(self.target_url, verbose=self.verbose)
+                    elif module_name == 'search':
+                        module = SearchSecurityModule(self.target_url, verbose=self.verbose)
+                    elif module_name == 'cache':
+                        module = CacheSecurityModule(self.target_url, verbose=self.verbose)
                     else:
                         self.log(f"Unknown module: {module_name}", 'warning')
                         continue
