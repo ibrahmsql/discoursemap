@@ -89,7 +89,7 @@ def save_partial_results(results, filename=None):
 def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description='DiscourseMap v1.2.0 - Comprehensive Discourse security assessment tool',
+        description="DiscourseMap v2.0.0 - Comprehensive Discourse security assessment tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -139,11 +139,16 @@ Examples:
                        help='Safe preset (10 threads, 0.1s delay)')
     
     # Module options
-    parser.add_argument('-m', '--modules', nargs='+', 
-                       choices=['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
-                               'api', 'auth', 'config', 'crypto', 'network', 'plugin', 'waf_bypass', 'compliance'],
-                       help='Modules to run (default: all)')
-    
+    parser.add_argument(
+        '-m', '--modules',
+        nargs='+',
+        choices=['info', 'vuln', 'endpoint', 'user', 'cve', 
+                 'plugin_detection', 'plugin_bruteforce', 'api', 'auth', 
+                 'config', 'crypto', 'network', 'plugin', 'waf_bypass', 'compliance',
+                 'badge', 'category', 'trust_level', 'rate_limit', 'session',
+                 'admin', 'webhook', 'email', 'search', 'cache'],
+        help='Modules to run (default: all). New in v2.0: badge, category, trust_level, rate_limit, session, admin, webhook, email, search, cache'
+    )
     # Output options
     parser.add_argument('-o', '--output', choices=['json', 'html', 'csv'],
                        help='Report format')
