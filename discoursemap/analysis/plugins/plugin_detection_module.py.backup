@@ -15,7 +15,7 @@ import os
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from colorama import Fore, Style
-from ..lib.discourse_utils import make_request
+from ...lib.discourse_utils import make_request
 
 class PluginDetectionModule:
     """ plugin and technology detection module"""

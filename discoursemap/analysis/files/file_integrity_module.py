@@ -8,7 +8,7 @@ Checks file integrity and detects modifications in Discourse installations
 import os
 from .core_file_checker import CoreFileChecker
 from .suspicious_file_scanner import SuspiciousFileScanner
-from .plugin_file_checker import PluginFileChecker
+from ..plugins.plugin_file_checker import PluginFileChecker
 from .theme_file_checker import ThemeFileChecker
 from .asset_file_checker import AssetFileChecker
 

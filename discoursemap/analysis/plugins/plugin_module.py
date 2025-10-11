@@ -11,7 +11,7 @@ import json
 import base64
 from urllib.parse import urljoin, quote
 from bs4 import BeautifulSoup
-from ..lib.discourse_utils import extract_csrf_token
+from ...lib.discourse_utils import extract_csrf_token
 
 class PluginModule:
     """Plugin security testing module for Discourse forums"""

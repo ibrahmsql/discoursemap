@@ -26,24 +26,24 @@ from ..lib.discourse_utils import (
 )
 from ..lib.http_client import HTTPClient
 from ..lib.config_manager import ConfigManager
-from .info_module import InfoModule
-from .vulnerability_module import VulnerabilityModule
-from .endpoint_module import EndpointModule
-from .user_module import UserModule
-from .cve_exploit_module import CVEExploitModule
-from .plugin_bruteforce_module import PluginBruteforceModule
-from .plugin_detection_module import PluginDetectionModule
-from .api_module import APISecurityModule
-from .auth_module import AuthModule
-from .config_module import ConfigModule
-from .crypto_module import CryptoModule
-from .network_module import NetworkModule
-from .plugin_module import PluginModule
-from .compliance_module import ComplianceModule
-from .waf_bypass_module import WAFBypassModule
+from ..analysis.info import InfoModule
+from ..security.vulnerabilities import VulnerabilityModule
+from ..analysis.endpoints import EndpointModule
+from ..utilities import UserModule
+from ..security.exploits import CVEExploitModule
+from ..analysis.plugins import PluginBruteforceModule
+from ..analysis.plugins import PluginDetectionModule
+from ..infrastructure.api import APISecurityModule
+from ..security.auth import AuthModule
+from ..infrastructure.config import ConfigModule
+from ..security.crypto import CryptoModule
+from ..infrastructure.network import NetworkModule
+from ..analysis.plugins import PluginModule
+from ..compliance import ComplianceModule
+from ..utilities import WAFBypassModule
 # BackupScannerModule integrated into EndpointModule
-from .passive_scanner_module import PassiveScannerModule
-from .file_integrity_module import FileIntegrityModule
+from ..analysis.passive import PassiveScannerModule
+from ..analysis.files import FileIntegrityModule
 from .reporter import Reporter
 
 class DiscourseScanner:
@@ -646,14 +646,42 @@ class DiscourseScanner:
             self.log(f"Unexpected error generating HTML report: {e}", 'error')
             return None
     
-    async def run_async_scan(self, modules_to_run: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Run async security scan with improved performance
+    def _run_module_safe(self, module, module_name: str) -> Dict[str, Any]:
+        """Safely run a module and handle exceptions
         
         Args:
-            modules_to_run: List of module names to run
+            module: Module instance to run
+            module_name: Name of the module
             
         Returns:
-            Dictionary containing scan results
+            Module results or error dict
+        """
+        try:
+            self.log(f"Executing {module_name} module...", 'info')
+            result = module.run()
+            return result
+        except (ImportError, AttributeError, TypeError) as e:
+            self.log(f"Module error in {module_name}: {str(e)}", 'error')
+            return {'error': str(e), 'error_type': 'module_error'}
+        except Exception as e:
+            self.log(f"Unexpected error in {module_name}: {str(e)}", 'error')
+            return {'error': str(e), 'error_type': 'unexpected'}
+    
+    async def run_async_scan(self, modules_to_run: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Run async security scan with true parallelism using ThreadPoolExecutor
+        
+        This method runs multiple security modules concurrently for improved performance.
+        Modules are executed in parallel threads, with results collected as they complete.
+        
+        Args:
+            modules_to_run: List of module names to run. If None, runs all modules.
+            
+        Returns:
+            Dictionary containing scan results from all modules
+            
+        Example:
+            scanner = DiscourseScanner(url)
+            results = await scanner.run_async_scan(['info', 'vuln', 'endpoint'])
         """
         if modules_to_run is None:
             modules_to_run = ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 
@@ -661,7 +689,9 @@ class DiscourseScanner:
         
         self.log("Starting Async Discourse Security Scan", 'success')
         self.log(f"Target: {self.target_url}")
-        self.log(f"Async Mode: Enabled")
+        self.log(f"Modules: {len(modules_to_run)}")
+        self.log(f"Parallel Workers: {min(len(modules_to_run), self.threads)}")
+        self.log(f"True Async Mode: ENABLED ✓")
         
         start_time = time.time()
         
@@ -674,61 +704,71 @@ class DiscourseScanner:
                 verify_ssl=self.verify_ssl
             )
         
-        # Run modules that support async operations
+        # Run modules concurrently using ThreadPoolExecutor for true parallelism
         async_results = {}
         
-        # For now, run modules sequentially but with async HTTP requests
-        # Future enhancement: Make modules themselves async
-        for module_name in modules_to_run:
-            try:
-                if module_name == 'info':
-                    module = InfoModule(self)
-                elif module_name == 'vuln':
-                    module = VulnerabilityModule(self)
-                elif module_name == 'endpoint':
-                    module = EndpointModule(self)
-                elif module_name == 'user':
-                    module = UserModule(self)
-                elif module_name == 'cve':
-                    module = CVEExploitModule(self)
-                elif module_name == 'plugin_detection':
-                    module = PluginDetectionModule(self)
-                elif module_name == 'plugin_bruteforce':
-                    module = PluginBruteforceModule(self)
-                elif module_name == 'api':
-                    module = APISecurityModule(self)
-                elif module_name == 'auth':
-                    module = AuthModule(self)
-                elif module_name == 'config':
-                    module = ConfigModule(self)
-                elif module_name == 'crypto':
-                    module = CryptoModule(self)
-                elif module_name == 'network':
-                    module = NetworkModule(self)
-                elif module_name == 'plugin':
-                    module = PluginModule(self)
-                elif module_name == 'waf_bypass':
-                    module = WAFBypassModule(self)
-                elif module_name == 'compliance':
-                    module = ComplianceModule(self)
-                else:
-                    self.log(f"Unknown module: {module_name}", 'warning')
-                    continue
-                
-                self.log(f"Running {module_name} module (async mode)...", 'info')
-                
-                # Run module (currently sync, but uses async HTTP client)
-                result = module.run()
-                async_results[module_name] = result
-                
-                self.log(f"Completed {module_name} module", 'success')
-                
-            except (ImportError, AttributeError, TypeError) as e:
-                self.log(f"Module error in {module_name}: {str(e)}", 'error')
-                async_results[module_name] = {'error': str(e)}
-            except Exception as e:
-                self.log(f"Unexpected error in {module_name} module: {str(e)}", 'error')
-                async_results[module_name] = {'error': str(e)}
+        # Use ThreadPoolExecutor for concurrent module execution
+        with ThreadPoolExecutor(max_workers=min(len(modules_to_run), self.threads)) as executor:
+            # Submit all module tasks
+            future_to_module = {}
+            
+            for module_name in modules_to_run:
+                try:
+                    # Create module instance
+                    if module_name == 'info':
+                        module = InfoModule(self)
+                    elif module_name == 'vuln':
+                        module = VulnerabilityModule(self)
+                    elif module_name == 'endpoint':
+                        module = EndpointModule(self)
+                    elif module_name == 'user':
+                        module = UserModule(self)
+                    elif module_name == 'cve':
+                        module = CVEExploitModule(self)
+                    elif module_name == 'plugin_detection':
+                        module = PluginDetectionModule(self)
+                    elif module_name == 'plugin_bruteforce':
+                        module = PluginBruteforceModule(self)
+                    elif module_name == 'api':
+                        module = APISecurityModule(self)
+                    elif module_name == 'auth':
+                        module = AuthModule(self)
+                    elif module_name == 'config':
+                        module = ConfigModule(self)
+                    elif module_name == 'crypto':
+                        module = CryptoModule(self)
+                    elif module_name == 'network':
+                        module = NetworkModule(self)
+                    elif module_name == 'plugin':
+                        module = PluginModule(self)
+                    elif module_name == 'waf_bypass':
+                        module = WAFBypassModule(self)
+                    elif module_name == 'compliance':
+                        module = ComplianceModule(self)
+                    else:
+                        self.log(f"Unknown module: {module_name}", 'warning')
+                        continue
+                    
+                    self.log(f"Submitting {module_name} module for async execution...", 'info')
+                    
+                    # Submit module execution to thread pool
+                    future = executor.submit(self._run_module_safe, module, module_name)
+                    future_to_module[future] = module_name
+                    
+                except Exception as e:
+                    self.log(f"Error submitting {module_name}: {str(e)}", 'error')
+                    async_results[module_name] = {'error': str(e)}
+            
+            # Collect results as they complete
+            for future in as_completed(future_to_module):
+                module_name = future_to_module[future]
+                try:
+                    result = future.result()
+                    async_results[module_name] = result
+                    self.log(f"Completed {module_name} module", 'success')
+                except Exception as e:
+                    self.log(f"Error in {module_name} module: {str(e)}", 'error')
+                    async_results[module_name] = {'error': str(e)}
         
         # Close async HTTP client
         if hasattr(self, 'http_client'):
