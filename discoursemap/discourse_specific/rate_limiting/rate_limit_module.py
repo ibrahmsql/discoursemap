@@ -19,13 +19,17 @@ class RateLimitModule:
     def __init__(self, target_url: str, session: Optional[requests.Session] = None,
                  verbose: bool = False):
         """
-        Initialize rate limit module
-        
-        Args:
-            target_url: Target Discourse forum URL
-            session: Optional requests session
-            verbose: Enable verbose output
-        """
+                 Create a RateLimitModule for scanning a Discourse site and initialize its state.
+                 
+                 Parameters:
+                     target_url (str): Base URL of the target Discourse forum; trailing slash is removed.
+                     session (Optional[requests.Session]): HTTP session to use for requests; a new session is created if not provided.
+                     verbose (bool): When True, enable verbose console output.
+                 
+                 Notes:
+                     Initializes an internal `results` dictionary to collect findings with keys:
+                     'rate_limits_found', 'endpoints_tested', 'bypass_methods', and 'recommendations'.
+                 """
         self.target_url = target_url.rstrip('/')
         self.session = session or requests.Session()
         self.verbose = verbose
@@ -38,10 +42,17 @@ class RateLimitModule:
     
     def scan(self) -> Dict[str, Any]:
         """
-        Perform comprehensive rate limiting scan
+        Perform a full rate limiting assessment against the configured Discourse site.
+        
+        Runs a suite of endpoint-specific checks (login, API, search, topic/post/PM behavior), inspects response headers, tests common bypass techniques, and generates remediation recommendations.
         
         Returns:
-            Dictionary containing scan results
+            results (Dict[str, Any]): Collected scan results containing:
+                - rate_limits_found: list of detected rate limit records.
+                - endpoints_tested: list of tested endpoint summaries.
+                - bypass_methods: list of discovered bypass technique findings.
+                - recommendations: list of generated security recommendations.
+                - rate_limit_headers (optional): mapping of any rate-limit-related headers observed.
         """
         if self.verbose:
             print(f"{Fore.CYAN}[*] Starting Discourse rate limiting scan...{Style.RESET_ALL}")
@@ -61,7 +72,11 @@ class RateLimitModule:
         return self.results
     
     def _test_login_rate_limit(self):
-        """Test login endpoint rate limiting"""
+        """
+        Probe the forum's login endpoint to determine whether request rate limiting is enforced.
+        
+        Performs up to 15 login attempts against /session to detect an HTTP 429 response. On detecting a 429 it records a rate-limit finding in self.results['rate_limits_found'] including the endpoint, type 'login', the number of attempts required to trigger the limit, the status code, and response headers. If no 429 is observed after the attempts, it appends an entry to self.results['endpoints_tested'] indicating the login endpoint appears not rate-limited and includes the attempted count. Stops testing early on exceptions and preserves the number of attempts performed.
+        """
         endpoint = urljoin(self.target_url, '/session')
         
         if self.verbose:
@@ -106,7 +121,15 @@ class RateLimitModule:
             })
     
     def _test_api_rate_limit(self):
-        """Test API endpoint rate limiting"""
+        """
+        Probe common Discourse API endpoints to detect rate limiting and record findings in self.results.
+        
+        Performs rapid requests against a set of API endpoints and records a rate limit finding when a 429 response is observed. Updates self.results by appending:
+        - to 'rate_limits_found': dicts with keys 'endpoint', 'type' (set to 'api'), 'triggered_after' (number of attempts), and 'status_code'.
+        - to 'endpoints_tested': dicts with keys 'endpoint', 'rate_limited' (False when no 429 observed), and 'attempts' (number of requests made).
+        
+        No return value.
+        """
         endpoints = [
             '/categories.json',
             '/latest.json',
@@ -150,7 +173,11 @@ class RateLimitModule:
                 })
     
     def _test_search_rate_limit(self):
-        """Test search endpoint rate limiting"""
+        """
+        Probe the forum's /search endpoint for rate limiting and record any trigger point.
+        
+        Performs repeated GET requests to /search with varying query parameters and, upon receiving an HTTP 429 response, appends a finding to self.results['rate_limits_found'] with keys 'endpoint' (set to '/search'), 'type' (set to 'search'), and 'triggered_after' (the number of requests made before the 429). Stops probing when a rate limit is detected or when a request error occurs.
+        """
         endpoint = urljoin(self.target_url, '/search')
         
         if self.verbose:
@@ -179,7 +206,15 @@ class RateLimitModule:
                 break
     
     def _test_topic_creation_rate_limit(self):
-        """Test topic creation rate limiting"""
+        """
+        Check whether the topic-creation endpoint exists and record its accessibility and authentication requirement.
+        
+        If the posts endpoint responds (or errors), an entry is appended to self.results['endpoints_tested'] with:
+        - 'endpoint': '/posts'
+        - 'type': 'topic_creation'
+        - 'requires_auth': True
+        - 'accessible': True if the response status code is not 404, False otherwise
+        """
         endpoint = urljoin(self.target_url, '/posts')
         
         if self.verbose:
@@ -198,7 +233,11 @@ class RateLimitModule:
             pass
     
     def _test_post_rate_limit(self):
-        """Test post creation rate limiting"""
+        """
+        Record metadata about the forum's post-creation endpoint with respect to rate limiting and authentication.
+        
+        Appends an entry to self.results['endpoints_tested'] describing the '/posts' endpoint with type 'post_creation' and a note indicating that an authenticated session is required.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing post rate limit...{Style.RESET_ALL}")
         
@@ -210,7 +249,11 @@ class RateLimitModule:
         })
     
     def _test_pm_rate_limit(self):
-        """Test private message rate limiting"""
+        """
+        Record a test entry indicating private-message rate limiting is associated with the posts endpoint.
+        
+        Adds an entry to self.results['endpoints_tested'] for '/posts' with type 'private_message' and a note that PM creation uses the posts endpoint. When verbose mode is enabled, prints a brief progress message.
+        """
         endpoint = urljoin(self.target_url, '/posts')
         
         if self.verbose:
@@ -223,7 +266,11 @@ class RateLimitModule:
         })
     
     def _check_rate_limit_headers(self):
-        """Check for rate limit headers in responses"""
+        """
+        Collect common rate-limit headers from the forum's /latest.json response and store them in the module results.
+        
+        Checks the response for the headers `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After`, and `X-Discourse-Rate-Limit-Error`. If any are present, stores a mapping of header names to values in `self.results['rate_limit_headers']`. Network or parsing errors are ignored.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Checking rate limit headers...{Style.RESET_ALL}")
         
@@ -246,7 +293,11 @@ class RateLimitModule:
             pass
     
     def _test_bypass_techniques(self):
-        """Test common rate limit bypass techniques"""
+        """
+        Assess common techniques that may bypass server-side rate limits.
+        
+        Performs simple checks against the /latest.json endpoint — testing an X-Forwarded-For header and a small set of User-Agent values — and records any observed bypass methods in self.results['bypass_methods'] as a list of dictionaries with keys like `method`, `successful`, and `severity`.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing rate limit bypass techniques...{Style.RESET_ALL}")
         
@@ -288,7 +339,14 @@ class RateLimitModule:
         self.results['bypass_methods'] = bypass_methods
     
     def _generate_recommendations(self):
-        """Generate security recommendations"""
+        """
+        Assembles security recommendations based on collected rate-limit test results.
+        
+        Populates self.results['recommendations'] with a list of recommendation dicts. Adds:
+        - A HIGH-severity recommendation listing endpoints from self.results['endpoints_tested'] that are not rate limited.
+        - A MEDIUM-severity recommendation if self.results['bypass_methods'] contains any findings.
+        - A LOW-severity recommendation if no rate limit headers were captured in self.results['rate_limit_headers'].
+        """
         recommendations = []
         
         # Check for missing rate limits
@@ -320,7 +378,11 @@ class RateLimitModule:
         self.results['recommendations'] = recommendations
     
     def print_results(self):
-        """Print formatted results"""
+        """
+        Prints the accumulated scan results in a human-readable, colorized format.
+        
+        Displays the module's collected findings from self.results, including detected rate limits (rate_limits_found), the count of endpoints tested (endpoints_tested), and any generated security recommendations (recommendations). Output is written to standard output in a formatted layout for quick review.
+        """
         print(f"\n{Fore.CYAN}{'='*60}")
         print(f"Discourse Rate Limiting Scan Results")
         print(f"{'='*60}{Style.RESET_ALL}\n")

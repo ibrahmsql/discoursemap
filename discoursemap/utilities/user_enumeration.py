@@ -16,11 +16,27 @@ class UserEnumerator:
     """User enumeration functionality"""
     
     def __init__(self, scanner):
+        """
+        Initialize the UserEnumerator with a scanner and prepare storage for discovered users.
+        
+        Parameters:
+            scanner: An object used to perform requests and provide the target URL (expected to expose attributes/methods like `target_url` and `make_request`).
+        
+        Detailed behavior:
+            Creates an empty list `discovered_users` to accumulate found user records.
+        """
         self.scanner = scanner
         self.discovered_users = []
     
     def discover_users_from_public_endpoints(self):
-        """Discover users from public Discourse endpoints"""
+        """
+        Probe common public Discourse JSON endpoints and aggregate discovered users.
+        
+        Queries a set of public endpoints (e.g., /about.json, /users.json, /directory_items.json, /u/search/users) on the target and extracts usernames found in returned JSON payloads, appending them to the enumerator's internal `discovered_users` list.
+        
+        Returns:
+            list: A list of user records (dicts) added to `self.discovered_users`. Each record typically contains keys such as `username`, optional `name`, and `source` indicating where the user was found.
+        """
         endpoints = [
             '/about.json',
             '/users.json',
@@ -41,7 +57,12 @@ class UserEnumerator:
         return self.discovered_users
     
     def discover_users_from_directory(self):
-        """Discover users from directory page"""
+        """
+        Extract user profiles from the target site's directory page (/u) and add them to the enumerator's discovered users.
+        
+        Returns:
+        	list[dict]: The list of discovered user records (each typically contains keys like 'username', optional 'name', and 'source').
+        """
         try:
             url = urljoin(self.scanner.target_url, '/u')
             response = self.scanner.make_request(url, timeout=10)
@@ -54,7 +75,17 @@ class UserEnumerator:
         return self.discovered_users
     
     def discover_users_from_search(self, query='a'):
-        """Discover users via search endpoint"""
+        """
+        Discover users by querying the site's search endpoint.
+        
+        Queries the /u/search/users endpoint with the provided search term and appends any returned users to the enumerator's internal `discovered_users` list. Each appended entry is a dict containing `username`, `name`, and `source` set to `'search'`.
+        
+        Parameters:
+        	query (str): Search term to use when querying the users endpoint. Defaults to `'a'`.
+        
+        Returns:
+        	list: The enumerator's `discovered_users` list, containing dicts with keys `username`, `name`, and `source`.
+        """
         try:
             url = urljoin(self.scanner.target_url, '/u/search/users')
             response = self.scanner.make_request(
@@ -79,7 +110,18 @@ class UserEnumerator:
         return self.discovered_users
     
     def _extract_users_from_json(self, data, endpoint):
-        """Extract users from JSON response"""
+        """
+        Extract usernames from a JSON-like payload and append them to self.discovered_users.
+        
+        Scans the provided dict for common keys that contain user lists (such as 'users',
+        'directory_items', 'about', and 'members'). For each user object found, appends a
+        dictionary with keys 'username', 'name', and 'source' (set to the provided endpoint)
+        to self.discovered_users.
+        
+        Parameters:
+            data (dict): Parsed JSON payload to search for user entries.
+            endpoint (str): Identifier of the source endpoint to record in the 'source' field.
+        """
         if isinstance(data, dict):
             # Check common keys
             for key in ['users', 'directory_items', 'about', 'members']:
@@ -97,7 +139,16 @@ class UserEnumerator:
                                     })
     
     def _extract_users_from_html(self, html_content):
-        """Extract users from HTML content"""
+        """
+        Parse HTML and add discovered usernames found in user profile links to self.discovered_users.
+        
+        Parameters:
+            html_content (str): HTML document text to search for user profile links.
+        
+        Notes:
+            For each discovered username, a dict is appended to self.discovered_users with keys:
+            'username' (str) and 'source' set to 'html_parsing'.
+        """
         soup = BeautifulSoup(html_content, 'html.parser')
         
         # Find user links
@@ -114,7 +165,18 @@ class UserEnumerator:
                 })
     
     def test_user_enumeration(self, usernames):
-        """Test if usernames can be enumerated via login"""
+        """
+        Check which provided usernames appear enumerable by probing the application's login endpoint.
+        
+        Parameters:
+            usernames (iterable): Sequence of username strings to test; only the first 10 entries are attempted.
+        
+        Returns:
+            list: A list of dictionaries for usernames that produced an indicative login response. Each dictionary contains:
+                - 'username' (str): The tested username.
+                - 'enumerable' (bool): `True` if the login response suggests the account exists, `False` otherwise.
+                - 'method' (str): The enumeration method used (set to 'login_response').
+        """
         results = []
         
         login_url = urljoin(self.scanner.target_url, '/session')
@@ -142,7 +204,18 @@ class UserEnumerator:
         return results
     
     def test_forgot_password_enumeration(self, usernames):
-        """Test password reset enumeration"""
+        """
+        Detect whether the forgot-password endpoint reveals the existence of specific usernames.
+        
+        Parameters:
+            usernames (Iterable[str]): Candidate usernames to test. Only the first 5 entries will be sent to the endpoint.
+        
+        Returns:
+            list[dict]: A list of results, one per tested username. Each dict contains:
+                - 'username' (str): The tested username.
+                - 'status_code' (int): HTTP status code returned by the forgot-password endpoint.
+                - 'enumerable' (bool): `true` if the response status code is not 429, `false` otherwise.
+        """
         results = []
         
         reset_url = urljoin(self.scanner.target_url, '/session/forgot_password')

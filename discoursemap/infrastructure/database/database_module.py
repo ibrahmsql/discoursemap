@@ -15,6 +15,12 @@ class DatabaseModule:
     """Database security module (Refactored)"""
     
     def __init__(self, scanner):
+        """
+        Initialize the DatabaseModule with a scanner and prepare an empty results structure.
+        
+        Parameters:
+            scanner: An object that provides a `target_url` attribute and a `make_request` method used to perform HTTP requests during tests. The module stores this scanner and initializes `self.results` with keys: 'module_name', 'target', 'sql_injection', 'nosql_injection', 'database_exposure', 'vulnerabilities', and 'tests_performed'.
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'Database Security',
@@ -27,7 +33,14 @@ class DatabaseModule:
         }
     
     def run(self) -> Dict[str, Any]:
-        """Execute database security tests"""
+        """
+        Coordinate and run database security checks against the configured target.
+        
+        Runs the module's SQL injection and database exposure tests, updates the instance results dictionary with findings and the tests performed count, and prints a brief summary to stdout.
+        
+        Returns:
+            results (Dict[str, Any]): Scan results containing keys such as 'module_name', 'target', 'sql_injection', 'nosql_injection', 'database_exposure', 'vulnerabilities', and 'tests_performed'.
+        """
         print(f"{Fore.CYAN}[*] Starting Database Security Scan...{Style.RESET_ALL}")
         
         # Test for SQL injection
@@ -43,7 +56,11 @@ class DatabaseModule:
         return self.results
     
     def _test_sql_injection(self):
-        """Test for SQL injection"""
+        """
+        Checks a set of endpoints for SQL injection indicators and records any findings in the instance results.
+        
+        Iterates over predefined endpoints and the first two SQL payloads; for each combination it issues a request and, when a response with HTTP status 500 is observed, records an entry in `self.results['sql_injection']` (with `endpoint` and `payload`) and a corresponding vulnerability entry in `self.results['vulnerabilities']` (type: "SQL Injection", severity: "critical"). Increments `self.results['tests_performed']` once after running the checks.
+        """
         payloads = ["' OR '1'='1", "1' OR '1'='1' --", "admin'--"]
         
         endpoints = ['/search', '/users', '/t/']
@@ -75,7 +92,11 @@ class DatabaseModule:
         self.results['tests_performed'] += 1
     
     def _test_database_exposure(self):
-        """Test for exposed database files"""
+        """
+        Check the target for publicly accessible database dump or file paths.
+        
+        For each common database file path, issues a request and, when a path is accessible (HTTP 200), appends a record with the path to results['database_exposure'] and adds a vulnerability entry with type "Database Exposure" and severity "critical". Increments results['tests_performed'] by 1.
+        """
         db_paths = [
             '/backup.sql',
             '/database.sql',

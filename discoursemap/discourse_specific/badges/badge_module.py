@@ -21,6 +21,20 @@ class BadgeSecurityModule:
     """Advanced badge system security testing for Discourse"""
     
     def __init__(self, target_url, verbose=False):
+        """
+        Initialize the BadgeSecurityModule with a target URL and verbosity, and prepare an empty results structure for the scan.
+        
+        Parameters:
+            target_url (str): Base URL of the target Discourse-like instance to test.
+            verbose (bool): If True, enable verbose colorized logging of scan progress (default False).
+        
+        The instance is initialized without performing any network activity. Creates `self.results`, a dictionary prepopulated with keys used by the scan workflow, including:
+        - metadata (`module`)
+        - discovery lists (`badges_found`, `badge_types` with `gold`, `silver`, `bronze`)
+        - issue buckets (`badge_manipulation`, `badge_enumeration`, `sql_query_exposure`, `auto_badge_flaws`, `custom_badge_vulns`, `badge_grouping_issues`)
+        - aggregated findings (`vulnerabilities`, `recommendations`)
+        - `total_tests` counter
+        """
         self.target_url = target_url
         self.verbose = verbose
         self.results = {
@@ -43,7 +57,14 @@ class BadgeSecurityModule:
         }
     
     def scan(self):
-        """Execute comprehensive badge security scan"""
+        """
+        Run a multi-phase security assessment of the target badge system.
+        
+        Performs badge discovery, hidden-badge enumeration, badge-type probing, manipulation tests (granting, revocation, creation), SQL/query exposure analysis, trigger manipulation checks, privilege-escalation checks, caching and notification checks, and synthesizes remediation recommendations. When the instance was created with verbose=True, progress and summary messages are printed to stdout.
+        
+        Returns:
+            results (dict): Aggregated findings, metadata, test counts, vulnerability entries, and recommendations produced by the scan.
+        """
         if self.verbose:
             print(f"{Fore.CYAN}[*] Starting Advanced Badge System Scan...{Style.RESET_ALL}")
             print(f"{Fore.CYAN}[*] Target: {self.target_url}{Style.RESET_ALL}\n")
@@ -79,7 +100,15 @@ class BadgeSecurityModule:
         return self.results
     
     def _enumerate_badges(self):
-        """Comprehensive badge enumeration"""
+        """
+        Fetch badge metadata from the target's /badges.json and populate the module's results with discovered badges, type categorizations, and basic enumeration/manipulation findings.
+        
+        This method increments self.results['total_tests'], requests the remote /badges.json endpoint, and for each returned badge adds a normalized badge entry to self.results['badges_found']. It also appends badges into self.results['badge_types']['gold' | 'silver' | 'bronze'] based on badge_type_id, and records simple findings into:
+        - self.results['badge_manipulation'] when a badge allows multiple grants,
+        - self.results['badge_enumeration'] when a badge is not listable.
+        
+        On network or parsing errors the method swallows exceptions (optionally printing a verbose message) and does not raise; it does not return a value.
+        """
         self.results['total_tests'] += 1
         
         try:
@@ -148,7 +177,11 @@ class BadgeSecurityModule:
                 print(f"  {Fore.RED}✗{Style.RESET_ALL} Badge enumeration failed: {str(e)}")
     
     def _discover_hidden_badges(self):
-        """Discover hidden badges via ID enumeration"""
+        """
+        Discover badges that are not listed in the public badges index by enumerating badge IDs.
+        
+        Probes /badges/{id}.json for IDs 1 through 100 (skipping IDs already present in results['badges_found']). For each accessible badge not in the public list, appends a record to results['badge_enumeration'] and results['vulnerabilities'] describing the hidden badge. Increments results['total_tests'] and uses self.verbose to control progress output. Individual request failures are ignored so the enumeration continues.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -203,7 +236,13 @@ class BadgeSecurityModule:
                 print(f"    {Fore.RED}✗{Style.RESET_ALL} Hidden badge discovery failed")
     
     def _enumerate_badge_types(self):
-        """Analyze badge type distribution"""
+        """
+        Check whether the badge types endpoint is reachable.
+        
+        Increments the module's total_tests counter and performs an HTTP GET to /badge_types.json.
+        If the endpoint returns HTTP 200 and verbose mode is enabled, prints a confirmation that the badge types endpoint is accessible.
+        Failures are swallowed and do not modify the results structure.
+        """
         self.results['total_tests'] += 1
         
         try:
@@ -218,7 +257,18 @@ class BadgeSecurityModule:
             pass
     
     def _test_badge_granting(self):
-        """Test badge granting vulnerabilities"""
+        """
+        Execute checks for unauthorized or improperly protected badge-granting endpoints and record findings in the module's results.
+        
+        This method performs live HTTP tests against the target to detect:
+        - Unauthenticated badge creation via the primary badge-granting endpoint (records entries in `self.results['vulnerabilities']`).
+        - Badge grantability via badge-specific API endpoints for discovered badges (records entries in `self.results['badge_manipulation']`).
+        
+        Side effects:
+        - Increments `self.results['total_tests']`.
+        - Appends structured findings to `self.results['vulnerabilities']` and/or `self.results['badge_manipulation']` when issues are detected.
+        - Prints progress and findings when `self.verbose` is True.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -267,7 +317,11 @@ class BadgeSecurityModule:
                 print(f"    {Fore.RED}✗{Style.RESET_ALL} Badge granting test failed")
     
     def _test_badge_revocation(self):
-        """Test badge revocation vulnerabilities"""
+        """
+        Attempt to detect unauthorized badge revocation and record findings.
+        
+        Increments the module's test counter, issues an HTTP DELETE to /user_badges/1 to check whether badge revocation is permitted without authorization, and appends a high-severity vulnerability entry to self.results['vulnerabilities'] if the request succeeds (HTTP 200). Does not raise on network or other errors and may emit verbose status messages via self.verbose.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -297,7 +351,11 @@ class BadgeSecurityModule:
             pass
     
     def _test_badge_creation(self):
-        """Test custom badge creation vulnerabilities"""
+        """
+        Check whether the admin badge creation endpoint permits unauthorized creation and record any findings.
+        
+        Increments the module's total_tests counter and, if an unauthorised creation is possible, appends a critical entry to self.results['custom_badge_vulns'] and a corresponding vulnerability record to self.results['vulnerabilities']. No return value.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -341,7 +399,11 @@ class BadgeSecurityModule:
             pass
     
     def _check_badge_sql_exposure(self):
-        """Check for exposed badge SQL queries (security risk)"""
+        """
+        Detects and records badge SQL queries exposed by badge endpoints.
+        
+        Increments `self.results['total_tests']`. For each badge in `self.results['badges_found']` it requests the badge endpoint and, if a `query` field is present, appends an entry to `self.results['sql_query_exposure']` describing the exposed snippet and detected SQL patterns. If multiple SQL patterns are found, a high-severity finding is added to `self.results['vulnerabilities']`. Emits status messages when `self.verbose` is True.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -401,7 +463,11 @@ class BadgeSecurityModule:
                 print(f"    {Fore.RED}✗{Style.RESET_ALL} SQL exposure check failed")
     
     def _test_badge_trigger_manipulation(self):
-        """Test if badge triggers can be manipulated"""
+        """
+        Check whether the administrative badge trigger endpoint is callable without authorization.
+        
+        Increments `results['total_tests']`. If the trigger endpoint is accessible, appends a high-severity finding to `results['badge_manipulation']` with an issue titled "Badge trigger accessible" and a description that the endpoint can be called without authorization.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -430,7 +496,11 @@ class BadgeSecurityModule:
             pass
     
     def _test_badge_group_privileges(self):
-        """Test badge-based group privileges"""
+        """
+        Check discovered badges for group/privilege misconfigurations and record findings.
+        
+        Inspects up to the first 10 discovered badges and appends entries to self.results['badge_grouping_issues'] for badges that grant persistent privileges (where `auto_revoke` is False and `allow_title` is truthy). Each recorded entry includes the badge name, an 'Permanent privilege badge' issue, a 'medium' severity, and a short description. This method also increments self.results['total_tests'] and uses verbose output to report a summary when enabled.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -466,7 +536,11 @@ class BadgeSecurityModule:
             pass
     
     def _test_automatic_badge_assignment(self):
-        """Test automatic badge assignment flaws"""
+        """
+        Scan discovered badges for signs of suspicious automatic assignment and record any findings.
+        
+        Inspects badges already collected in self.results['badges_found'] for gold badges with an unusually high grant count (greater than 1000). For each match, appends a finding to self.results['auto_badge_flaws'] describing the badge, issue, grant_count, and severity. Increments self.results['total_tests'] as part of the test bookkeeping.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -492,7 +566,11 @@ class BadgeSecurityModule:
                 print(f"    {Fore.GREEN}✓{Style.RESET_ALL} No suspicious automatic assignments")
     
     def _test_badge_caching(self):
-        """Test badge caching vulnerabilities"""
+        """
+        Check whether the public badge list is served with public caching and log a warning when detected.
+        
+        Sends a GET request to `/badges.json`; if the response is successful and its `Cache-Control` header contains `public`, a warning message is emitted when verbose mode is enabled.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -514,7 +592,11 @@ class BadgeSecurityModule:
             pass
     
     def _test_badge_notifications(self):
-        """Test badge notification privacy"""
+        """
+        Check whether the public notifications endpoint is accessible, which may indicate information exposure of badge notifications.
+        
+        Performs a single test that increments the module's test counter and attempts to GET /notifications.json; results are surfaced via the module's verbose output and the internal results structure.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -534,7 +616,16 @@ class BadgeSecurityModule:
             pass
     
     def _generate_recommendations(self):
-        """Generate security recommendations"""
+        """
+        Populate the module's recommendations list based on findings collected during the scan.
+        
+        Adds structured recommendation entries to self.results['recommendations']:
+        - A HIGH-priority recommendation if any badge SQL queries were exposed.
+        - A CRITICAL-priority recommendation if any recorded vulnerabilities have severity 'critical'.
+        - A LOW-priority recommendation if there are more than 50 gold badges.
+        
+        Each recommendation is a dict containing 'priority', 'issue', and 'recommendation'.
+        """
         
         if self.results['sql_query_exposure']:
             self.results['recommendations'].append({
@@ -560,7 +651,11 @@ class BadgeSecurityModule:
             })
     
     def print_results(self):
-        """Print scan results"""
+        """
+        Prints a formatted summary of the scan results to standard output.
+        
+        Includes the target URL, total badges found, total vulnerabilities, and—if any—a list of each vulnerability showing its severity, type, and description.
+        """
         print(f"\n{Fore.CYAN}{'='*60}")
         print(f"BADGE SECURITY SCAN RESULTS")
         print(f"{'='*60}{Style.RESET_ALL}\n")

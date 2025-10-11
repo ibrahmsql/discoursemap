@@ -20,13 +20,13 @@ class SessionSecurityModule:
     def __init__(self, target_url: str, session: Optional[requests.Session] = None,
                  verbose: bool = False):
         """
-        Initialize session security module
-        
-        Args:
-            target_url: Target Discourse forum URL
-            session: Optional requests session
-            verbose: Enable verbose output
-        """
+                 Create and configure a SessionSecurityModule for scanning session and cookie security on a Discourse forum.
+                 
+                 Parameters:
+                     target_url (str): Base URL of the target Discourse site; trailing slash will be removed.
+                     session (Optional[requests.Session]): Existing HTTP session to reuse for requests; a new session is created if omitted.
+                     verbose (bool): When True, enable verbose output for debugging and progress reporting.
+                 """
         self.target_url = target_url.rstrip('/')
         self.session = session or requests.Session()
         self.verbose = verbose
@@ -41,10 +41,11 @@ class SessionSecurityModule:
     
     def scan(self) -> Dict[str, Any]:
         """
-        Perform comprehensive session security scan
+        Run a suite of session security tests against the configured Discourse target and collect findings.
         
         Returns:
-            Dictionary containing scan results
+            results (Dict[str, Any]): Aggregated scan results, including keys for cookie_security, csrf_protection,
+            session_fixation, session_timeout, concurrent_sessions, session_regeneration, vulnerabilities, and recommendations.
         """
         if self.verbose:
             print(f"{Fore.CYAN}[*] Starting Discourse session security scan...{Style.RESET_ALL}")
@@ -62,7 +63,11 @@ class SessionSecurityModule:
         return self.results
     
     def _test_cookie_security(self):
-        """Test cookie security attributes"""
+        """
+        Analyze cookies returned by the target site and record their security attributes and any issues in self.results.
+        
+        Per-cookie entries include name, secure, httponly, samesite, domain, path, and a list of detected issues. The method performs an HTTP request to the target to collect cookies, counts cookies found and stores them under `results['cookie_security']` with keys `cookies_found` and `cookies`. For any cookie missing the Secure, HttpOnly, or SameSite attributes, a vulnerability entry is appended to `results['vulnerabilities']` with type `"Insecure Cookie"` and severity `"MEDIUM"`.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing cookie security...{Style.RESET_ALL}")
         
@@ -110,7 +115,16 @@ class SessionSecurityModule:
                 print(f"{Fore.RED}[!] Error testing cookies: {e}{Style.RESET_ALL}")
     
     def _test_csrf_protection(self):
-        """Test CSRF protection mechanisms"""
+        """
+        Assess presence of CSRF protections on the target by detecting tokens and probing common endpoints.
+        
+        Updates self.results['csrf_protection'] with:
+        - 'tokens_found': list of detected CSRF token indicators (meta tags or cookies)
+        - 'protected_endpoints': endpoints that appear to require a CSRF token
+        - 'protection_enabled': boolean indicating whether any token indicators were found
+        
+        If no tokens are detected, appends a HIGH-severity "Missing CSRF Protection" vulnerability entry to self.results['vulnerabilities'].
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing CSRF protection...{Style.RESET_ALL}")
         
@@ -169,7 +183,19 @@ class SessionSecurityModule:
                 print(f"{Fore.RED}[!] Error testing CSRF: {e}{Style.RESET_ALL}")
     
     def _test_session_fixation(self):
-        """Test for session fixation vulnerabilities"""
+        """
+        Detect whether the application regenerates session identifiers after an authentication attempt.
+        
+        Updates self.results['session_fixation'] with:
+        - 'session_regenerated' (True if any session cookie value changed after the login attempt)
+        - 'vulnerable' (True if no session regeneration was observed)
+        
+        If no regeneration is observed, adds a HIGH-severity "Session Fixation" entry to self.results['vulnerabilities'].
+        
+        Notes:
+        - The test performs a simulated login and compares cookies before and after; it does not require valid credentials.
+        - No value is returned.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing session fixation...{Style.RESET_ALL}")
         
@@ -214,7 +240,15 @@ class SessionSecurityModule:
                 print(f"{Fore.RED}[!] Error testing session fixation: {e}{Style.RESET_ALL}")
     
     def _test_session_timeout(self):
-        """Test session timeout configuration"""
+        """
+        Analyze session cookies to determine configured timeouts and record the findings.
+        
+        Performs an HTTP GET to the target URL, inspects cookies in the current session for an `expires` attribute, and computes remaining lifetime for each expiring cookie (in seconds and hours). Updates `self.results['session_timeout']` with:
+        - `cookies_with_timeout`: list of dicts with keys `cookie`, `expires_in_seconds`, and `expires_in_hours`
+        - `configured`: boolean indicating whether any cookie timeouts were found
+        
+        If a network error occurs, the exception is caught; an error message is printed only when `self.verbose` is enabled.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing session timeout...{Style.RESET_ALL}")
         
@@ -242,7 +276,13 @@ class SessionSecurityModule:
                 print(f"{Fore.RED}[!] Error testing timeout: {e}{Style.RESET_ALL}")
     
     def _test_concurrent_sessions(self):
-        """Test if concurrent sessions are allowed"""
+        """
+        Check whether the target allows concurrent sessions and record the test outcome.
+        
+        This is a placeholder that does not perform an authenticated check; it records that the concurrent-session test was not executed because valid credentials are required. The result is stored in self.results['concurrent_sessions'] with keys:
+        - 'tested': False
+        - 'note': 'Requires valid credentials for full test'
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing concurrent sessions...{Style.RESET_ALL}")
         
@@ -253,7 +293,13 @@ class SessionSecurityModule:
         }
     
     def _test_session_regeneration(self):
-        """Test session regeneration on privilege escalation"""
+        """
+        Record a partial check for session ID regeneration after privilege escalation.
+        
+        This test records that a session regeneration check was performed but not completed because authenticated access is required. It sets `self.results['session_regeneration']` to a dictionary with keys:
+        - `tested`: `'partial'`
+        - `note`: explanatory text indicating full test requires authenticated access
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing session regeneration...{Style.RESET_ALL}")
         
@@ -263,7 +309,11 @@ class SessionSecurityModule:
         }
     
     def _check_secure_cookies(self):
-        """Check if cookies are transmitted securely"""
+        """
+        Determine whether the target enforces HTTPS and record a CRITICAL vulnerability if it does not.
+        
+        If the target URL does not start with "https://", appends an 'Insecure Transmission' vulnerability entry (severity 'CRITICAL', description 'Site not using HTTPS') to self.results['vulnerabilities'].
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Checking secure cookie transmission...{Style.RESET_ALL}")
         
@@ -278,7 +328,17 @@ class SessionSecurityModule:
             })
     
     def _generate_recommendations(self):
-        """Generate security recommendations"""
+        """
+        Populate the results with actionable security recommendations based on the module's test outcomes.
+        
+        This updates self.results['recommendations'] with a list of recommendation dictionaries derived from previously collected checks (cookie_security, csrf_protection, session_fixation). Each recommendation dictionary contains:
+            - severity: severity level as a string (e.g., 'HIGH', 'MEDIUM').
+            - issue: short description of the detected issue.
+            - recommendation: concise remediation action.
+            - affected: optional list of affected identifiers (e.g., cookie names) when applicable.
+        
+        Existing recommendations are replaced.
+        """
         recommendations = []
         
         # Cookie security recommendations
@@ -312,7 +372,11 @@ class SessionSecurityModule:
         self.results['recommendations'] = recommendations
     
     def print_results(self):
-        """Print formatted results"""
+        """
+        Print a human-readable, colorized summary of the scan results to standard output.
+        
+        Displays sections for cookie security (per-cookie status and issues), CSRF protection status, discovered vulnerabilities (with severity and descriptions), and actionable recommendations.
+        """
         print(f"\n{Fore.CYAN}{'='*60}")
         print(f"Discourse Session Security Scan Results")
         print(f"{'='*60}{Style.RESET_ALL}\n")

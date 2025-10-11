@@ -31,7 +31,11 @@ from discoursemap import (
 
 
 def print_banner():
-    """Print assessment banner"""
+    """
+    Display the tool's colored ASCII banner identifying DiscourseMap and its version.
+    
+    Prints a multi-line, colored banner to standard output for the assessment startup.
+    """
     banner = f"""
 {Fore.CYAN}╔═══════════════════════════════════════════════════════════╗
 ║       DiscourseMap v2.0 - Security Assessment Suite      ║
@@ -43,14 +47,17 @@ def print_banner():
 
 def validate_target(target_url, verbose=False):
     """
-    Validate if target is a Discourse forum
+    Validate that the given URL points to a Discourse forum.
     
-    Args:
-        target_url: Target forum URL
-        verbose: Enable verbose output
-        
+    Performs a Discourse-specific validation and returns the validator's findings.
+    
+    Parameters:
+        target_url (str): The forum URL to validate.
+        verbose (bool): Enable verbose diagnostic output from the validator.
+    
     Returns:
-        dict: Validation results
+        dict: Validation details (includes at least the keys `is_discourse`, `version`, and `confidence`) if the target is a Discourse forum.
+        None: If the target is not identified as a Discourse forum.
     """
     print(f"\n{Fore.YELLOW}[STEP 1/8] Validating Discourse Forum{Style.RESET_ALL}")
     print(f"Target: {target_url}")
@@ -71,7 +78,18 @@ def validate_target(target_url, verbose=False):
 
 
 def test_rate_limiting(target_url, verbose=False):
-    """Test rate limiting mechanisms"""
+    """
+    Assess rate-limiting behavior of the target Discourse forum.
+    
+    Runs the rate limiting module against the provided target and returns the module's findings.
+    The returned dictionary contains, at minimum:
+    - 'endpoints_tested': list of endpoint result objects
+    - 'rate_limits_found': list of endpoints where rate limiting was observed
+    - per-endpoint entries include a 'rate_limited' boolean flag
+    
+    Returns:
+        results (dict): Aggregated rate limiting scan results as produced by RateLimitModule.scan().
+    """
     print(f"\n{Fore.YELLOW}[STEP 2/8] Testing Rate Limiting{Style.RESET_ALL}")
     
     module = RateLimitModule(target_url, verbose=verbose)
@@ -87,7 +105,21 @@ def test_rate_limiting(target_url, verbose=False):
 
 
 def test_session_security(target_url, verbose=False):
-    """Test session security"""
+    """
+    Assess session-related security controls for the target Discourse forum.
+    
+    Runs session security checks (cookie attributes, CSRF protection, etc.) and returns a structured result with findings and extracted metadata.
+    
+    Parameters:
+        target_url (str): Base URL of the Discourse forum to test.
+        verbose (bool): Enable verbose output.
+    
+    Returns:
+        dict: Results of the session security scan. Expected keys include:
+            - 'cookie_security' (dict): Cookie-related findings and counts (e.g., 'cookies_found').
+            - 'csrf_protection' (dict): CSRF protection status (e.g., 'protection_enabled').
+            - 'vulnerabilities' (list): Discovered session-related vulnerability records.
+    """
     print(f"\n{Fore.YELLOW}[STEP 3/8] Testing Session Security{Style.RESET_ALL}")
     
     module = SessionSecurityModule(target_url, verbose=verbose)
@@ -104,7 +136,19 @@ def test_session_security(target_url, verbose=False):
 
 
 def test_admin_panel(target_url, verbose=False):
-    """Test admin panel security"""
+    """
+    Assess the Discourse forum's admin panel for exposed endpoints and security issues.
+    
+    Parameters:
+        target_url (str): URL of the target Discourse forum to test.
+        verbose (bool): Enable verbose output for troubleshooting and details.
+    
+    Returns:
+        results (dict): Scan results containing:
+            - `admin_endpoints` (list): Discovered admin endpoints.
+            - `accessible_endpoints` (list): Endpoints reachable without authentication.
+            - `vulnerabilities` (list): Detected vulnerability records with details.
+    """
     print(f"\n{Fore.YELLOW}[STEP 4/8] Testing Admin Panel Security{Style.RESET_ALL}")
     
     module = AdminPanelModule(target_url, verbose=verbose)
@@ -120,7 +164,18 @@ def test_admin_panel(target_url, verbose=False):
 
 
 def test_webhooks(target_url, verbose=False):
-    """Test webhook security"""
+    """
+    Assess webhook-related security for a Discourse forum.
+    
+    Parameters:
+        target_url (str): Base URL of the target Discourse forum to test.
+        verbose (bool): Enable verbose output for the module.
+    
+    Returns:
+        results (dict): Scan results containing at least:
+            - 'webhook_endpoints' (list): Discovered webhook endpoints that were tested.
+            - 'vulnerabilities' (list): Detected webhook-related vulnerabilities.
+    """
     print(f"\n{Fore.YELLOW}[STEP 5/8] Testing Webhook Security{Style.RESET_ALL}")
     
     module = WebhookSecurityModule(target_url, verbose=verbose)
@@ -135,7 +190,22 @@ def test_webhooks(target_url, verbose=False):
 
 
 def test_email_security(target_url, verbose=False):
-    """Test email security"""
+    """
+    Assess DNS-based email security for the specified Discourse forum.
+    
+    Performs SPF, DKIM, and DMARC checks and returns structured findings.
+    
+    Parameters:
+        target_url (str): Target Discourse forum base URL.
+        verbose (bool): Enable verbose output from the scan.
+    
+    Returns:
+        dict: Scan results containing at least the keys:
+            - spf_record (dict): Details about the SPF DNS record (e.g., `{'exists': bool, ...}`).
+            - dkim_record (dict): Details about DKIM DNS records (e.g., `{'exists': bool, ...}`).
+            - dmarc_record (dict): Details about the DMARC policy (e.g., `{'exists': bool, ...}`).
+            - vulnerabilities (list): List of discovered email-related issues.
+    """
     print(f"\n{Fore.YELLOW}[STEP 6/8] Testing Email Security (DNS){Style.RESET_ALL}")
     
     module = EmailSecurityModule(target_url, verbose=verbose)
@@ -155,7 +225,20 @@ def test_email_security(target_url, verbose=False):
 
 
 def test_search_security(target_url, verbose=False):
-    """Test search security"""
+    """
+    Assess the forum's search functionality for security issues.
+    
+    Parameters:
+        target_url (str): The base URL of the Discourse forum to test.
+        verbose (bool): Enable verbose output for scanning details.
+    
+    Returns:
+        dict: Results from the search security scan. Expected keys include
+            - 'search_endpoints' (list): Endpoints that were tested.
+            - 'injection_vulnerabilities' (list): Detected search injection issues.
+            - 'dos_potential' (list): Endpoints identified as having DoS potential.
+            - other module-specific findings as provided by the scan.
+    """
     print(f"\n{Fore.YELLOW}[STEP 7/8] Testing Search Security{Style.RESET_ALL}")
     
     module = SearchSecurityModule(target_url, verbose=verbose)
@@ -171,7 +254,17 @@ def test_search_security(target_url, verbose=False):
 
 
 def test_cache_security(target_url, verbose=False):
-    """Test cache security"""
+    """
+    Assess cache-related security for the given Discourse forum.
+    
+    Runs the cache security scan and returns the module's results, which include CDN detection, discovered cache-related response headers, and any identified cache-poisoning vulnerabilities.
+    
+    Returns:
+        results (dict): Scan output containing at least:
+            - 'cdn_detection' (dict): {'detected': bool, 'cdns': list[str]} indicating CDN presence and names.
+            - 'cache_headers' (list): collected cache-related headers observed.
+            - 'cache_poisoning' (list): discovered cache-poisoning findings.
+    """
     print(f"\n{Fore.YELLOW}[STEP 8/8] Testing Cache Security{Style.RESET_ALL}")
     
     module = CacheSecurityModule(target_url, verbose=verbose)
@@ -188,7 +281,17 @@ def test_cache_security(target_url, verbose=False):
 
 
 def generate_final_report(target_url, all_results):
-    """Generate final security report"""
+    """
+    Produce a formatted final security assessment report for the given target URL.
+    
+    Prints a summary that aggregates vulnerabilities across modules (counts by severity: CRITICAL, HIGH, MEDIUM, LOW), computes a security score and status label, and lists top remediation recommendations.
+    
+    Parameters:
+        target_url (str): The assessed Discourse forum URL shown in the report header.
+        all_results (dict): Mapping of module names to result dictionaries. Each result dictionary may include:
+            - 'vulnerabilities' (list): List of vulnerability objects where each object contains at least a 'severity' field.
+            - 'recommendations' (list): List of recommendation objects where each object contains at least 'severity', 'issue', and 'recommendation' fields.
+    """
     print(f"\n{Fore.CYAN}{'='*60}")
     print("FINAL SECURITY ASSESSMENT REPORT")
     print(f"{'='*60}{Style.RESET_ALL}\n")
@@ -255,7 +358,11 @@ def generate_final_report(target_url, all_results):
 
 
 def main():
-    """Main assessment function"""
+    """
+    Orchestrates a full security assessment of a Discourse forum and optionally writes results to JSON.
+    
+    Parses command-line options (target URL, verbosity, quick mode, output file), validates the target as a Discourse forum, executes the suite of security tests (rate limiting, session security, admin panel, webhooks, and — unless quick mode is enabled — email, search, and cache checks), aggregates results, and prints a final report. Handles user interrupt and unexpected errors, and saves aggregated results to the provided output path when requested.
+    """
     parser = argparse.ArgumentParser(
         description='DiscourseMap v2.0 - Complete Security Assessment',
         formatter_class=argparse.RawDescriptionHelpFormatter,

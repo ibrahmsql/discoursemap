@@ -6,7 +6,31 @@ Contains known vulnerabilities for Discourse plugins.
 """
 
 def get_plugin_vulnerabilities():
-    """Return plugin vulnerability database"""
+    """
+    Provide an in-code catalog of known Discourse plugin vulnerabilities.
+    
+    The returned dictionary contains a top-level key 'plugins' mapping to a list of plugin records. Each plugin record contains:
+    - name (str): plugin name.
+    - category (str): plugin category.
+    - risk_score (number): overall risk score for the plugin.
+    - vulnerabilities (list): list of vulnerability records.
+    
+    Each vulnerability record contains:
+    - cve_id (str)
+    - severity (str)
+    - cvss_score (number)
+    - type (str)
+    - description (str)
+    - affected_versions (list of str)
+    - fixed_versions (list of str)
+    - exploit_available (bool)
+    - impact (str)
+    Optional fields:
+    - payload_examples (list of str): example exploit payloads; may be omitted.
+    
+    Returns:
+        plugin_db (dict): Dictionary with key 'plugins' containing the list of plugin vulnerability records.
+    """
     return {
         'plugins': [
             {
@@ -52,14 +76,14 @@ def get_plugin_vulnerabilities():
 
 def check_plugin_vulnerabilities(plugin_name: str, version: str = None):
     """
-    Check if a plugin has known vulnerabilities
+    Determine known vulnerabilities for a named Discourse plugin.
     
-    Args:
-        plugin_name: Name of the plugin
-        version: Version of the plugin (optional)
-        
+    Parameters:
+        plugin_name (str): Plugin name to look up (case-insensitive).
+        version (str, optional): Plugin version; currently ignored by lookup.
+    
     Returns:
-        List of vulnerabilities
+        list: List of vulnerability records for the matching plugin, or an empty list if no match is found.
     """
     vulns_db = get_plugin_vulnerabilities()
     

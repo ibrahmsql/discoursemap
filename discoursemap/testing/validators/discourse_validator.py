@@ -16,7 +16,21 @@ class DiscourseValidator:
     """Validates Discourse forum targets"""
     
     def __init__(self, target_url: str, verbose: bool = False):
-        """Initialize validator"""
+        """
+        Create a DiscourseValidator for a target URL and configure verbosity.
+        
+        Parameters:
+        	target_url (str): Base URL of the site to validate; a trailing slash will be removed.
+        	verbose (bool): If True, enable verbose status output during validation.
+        
+        Initializes:
+        	results (dict): Default validation state with keys:
+        		- is_discourse: False
+        		- version: None
+        		- version_details: {}
+        		- confidence: 0
+        		- indicators: []
+        """
         self.target_url = target_url.rstrip('/')
         self.verbose = verbose
         self.results = {
@@ -28,7 +42,19 @@ class DiscourseValidator:
         }
     
     def validate(self) -> Dict[str, Any]:
-        """Validate if target is a Discourse forum"""
+        """
+        Run a sequence of checks to determine whether the target URL is a Discourse forum and collect related indicators.
+        
+        Performs meta tag, API endpoint, header, version, and asset checks, computes a confidence score as 20 points per found indicator (capped at 100), and sets `is_discourse` to `True` when confidence is greater than or equal to 60.
+        
+        Returns:
+            dict: Results dictionary containing:
+                - is_discourse (bool): `True` when confidence >= 60, `False` otherwise.
+                - version (str|None): Extracted Discourse version string when available.
+                - version_details (dict|None): Additional version info (e.g., full_version, major) when available.
+                - confidence (int): Confidence percentage (0–100).
+                - indicators (list[str]): Collected indicator strings found during validation.
+        """
         if self.verbose:
             print(f"{Fore.CYAN}[*] Validating Discourse forum...{Style.RESET_ALL}")
         
@@ -46,7 +72,15 @@ class DiscourseValidator:
         return self.results
     
     def _check_meta_tags(self):
-        """Check for Discourse meta tags"""
+        """
+        Detects Discourse-related markers in the target page's HTML and records indicators.
+        
+        Performs an HTTP GET to the instance's root page and, if the page is reachable, appends entries to self.results['indicators'] for:
+        - the presence of the literal "Discourse" in the page text, and
+        - any matches against common Discourse-related patterns (meta name="discourse", data-discourse- attributes, discourse.org references).
+        
+        Network errors and parsing failures are ignored and do not raise exceptions.
+        """
         try:
             response = requests.get(self.target_url, timeout=10)
             
@@ -69,7 +103,11 @@ class DiscourseValidator:
             pass
     
     def _check_api_endpoints(self):
-        """Check for Discourse API endpoints"""
+        """
+        Probe common Discourse API endpoints on the instance and record positive indicators.
+        
+        For each known endpoint, perform an HTTP request and, if the response contains JSON with keys such as `categories`, `topic_list`, or `about`, append a `Valid Discourse API: <endpoint>` entry to `self.results['indicators']`.
+        """
         api_endpoints = [
             '/site.json',
             '/about.json',
@@ -112,7 +150,14 @@ class DiscourseValidator:
             pass
     
     def _extract_version(self):
-        """Extract Discourse version"""
+        """
+        Obtain Discourse version information from the site's /site.json and record it in self.results.
+        
+        If /site.json returns JSON containing a `version` field, this method sets:
+        - `self.results['version']` to the version string,
+        - `self.results['version_details']` to a dict with `full_version` and `major` (the portion before the first dot, or `None` if not present),
+        and appends an indicator string "Version detected: <version>" to `self.results['indicators']`. Network, HTTP, and JSON parsing errors are ignored.
+        """
         try:
             # Try site.json
             url = urljoin(self.target_url, '/site.json')
@@ -134,7 +179,11 @@ class DiscourseValidator:
             pass
     
     def _check_discourse_assets(self):
-        """Check for Discourse asset files"""
+        """
+        Detects common Discourse static asset files on the target site and records any found assets as indicators.
+        
+        This method probes a set of well-known Discourse asset paths and appends a descriptive indicator to self.results['indicators'] for each asset that is present.
+        """
         asset_paths = [
             '/assets/discourse.js',
             '/assets/vendor.js',
@@ -153,7 +202,11 @@ class DiscourseValidator:
                 pass
     
     def print_results(self):
-        """Print validation results"""
+        """
+        Print a concise, colorized summary of the validation results to standard output.
+        
+        Displays a header, detection status (CONFIRMED or NOT DETECTED), the computed confidence percentage, the discovered version if available, and a numbered list of found indicators. Output includes ANSI color formatting for readability.
+        """
         print(f"\n{Fore.CYAN}{'='*60}")
         print(f"Discourse Validation Results")
         print(f"{'='*60}{Style.RESET_ALL}\n")

@@ -13,10 +13,24 @@ class Reporter:
     """Report generation (Refactored)"""
     
     def __init__(self):
+        """
+        Initialize the Reporter and create an internal ReportGenerator instance.
+        
+        Creates and assigns a new ReportGenerator to self.generator for producing reports in various formats.
+        """
         self.generator = ReportGenerator()
     
     def generate_report(self, results, format='text'):
-        """Generate scan report"""
+        """
+        Produce a report representation for the given scan results.
+        
+        Parameters:
+            results (dict): Scan results data; commonly includes keys like 'target' and 'vulnerabilities'.
+            format (str): Output format. Use 'json' for JSON output, 'text' for a human-readable summary. Defaults to 'text'; any other value returns the string representation of `results`.
+        
+        Returns:
+            report (str): Report content in the requested format or the fallback string form of `results`.
+        """
         if format == 'json':
             return self.generator.generate_json(results)
         elif format == 'text':
@@ -25,7 +39,20 @@ class Reporter:
             return str(results)
     
     def print_summary(self, results):
-        """Print scan summary"""
+        """
+        Display a formatted, colored scan summary to standard output.
+        
+        When `results` contains a 'target' key its value is shown (defaults to 'Unknown').
+        If `results` contains a 'vulnerabilities' key, the total count is shown and up to
+        the first five vulnerability entries will have their `type` values listed (each
+        defaults to 'Unknown' if missing).
+        
+        Parameters:
+            results (dict): Scan results mapping. Expected optional keys:
+                - 'target' (str): Identifier of the scan target.
+                - 'vulnerabilities' (list[dict]): List of vulnerability records where each
+                  record may include a 'type' key.
+        """
         print(f"\n{Fore.CYAN}{'='*60}")
         print(f"SCAN SUMMARY")
         print(f"{'='*60}{Style.RESET_ALL}\n")

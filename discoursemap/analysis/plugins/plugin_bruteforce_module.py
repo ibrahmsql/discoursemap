@@ -14,6 +14,22 @@ class PluginBruteforceModule:
     """Plugin discovery via bruteforce (Refactored)"""
     
     def __init__(self, scanner):
+        """
+        Initialize the PluginBruteforceModule with a scanner and default state.
+        
+        Parameters:
+            scanner: Scanner-like object providing a `target_url` attribute used as the discovery base URL.
+        
+        Attributes:
+            scanner: The provided scanner object.
+            results (dict): Module metadata and runtime counters:
+                - module_name: 'Plugin Bruteforce'
+                - target: scanner.target_url
+                - plugins_found: list of discovered plugins (each as dict with keys `name`, `path`, `method`)
+                - attempts: number of plugin checks performed
+                - success_count: number of successful discoveries
+            common_plugins (list): Predefined plugin names to probe (e.g., 'discourse-chat', 'discourse-calendar', etc.).
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'Plugin Bruteforce',
@@ -31,7 +47,19 @@ class PluginBruteforceModule:
         ]
     
     def run(self) -> Dict[str, Any]:
-        """Execute plugin bruteforce"""
+        """
+        Run the plugin bruteforce workflow and collect discovery results.
+        
+        Performs probing of common plugin paths, updates the module's results, and prints progress messages.
+        
+        Returns:
+            results (Dict[str, Any]): Dictionary with keys:
+                - module_name: str, the module display name
+                - target: str, the target URL tested
+                - plugins_found: List[Dict[str, Any]], each entry contains 'name', 'path', and 'method'
+                - attempts: int, total number of probe attempts performed
+                - success_count: int, number of successful detections
+        """
         print(f"{Fore.CYAN}[*] Starting Plugin Bruteforce...{Style.RESET_ALL}")
         
         self._bruteforce_plugins()
@@ -40,7 +68,11 @@ class PluginBruteforceModule:
         return self.results
     
     def _bruteforce_plugins(self):
-        """Bruteforce common plugin names"""
+        """
+        Probe a set of common Discourse plugin paths and record any discoveries in self.results.
+        
+        For each name in self.common_plugins, increments self.results['attempts'], requests a set of common plugin paths constructed from that name, and on an HTTP 200 response appends a dictionary with keys 'name', 'path', and 'method' ('bruteforce') to self.results['plugins_found'] and increments self.results['success_count']. Exceptions raised during probing are suppressed.
+        """
         try:
             import requests
             

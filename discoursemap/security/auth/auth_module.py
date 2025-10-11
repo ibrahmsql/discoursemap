@@ -15,6 +15,14 @@ class AuthModule:
     """Authentication security module (Refactored)"""
     
     def __init__(self, scanner):
+        """
+        Initialize the authentication security module and prepare its results container.
+        
+        Creates an AuthModule instance by storing the provided scanner and initializing the results dictionary used to aggregate findings (module_name, target, bypass_attempts, session_security, password_policy, mfa_status, oauth_security, vulnerabilities, recommendations). Also initializes the AuthBypassTester sub-module.
+        
+        Parameters:
+            scanner: An object providing the target_url and request capabilities the module uses to interact with the target site.
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'Authentication Security',
@@ -32,7 +40,23 @@ class AuthModule:
         self.bypass_tester = AuthBypassTester(scanner)
     
     def run(self) -> Dict[str, Any]:
-        """Execute authentication security tests"""
+        """
+        Run the full authentication security scan and aggregate findings.
+        
+        Performs bypass testing, session cookie inspection, password-policy checks, MFA discovery, and recommendation generation, then returns the compiled results.
+        
+        Returns:
+            results (Dict[str, Any]): Aggregated scan results with keys:
+                - module_name: module identifier
+                - target: target URL
+                - bypass_attempts: list of bypass test outcomes
+                - session_security: list of cookie/session security observations
+                - password_policy: list of password-policy test outcomes
+                - mfa_status: dict with MFA availability/enforcement info
+                - oauth_security: OAuth-related findings (may be empty)
+                - vulnerabilities: list of discovered vulnerabilities (each includes type and severity)
+                - recommendations: prioritized remediation suggestions
+        """
         print(f"{Fore.CYAN}[*] Starting Authentication Security Scan...{Style.RESET_ALL}")
         
         # Test bypass techniques
@@ -58,7 +82,11 @@ class AuthModule:
         return self.results
     
     def _test_session_security(self):
-        """Test session management security"""
+        """
+        Assess session cookie configuration and record findings.
+        
+        Inspects cookies from a request to the target site and appends each cookie's metadata to self.results['session_security']. If a cookie is missing the Secure flag, records a medium-severity vulnerability entry in self.results['vulnerabilities'] describing the insecure cookie.
+        """
         try:
             from urllib.parse import urljoin
             
@@ -85,7 +113,14 @@ class AuthModule:
             pass
     
     def _test_password_policy(self):
-        """Test password policy strength"""
+        """
+        Evaluate whether the target's registration accepts weak passwords.
+        
+        Attempts to register using a sample weak password; if the registration is accepted, records a
+        'Weak Password Accepted' entry in self.results['password_policy'] and adds a 'Weak Password Policy'
+        vulnerability to self.results['vulnerabilities']. Tests only one weak password sample and suppresses
+        exceptions encountered during the check.
+        """
         try:
             from urllib.parse import urljoin
             import time
@@ -126,7 +161,17 @@ class AuthModule:
             pass
     
     def _test_mfa(self):
-        """Test Multi-Factor Authentication"""
+        """
+        Check whether the target site exposes Multi-Factor Authentication and record the outcome.
+        
+        Queries the target's /site.json for an `mfa_enabled` flag and updates self.results:
+        - Sets self.results['mfa_status'] to a dict with keys:
+          - 'available': `True` if MFA is reported enabled, `False` otherwise.
+          - 'enforced': `False` (enforcement is not checked by this method).
+        - If MFA is not available, appends a medium-severity "MFA Not Available" entry to self.results['vulnerabilities'].
+        
+        This method performs observable updates to the instance results and does not return a value.
+        """
         try:
             from urllib.parse import urljoin
             
@@ -157,7 +202,11 @@ class AuthModule:
             pass
     
     def _generate_recommendations(self):
-        """Generate security recommendations"""
+        """
+        Compile security recommendations from the module's collected results and store them in self.results['recommendations'].
+        
+        Scans self.results['vulnerabilities'] to add recommendations for critical and high-severity authentication issues, and adds a recommendation when MFA is not available. Each recommendation is a dict with keys: 'severity', 'issue', and 'recommendation'.
+        """
         recommendations = []
         
         if self.results['vulnerabilities']:

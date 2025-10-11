@@ -14,6 +14,16 @@ class PassiveScannerModule:
     """Passive scanning (Refactored)"""
     
     def __init__(self, scanner):
+        """
+        Initialize the PassiveScannerModule and prepare its results container.
+        
+        Creates the module with a reference to the provided scanner and initializes `self.results` with keys:
+        `module_name` (module identifier), `target` (the scanner's target_url), `headers` (dict for HTTP headers),
+        `meta_info` (dict for site meta information), `technologies` (list of detected technologies), and `findings` (list of discovered issues).
+        
+        Parameters:
+            scanner: An object that exposes a `target_url` attribute representing the target to scan.
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'Passive Scanner',
@@ -25,7 +35,20 @@ class PassiveScannerModule:
         }
     
     def run(self) -> Dict[str, Any]:
-        """Execute passive scan"""
+        """
+        Run the module's passive scan and aggregate findings.
+        
+        Performs passive information gathering steps and accumulates results for the configured target.
+        
+        Returns:
+            results (Dict[str, Any]): Aggregated scan data containing keys:
+                - module_name: name of the module
+                - target: scanned target URL
+                - headers: collected HTTP headers (dict)
+                - meta_info: discovered site metadata (dict)
+                - technologies: detected technologies (list)
+                - findings: recorded findings (list)
+        """
         print(f"{Fore.CYAN}[*] Starting Passive Scan...{Style.RESET_ALL}")
         
         self._analyze_headers()
@@ -35,7 +58,11 @@ class PassiveScannerModule:
         return self.results
     
     def _analyze_headers(self):
-        """Analyze HTTP headers"""
+        """
+        Analyze HTTP response headers for the target and record results.
+        
+        Populates self.results['headers'] with the response headers (if any) and appends a finding to self.results['findings'] for each missing important security header. The security headers checked are: `strict-transport-security`, `content-security-policy`, and `x-frame-options`. Exceptions during the request are suppressed and leave results unchanged.
+        """
         try:
             import requests
             response = requests.get(self.scanner.target_url, timeout=10)
@@ -61,7 +88,14 @@ class PassiveScannerModule:
             pass
     
     def _gather_meta_info(self):
-        """Gather metadata"""
+        """
+        Retrieve site metadata from /site.json and store it in the module results.
+        
+        If a JSON document is successfully fetched with HTTP status 200, extracts the
+        `title`, `version`, and `description` fields and stores them in
+        `self.results['meta_info']`. Network, HTTP, or JSON parsing errors are silently
+        ignored and leave `self.results['meta_info']` unchanged.
+        """
         try:
             import requests
             site_url = urljoin(self.scanner.target_url, '/site.json')

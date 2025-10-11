@@ -627,13 +627,14 @@ class DiscourseScanner:
             return None
     
     def generate_html_report(self, output_file: Optional[str] = None) -> str:
-        """Generate HTML report
+        """
+        Generate an HTML report for the current scan and return the file path.
         
-        Args:
-            output_file: Output file path. If None, uses default naming
-            
+        Parameters:
+            output_file (str, optional): Path to write the report. If omitted, a default filename and location are used.
+        
         Returns:
-            Path to generated report file
+            str or None: The path to the generated HTML report, or `None` if report generation failed due to an error.
         """
         try:
             report_file = self.reporter.generate_html_report(output_file)
@@ -647,14 +648,17 @@ class DiscourseScanner:
             return None
     
     def _run_module_safe(self, module, module_name: str) -> Dict[str, Any]:
-        """Safely run a module and handle exceptions
+        """
+        Execute a scanner module and return its results, converting raised exceptions into structured error information.
         
-        Args:
-            module: Module instance to run
-            module_name: Name of the module
-            
+        Parameters:
+            module: The module instance to execute; must implement a `run()` method.
+            module_name (str): Human-readable name of the module used for logging.
+        
         Returns:
-            Module results or error dict
+            dict: The module's result as returned by `module.run()`, or an error dictionary of the form
+            `{'error': <message>, 'error_type': 'module_error'}` for import/attribute/type issues, or
+            `{'error': <message>, 'error_type': 'unexpected'}` for any other exception.
         """
         try:
             self.log(f"Executing {module_name} module...", 'info')

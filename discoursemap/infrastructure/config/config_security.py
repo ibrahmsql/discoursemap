@@ -12,11 +12,25 @@ class ConfigSecurityTester:
     """Configuration security testing"""
     
     def __init__(self, scanner):
+        """
+        Initialize the ConfigSecurityTester with a scanner and prepare internal vulnerability storage.
+        
+        Parameters:
+            scanner (object): Scanner instance used to perform HTTP requests and provide the target URL for tests. The instance is retained for use by test methods.
+        
+        """
         self.scanner = scanner
         self.vulnerabilities = []
     
     def test_all_security(self):
-        """Run all configuration security tests"""
+        """
+        Execute all configuration security checks and collect discovered vulnerabilities.
+        
+        Runs the exposed configs, default settings, debug mode, and sensitive information checks in sequence and aggregates any findings.
+        
+        Returns:
+            list: Collected vulnerability entries; each entry is a dict describing a detected issue (type, severity, description, and related fields).
+        """
         self.test_exposed_configs()
         self.test_default_settings()
         self.test_debug_mode()
@@ -25,7 +39,11 @@ class ConfigSecurityTester:
         return self.vulnerabilities
     
     def test_exposed_configs(self):
-        """Test for exposed configuration files"""
+        """
+        Check for publicly accessible configuration files on the scanner's target.
+        
+        For each common configuration path, requests the corresponding URL on the scanner's target and, when a 200 OK response is received, appends a vulnerability entry to self.vulnerabilities describing an 'Exposed Configuration' with severity 'critical', the tested path, and a descriptive message.
+        """
         config_paths = [
             '/config/database.yml',
             '/config/secrets.yml',
@@ -50,7 +68,15 @@ class ConfigSecurityTester:
                 continue
     
     def test_default_settings(self):
-        """Test for insecure default settings"""
+        """
+        Validate site default configuration values and record insecure settings.
+        
+        Checks the site's configuration for two insecure conditions and appends a vulnerability entry to self.vulnerabilities for each finding:
+        - Default site title: flags common unchanged titles (e.g., "discourse", "my discourse", "new site").
+        - Anonymous posting enabled: flags when `allow_anonymous_posting` is true.
+        
+        Each appended vulnerability is a dict containing at least `type`, `severity`, `setting`, and `description`.
+        """
         try:
             site_url = urljoin(self.scanner.target_url, '/site.json')
             response = self.scanner.make_request(site_url, timeout=10)
@@ -80,7 +106,11 @@ class ConfigSecurityTester:
             pass
     
     def test_debug_mode(self):
-        """Test if debug mode is enabled"""
+        """
+        Detect whether the target site is exposing debug information and record a high-severity vulnerability if found.
+        
+        When a debug indicator is observed in the response body or headers, appends a dict with keys 'type', 'severity', 'indicator', and 'description' to self.vulnerabilities.
+        """
         try:
             response = self.scanner.make_request(self.scanner.target_url, timeout=10)
             if response:
@@ -107,7 +137,11 @@ class ConfigSecurityTester:
             pass
     
     def test_sensitive_info(self):
-        """Test for sensitive information in configuration"""
+        """
+        Scan the scanner's target page for exposed sensitive configuration values and record findings.
+        
+        Searches the HTTP response body for common sensitive patterns (e.g., "password", "api_key", "secret_key", "access_token", "private_key") and, when a pattern appears alongside a value indicator (e.g., "value="), appends a high-severity vulnerability entry to self.vulnerabilities describing the matched pattern.
+        """
         try:
             response = self.scanner.make_request(self.scanner.target_url, timeout=10)
             if response:

@@ -14,10 +14,25 @@ class UserAuthTester:
     """Authentication testing functionality"""
     
     def __init__(self, scanner):
+        """
+        Store the provided scanner instance for use by the tester's methods.
+        
+        The scanner is kept on the instance as `self.scanner` and is used to perform HTTP requests against the target under test.
+        """
         self.scanner = scanner
     
     def test_weak_passwords(self):
-        """Test for weak password acceptance"""
+        """
+        Check whether the target accepts a small set of common weak passwords during user registration.
+        
+        Tests the first three passwords from a predefined list of common weak passwords by attempting registrations and records which passwords succeeded.
+        
+        Returns:
+            dict: {
+                'weak_passwords_tested' (int): number of weak passwords considered,
+                'accepted_passwords' (list): subset of tested passwords that resulted in successful registration (status 200 or 201)
+            }
+        """
         weak_passwords = [
             'password', '123456', 'admin', 'test', 
             'qwerty', 'welcome', 'Password1'
@@ -51,7 +66,15 @@ class UserAuthTester:
         return results
     
     def test_brute_force_protection(self):
-        """Test brute force protection on login"""
+        """
+        Assess whether the target enforces rate limiting on repeated login attempts.
+        
+        Returns:
+            dict: A mapping with keys:
+                - attempts (int): Number of login attempts performed.
+                - rate_limited (bool): `True` if a 429 (rate limit) response was observed, `False` otherwise.
+                - rate_limit_threshold (int or None): Number of attempts after which rate limiting was triggered, or `None` if not observed.
+        """
         results = {
             'attempts': 0,
             'rate_limited': False,
@@ -83,7 +106,20 @@ class UserAuthTester:
         return results
     
     def test_session_management(self):
-        """Test session management security"""
+        """
+        Inspect session cookies returned by the target and report key security-related cookie attributes.
+        
+        Returns:
+            results (dict): Mapping with the following keys:
+                - session_cookies (list): List of cookie info dicts; each dict contains:
+                    - name (str): Cookie name.
+                    - secure (bool): Whether the cookie has the Secure attribute.
+                    - httponly (bool): Whether the cookie has the HttpOnly attribute.
+                    - path (str): Cookie path.
+                - secure_flag (bool): `True` if any returned cookie has the Secure attribute, `False` otherwise.
+                - httponly_flag (bool): `True` if any returned cookie has the HttpOnly attribute, `False` otherwise.
+                - samesite (str or None): The SameSite attribute value if available, otherwise `None`.
+        """
         results = {
             'session_cookies': [],
             'secure_flag': False,
@@ -118,7 +154,17 @@ class UserAuthTester:
         return results
     
     def test_password_reset_flaws(self):
-        """Test for password reset vulnerabilities"""
+        """
+        Detect password-reset weaknesses, currently by testing whether the reset endpoint reveals account existence.
+        
+        Sends a password-reset request for a non-existent username to infer token enumeration.
+        
+        Returns:
+            dict: A mapping with keys:
+                - `token_enumeration` (bool): `True` if the reset endpoint indicates whether an account exists, `False` otherwise.
+                - `token_predictable` (bool): `True` if reset tokens appear predictable, `False` otherwise (not currently tested).
+                - `token_reusable` (bool): `True` if reset tokens can be reused, `False` otherwise (not currently tested).
+        """
         results = {
             'token_enumeration': False,
             'token_predictable': False,
@@ -145,7 +191,15 @@ class UserAuthTester:
         return results
     
     def test_registration_flaws(self):
-        """Test user registration for flaws"""
+        """
+        Assess registration handling for common flaws related to weak passwords, username enumeration, and email verification.
+        
+        Returns:
+            results (dict): A mapping with keys:
+                - email_verification_required (bool): `True` if the registration flow appears to require email verification, `False` otherwise.
+                - username_enumeration (bool): `True` if usernames can be enumerated through the registration flow or responses, `False` otherwise.
+                - weak_password_allowed (bool): `True` if registration succeeds using a weak password, `False` otherwise.
+        """
         results = {
             'email_verification_required': True,
             'username_enumeration': False,
@@ -175,7 +229,15 @@ class UserAuthTester:
         return results
     
     def test_privilege_escalation(self):
-        """Test for privilege escalation vulnerabilities"""
+        """
+        Check whether common administrative endpoints are accessible, indicating potential privilege escalation.
+        
+        Returns:
+            dict: {
+                'admin_endpoints_accessible': list of endpoint paths (str) that returned HTTP 200,
+                'privilege_escalation_possible': bool, `true` if any admin endpoint was accessible, `false` otherwise
+            }
+        """
         results = {
             'admin_endpoints_accessible': [],
             'privilege_escalation_possible': False

@@ -8,6 +8,16 @@ class SQLiScanner:
     """SQL Injection vulnerability scanner"""
     
     def __init__(self, scanner):
+        """
+        Initialize the SQLiScanner with a request-capable scanner and preset SQL injection payloads.
+        
+        Parameters:
+            scanner: An object used to perform HTTP requests and provide target base URL for scans.
+        
+        Attributes:
+            scanner: The provided scanner instance used to make requests.
+            sqli_payloads (list[str]): A list of SQL injection payload strings used during scanning.
+        """
         self.scanner = scanner
         self.sqli_payloads = [
             "' OR '1'='1",
@@ -20,7 +30,20 @@ class SQLiScanner:
         ]
     
     def scan_sqli(self):
-        """Scan for SQL injection vulnerabilities"""
+        """
+        Check the target for SQL injection vulnerabilities across a set of endpoints.
+        
+        Sends requests using SQL injection payloads and inspects responses for common SQL error signatures. For each detected signature, a finding is recorded.
+        
+        Returns:
+            results (list): List of finding dictionaries. Each dictionary contains:
+                - 'type' (str): Vulnerability type, e.g. 'SQL Injection'.
+                - 'severity' (str): Severity level, e.g. 'critical'.
+                - 'endpoint' (str): The probed endpoint path.
+                - 'payload' (str): The payload that triggered the finding.
+                - 'error' (str): The matched SQL error signature.
+                - 'description' (str): Human-readable description of the finding.
+        """
         results = []
         
         test_endpoints = [

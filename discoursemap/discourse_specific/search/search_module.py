@@ -16,7 +16,18 @@ class SearchSecurityModule:
     
     def __init__(self, target_url: str, session: Optional[requests.Session] = None,
                  verbose: bool = False):
-        """Initialize search security module"""
+        """
+                 Create a SearchSecurityModule configured for a target Discourse URL.
+                 
+                 Parameters:
+                     target_url (str): Base URL of the target Discourse instance; trailing slash will be removed.
+                     session (Optional[requests.Session]): Optional HTTP session to reuse for requests. If not provided, a new session will be created.
+                     verbose (bool): If True, enable verbose console output for scan progress and findings.
+                 
+                 Notes:
+                     Initializes an internal `results` container with keys: 'search_endpoints', 'information_disclosure',
+                     'injection_vulnerabilities', 'dos_potential', and 'recommendations'.
+                 """
         self.target_url = target_url.rstrip('/')
         self.session = session or requests.Session()
         self.verbose = verbose
@@ -29,7 +40,17 @@ class SearchSecurityModule:
         }
     
     def scan(self) -> Dict[str, Any]:
-        """Perform search security scan"""
+        """
+        Run the full suite of security tests against the target Discourse search endpoints and aggregate the findings.
+        
+        This invokes the internal endpoint, injection, information disclosure, DoS, and filter tests, then generates recommendations based on discovered issues.
+        
+        Returns:
+            results (Dict[str, Any]): Aggregated scan results containing the keys
+            'search_endpoints', 'information_disclosure', 'injection_vulnerabilities',
+            'dos_potential', and 'recommendations'; each key maps to a list of findings
+            (which may be empty).
+        """
         if self.verbose:
             print(f"{Fore.CYAN}[*] Starting search security scan...{Style.RESET_ALL}")
         
@@ -43,7 +64,17 @@ class SearchSecurityModule:
         return self.results
     
     def _test_search_endpoints(self):
-        """Test search endpoints"""
+        """
+        Check a set of common Discourse search-related endpoints and record their accessibility.
+        
+        For each endpoint tested, appends a dictionary to self.results['search_endpoints'] with the keys:
+        - 'endpoint': the endpoint path tested (e.g., '/search.json')
+        - 'status_code': HTTP status code received
+        - 'accessible': `True` if status code is 200, `False` otherwise
+        - 'response_size': length in bytes of the response content
+        
+        Errors encountered during individual endpoint requests are caught; when `self.verbose` is true, errors are printed but do not stop the overall test.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing search endpoints...{Style.RESET_ALL}")
         
@@ -72,7 +103,15 @@ class SearchSecurityModule:
                     print(f"{Fore.RED}[!] Error testing {endpoint}: {e}{Style.RESET_ALL}")
     
     def _test_search_injection(self):
-        """Test search injection vulnerabilities"""
+        """
+        Tests the target's search endpoint for injection vulnerabilities and records findings in self.results['injection_vulnerabilities'].
+        
+        Sends crafted payloads as the search `q` parameter to `/search.json` and records discovered issues:
+        - Server Error: when the response status code is 500; an entry is added with keys `payload`, `type` = 'Server Error', `severity` = 'MEDIUM', and `status_code`.
+        - Reflected Input: when the payload appears verbatim in the response body; an entry is added with keys `payload`, `type` = 'Reflected Input', and `severity` = 'LOW'.
+        
+        Findings are appended to `self.results['injection_vulnerabilities']`. The method does not return a value.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing search injection...{Style.RESET_ALL}")
         
@@ -115,7 +154,11 @@ class SearchSecurityModule:
                 pass
     
     def _test_information_disclosure(self):
-        """Test for information disclosure via search"""
+        """
+        Detects potential information disclosure by querying the application's search API for common sensitive terms.
+        
+        For each sensitive term, performs a search against /search.json and, when the response contains posts or topics, records a finding in self.results['information_disclosure'] with keys: `query`, `results_found`, `severity` (set to "MEDIUM"), and `note`.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing information disclosure...{Style.RESET_ALL}")
         
@@ -159,7 +202,17 @@ class SearchSecurityModule:
                 pass
     
     def _test_dos_vectors(self):
-        """Test for DoS vectors in search"""
+        """
+        Detects search queries that may cause denial-of-service conditions.
+        
+        Sends a set of large or complex queries against the target's /search.json endpoint and records observations of slow responses or request timeouts into self.results['dos_potential'].
+        
+        Recorded entries:
+        - Slow responses: an object with keys 'payload_type' ('Slow query'), 'time_taken' (seconds), 'severity' ('MEDIUM'), and 'description'. Slow responses are recorded when a request takes longer than 5 seconds.
+        - Timeouts: an object with keys 'payload_type' ('Timeout'), 'severity' ('HIGH'), and 'description' when a request times out.
+        
+        Non-timeout exceptions are ignored to allow the scan to continue.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing DoS vectors...{Style.RESET_ALL}")
         
@@ -203,7 +256,12 @@ class SearchSecurityModule:
                 pass
     
     def _test_search_filters(self):
-        """Test search filter bypass"""
+        """
+        Check whether various search filter parameters are accepted by the target's /search.json endpoint.
+        
+        Sends a series of requests using different filter parameter sets and, for each successful (HTTP 200) response,
+        records an entry in `self.results['search_endpoints']` containing the `params`, `accessible` (True), and a short `note`.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing search filters...{Style.RESET_ALL}")
         
@@ -232,7 +290,11 @@ class SearchSecurityModule:
                 pass
     
     def _generate_recommendations(self):
-        """Generate security recommendations"""
+        """
+        Builds security recommendations based on scan findings and stores them in self.results['recommendations'].
+        
+        Generates prioritized recommendations when injection vulnerabilities, information disclosure findings, or DoS potentials are present; if none of the critical findings exist, adds an informational recommendation. The resulting list of recommendation dictionaries (each containing 'severity', 'issue', and 'recommendation') is assigned to self.results['recommendations'].
+        """
         recommendations = []
         
         if self.results['injection_vulnerabilities']:
@@ -267,7 +329,19 @@ class SearchSecurityModule:
         self.results['recommendations'] = recommendations
     
     def print_results(self):
-        """Print formatted results"""
+        """
+        Print a formatted security scan report to standard output.
+        
+        The report includes:
+        - A header with the scan title.
+        - Count of tested search endpoints.
+        - A list of injection vulnerabilities with severity, type, and a truncated payload.
+        - A list of information-disclosure findings showing the query and number of results.
+        - A list of DoS-related findings with severity and description.
+        - Recommendations with severity, issue, and suggested remediation.
+        
+        Output is written to stdout and uses colorized formatting when available.
+        """
         print(f"\n{Fore.CYAN}{'='*60}")
         print(f"Discourse Search Security Scan Results")
         print(f"{'='*60}{Style.RESET_ALL}\n")

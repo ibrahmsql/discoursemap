@@ -15,10 +15,31 @@ class ConfigParser:
     """Configuration parsing utilities"""
     
     def __init__(self, scanner):
+        """
+        Create a ConfigParser instance bound to a scanner used to fetch site JSON and HTML.
+        
+        Parameters:
+            scanner: An object responsible for making HTTP requests and exposing the target URL.
+                It is expected to provide a `make_request(url, timeout=...)` method and a
+                `target_url` attribute used by parsing methods.
+        """
         self.scanner = scanner
     
     def parse_site_settings(self):
-        """Parse Discourse site settings"""
+        """
+        Extract site settings from the target site's /site.json.
+        
+        Returns:
+            dict: Mapping with keys:
+                - title: Site title or None
+                - description: Site description or None
+                - version: Site version string or None
+                - default_locale: Default locale string or None
+                - auth_providers: List of authentication providers (may be empty)
+                - categories: Number of categories (int)
+                - groups: Number of groups (int)
+            Returns an empty dict if the settings cannot be retrieved or parsed.
+        """
         settings = {}
         
         try:
@@ -42,7 +63,17 @@ class ConfigParser:
         return settings
     
     def parse_about_json(self):
-        """Parse /about.json for configuration info"""
+        """
+        Parse Discourse /about.json and extract basic site information.
+        
+        Returns:
+            config_info (dict): Dictionary containing:
+                - 'discourse_version': version string or None
+                - 'admins': integer count of admins
+                - 'moderators': integer count of moderators
+                - 'stats': dict of statistics (empty dict if unavailable)
+            Returns an empty dict if the request or parsing fails.
+        """
         config_info = {}
         
         try:
@@ -65,7 +96,15 @@ class ConfigParser:
         return config_info
     
     def detect_plugins(self):
-        """Detect installed plugins"""
+        """
+        Detect installed plugins available on the target site.
+        
+        Returns:
+            plugins (list): A list of plugin descriptors. Each descriptor is a dict with keys:
+                - 'name' (str or None): Plugin name.
+                - 'version' (str or None): Plugin version.
+                - 'enabled' (bool): `True` if the plugin is enabled, `False` otherwise.
+        """
         plugins = []
         
         try:
@@ -89,7 +128,17 @@ class ConfigParser:
         return plugins
     
     def extract_html_config(self):
-        """Extract configuration from HTML"""
+        """
+        Extract configuration-relevant data from the target page's HTML.
+        
+        Parses the page at the scanner's target URL for meta tags and script-based configuration markers.
+        
+        Returns:
+            config (dict): A dictionary that may contain:
+                - 'meta' (dict): mapping of meta tag names/properties to their content values.
+                - 'has_preload_store' (bool): True if any script tag contains the substring 'PreloadStore'.
+            The dictionary will be empty if no response was obtained or no relevant data was found.
+        """
         config = {}
         
         try:

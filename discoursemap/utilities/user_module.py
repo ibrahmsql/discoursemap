@@ -16,10 +16,14 @@ class UserModule:
     """User security testing module for Discourse forums (Refactored)"""
     
     def __init__(self, scanner) -> None:
-        """Initialize UserModule
+        """
+        Create a UserModule that coordinates user-focused security tests against a scanner target.
+        
+        Initializes internal results storage (module metadata, discovered users, test sections, vulnerabilities, and recommendations)
+        and constructs the user enumeration and authentication tester sub-modules.
         
         Args:
-            scanner: DiscourseScanner instance
+            scanner: A DiscourseScanner-like object with a `target_url` attribute used as the testing target.
         """
         self.scanner = scanner
         self.results = {
@@ -39,10 +43,13 @@ class UserModule:
         self.auth_tester = UserAuthTester(scanner)
     
     def run(self) -> Dict[str, Any]:
-        """Execute user security tests
+        """
+        Run the full sequence of user-focused security tests and aggregate their findings.
+        
+        Executes phases for user enumeration, authentication testing, session management, privilege escalation, and then generates remediation recommendations.
         
         Returns:
-            Dictionary containing test results
+            results (Dict[str, Any]): Aggregated test results containing discovered users, per-phase test outputs, identified vulnerabilities, and recommendations.
         """
         print(f"{Fore.CYAN}[*] Starting User Security Scan...{Style.RESET_ALL}")
         
@@ -68,7 +75,11 @@ class UserModule:
         return self.results
     
     def _test_user_enumeration(self):
-        """Test user enumeration vulnerabilities"""
+        """
+        Discover users from public endpoints, deduplicate them, run enumeration checks, and record findings in the module results.
+        
+        Discovers users via public endpoints, directory listings, and search, deduplicates by username and stores the unique entries in self.results['discovered_users']. Runs enumeration tests against the login and forgot-password paths, stores the detailed test outputs under self.results['user_enumeration']['login_enumeration'] and self.results['user_enumeration']['forgot_password'], and appends vulnerability entries to self.results['vulnerabilities'] when enumeration is observed.
+        """
         print(f"{Fore.YELLOW}[*] Testing user enumeration...{Style.RESET_ALL}")
         
         # Discover users from public endpoints
@@ -101,7 +112,11 @@ class UserModule:
             self.results['user_enumeration']['forgot_password'] = forgot_results
     
     def _test_authentication(self):
-        """Test authentication mechanisms"""
+        """
+        Run authentication-related security checks and record findings.
+        
+        Executes weak-password checks, brute-force protection checks, password-reset flaw checks, and registration flaw checks via the authentication tester. Stores each phase's results under self.results['authentication_tests'] and appends vulnerability entries to self.results['vulnerabilities'] when observable issues are found (for example, accepted weak passwords or missing rate limiting on the login endpoint).
+        """
         print(f"{Fore.YELLOW}[*] Testing authentication...{Style.RESET_ALL}")
         
         # Test weak passwords
@@ -136,7 +151,11 @@ class UserModule:
         self.results['authentication_tests']['registration'] = reg_results
     
     def _test_session_management(self):
-        """Test session management security"""
+        """
+        Run session management tests, record results, and flag insecure session cookie settings.
+        
+        Performs session management checks via the authentication tester, stores the returned results under `self.results['session_security']`, and appends MEDIUM-severity vulnerability entries to `self.results['vulnerabilities']` when the session cookie is missing the `Secure` flag or the `HttpOnly` flag.
+        """
         print(f"{Fore.YELLOW}[*] Testing session management...{Style.RESET_ALL}")
         
         session_results = self.auth_tester.test_session_management()
@@ -158,7 +177,13 @@ class UserModule:
             })
     
     def _test_privilege_escalation(self):
-        """Test for privilege escalation"""
+        """
+        Perform privilege escalation checks and record findings.
+        
+        Queries the authentication tester for privilege-escalation results and stores them under
+        `self.results['privilege_escalation']`. If escalation is indicated, append a CRITICAL
+        vulnerability entry describing accessible admin endpoints to `self.results['vulnerabilities']`.
+        """
         print(f"{Fore.YELLOW}[*] Testing privilege escalation...{Style.RESET_ALL}")
         
         priv_results = self.auth_tester.test_privilege_escalation()
@@ -173,7 +198,11 @@ class UserModule:
             })
     
     def _generate_recommendations(self):
-        """Generate security recommendations"""
+        """
+        Populate the module's recommendations based on discovered users and aggregated vulnerabilities.
+        
+        Adds an INFO-level recommendation if more than 100 users were discovered and a HIGH-level recommendation if any vulnerabilities were recorded, then stores the resulting list in self.results['recommendations'].
+        """
         recommendations = []
         
         if len(self.results['discovered_users']) > 100:

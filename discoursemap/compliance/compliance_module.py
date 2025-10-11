@@ -16,6 +16,12 @@ class ComplianceModule:
     """Compliance testing module (Refactored)"""
     
     def __init__(self, scanner):
+        """
+        Initialize the ComplianceModule with a scanner and prepare the default results container.
+        
+        Parameters:
+            scanner (object): Scanner instance for the target forum. Must provide `target_url` and the interfaces required by OWASPTests and PrivacyComplianceTests; it is stored for use by the module and passed to sub-testers.
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'Compliance Testing',
@@ -37,7 +43,22 @@ class ComplianceModule:
         return self.run_scan()
     
     def run_scan(self):
-        """Execute all compliance scans"""
+        """
+        Run the full compliance workflow and return the aggregated findings.
+        
+        Executes OWASP Top 10 scans, GDPR and CCPA checks, evaluates security headers, generates recommendations, and prints a summary. The method updates the instance's results structure with all findings.
+        
+        Returns:
+            dict: Aggregated results containing:
+                - module_name (str): Name of the module.
+                - target (str): Scanned target URL.
+                - owasp_compliance (list): Findings from OWASP Top 10 tests.
+                - gdpr_compliance (list): Findings from GDPR compliance checks.
+                - ccpa_compliance (list): Findings from CCPA compliance checks.
+                - security_headers (list): Results about presence or absence of security headers.
+                - privacy_policies (list): Collected privacy policy data (may be empty).
+                - recommendations (list): Generated recommendation objects derived from findings.
+        """
         print(f"{Fore.CYAN}[*] Starting Compliance Scan...{Style.RESET_ALL}")
         
         # OWASP Top 10 2021
@@ -64,7 +85,11 @@ class ComplianceModule:
         return self.results
     
     def _test_security_headers(self):
-        """Test security headers compliance"""
+        """
+        Assess presence of important HTTP security headers for the configured target and record findings.
+        
+        Performs an HTTP request to the scanner's target URL and appends one result entry per expected header to self.results['security_headers']. Each entry for a present header uses severity `info` and includes the header name and observed value. Each entry for a missing header uses severity `high` for `strict-transport-security` and `content-security-policy`, and `medium` for all other expected headers. If the request fails, an error message is printed and no additional entries are added.
+        """
         print(f"{Fore.CYAN}[*] Testing security headers...{Style.RESET_ALL}")
         
         security_headers = {
@@ -102,7 +127,14 @@ class ComplianceModule:
             print(f"[!] Error testing security headers: {str(e)}")
     
     def _generate_recommendations(self):
-        """Generate compliance recommendations"""
+        """
+        Create top-level remediation entries based on aggregated findings.
+        
+        Counts issues by severity across OWASP, GDPR, CCPA, and security header findings and populates
+        self.results['recommendations'] with a list of recommendation objects. Each recommendation
+        includes a severity label ('CRITICAL', 'HIGH', 'MEDIUM'), a short summary of the issue count,
+        and a concise remediation action; entries are added only for severities that have at least one issue.
+        """
         recommendations = []
         
         # Count issues by severity
@@ -141,7 +173,11 @@ class ComplianceModule:
         self.results['recommendations'] = recommendations
     
     def _print_summary(self):
-        """Print scan summary"""
+        """
+        Prints a human-readable summary of the collected compliance findings to stdout.
+        
+        Displays a completion banner and the counts for OWASP findings, GDPR findings, CCPA findings, and missing security headers based on the module's aggregated results.
+        """
         print(f"\n{Fore.GREEN}[+] Compliance scan complete!{Style.RESET_ALL}")
         
         owasp_count = len(self.results['owasp_compliance'])

@@ -14,6 +14,12 @@ class EndpointModule:
     """Endpoint security module (Refactored)"""
     
     def __init__(self, scanner):
+        """
+        Initialize EndpointModule state using the provided scanner.
+        
+        Parameters:
+            scanner: An object that provides `target_url`. Its `target_url` is used to create an EndpointScanner and to populate the module's `results['target']`. The initializer also stores the scanner on the instance, creates `self.endpoint_scanner`, and initializes `self.results` with default keys for discovered and accessible endpoints, vulnerabilities, and scan count.
+        """
         self.scanner = scanner
         self.endpoint_scanner = EndpointScanner(scanner.target_url)
         self.results = {
@@ -26,7 +32,20 @@ class EndpointModule:
         }
     
     def run(self) -> Dict[str, Any]:
-        """Execute endpoint discovery"""
+        """
+        Discover common Discourse endpoints on the target and collect scan results.
+        
+        Scans a predefined list of Discourse endpoints, records the scan responses, filters accessible endpoints, updates the total scanned count, and stores these in the module results.
+        
+        Returns:
+            results (Dict[str, Any]): Module results containing keys:
+                - 'module_name': name of the module
+                - 'target': target URL
+                - 'endpoints_found': list of scan result entries for each tested endpoint
+                - 'accessible_endpoints': subset of `endpoints_found` marked as accessible
+                - 'vulnerabilities': list of discovered vulnerabilities (may be empty)
+                - 'total_scanned': number of endpoints tested
+        """
         print(f"{Fore.CYAN}[*] Starting Endpoint Discovery...{Style.RESET_ALL}")
         
         # Common Discourse endpoints

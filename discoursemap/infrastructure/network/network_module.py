@@ -16,6 +16,12 @@ class NetworkModule:
     """Network security module (Refactored)"""
     
     def __init__(self, scanner):
+        """
+        Initialize the NetworkModule with a scanner and prepare the default results structure.
+        
+        Parameters:
+            scanner: An object that provides a `target_url` attribute; used as the scan target and stored on the instance.
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'Network Security',
@@ -27,7 +33,18 @@ class NetworkModule:
         }
     
     def run(self) -> Dict[str, Any]:
-        """Execute network security tests"""
+        """
+        Run a set of network security checks and collect their findings.
+        
+        Returns:
+            results (Dict[str, Any]): Scan results containing:
+                - module_name: name of the module
+                - target: original target URL
+                - open_ports: list of discovered open TCP ports (ints)
+                - dns_info: dict with keys 'hostname' and 'ip' (if resolved)
+                - network_vulns: list of identified network vulnerabilities
+                - tests_performed: count of tests executed (int)
+        """
         print(f"{Fore.CYAN}[*] Starting Network Security Scan...{Style.RESET_ALL}")
         
         # Test ports
@@ -42,7 +59,11 @@ class NetworkModule:
         return self.results
     
     def _test_common_ports(self):
-        """Test common ports"""
+        """
+        Scan a subset of common TCP ports on the module's target and record any that are open.
+        
+        Parses the hostname from self.scanner.target_url, attempts a TCP connection to ports 21, 22, 80, and 443, appends any successfully reached ports to self.results['open_ports'], and increments self.results['tests_performed'] by 1. Connection errors are ignored and do not interrupt the scan.
+        """
         parsed = urlparse(self.scanner.target_url)
         hostname = parsed.hostname
         
@@ -63,7 +84,11 @@ class NetworkModule:
         self.results['tests_performed'] += 1
     
     def _test_dns(self):
-        """Test DNS configuration"""
+        """
+        Resolve the target hostname to an IP address and record DNS information.
+        
+        On success, stores a dictionary {'hostname': <hostname>, 'ip': <ip>} in self.results['dns_info']. If DNS resolution fails, leaves dns_info unchanged. Always increments self.results['tests_performed'] by 1.
+        """
         try:
             parsed = urlparse(self.scanner.target_url)
             hostname = parsed.hostname

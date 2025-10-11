@@ -13,11 +13,24 @@ class AuthBypassTester:
     """Authentication bypass testing"""
     
     def __init__(self, scanner):
+        """
+        Initialize the AuthBypassTester with a scanner client and prepare an empty results list.
+        
+        Parameters:
+            scanner: Scanner client used to perform HTTP requests and inspect responses during bypass tests. The instance is stored on the object as `self.scanner`. An empty list `self.results` is created to collect findings from each test.
+        """
         self.scanner = scanner
         self.results = []
     
     def test_all_bypasses(self):
-        """Test all bypass techniques"""
+        """
+        Run the full suite of authentication-bypass checks and collect findings.
+        
+        Executes SQL injection, default credentials, session fixation, JWT exposure, and OAuth CSRF checks in sequence and aggregates their findings.
+        
+        Returns:
+            results (list): Collected findings from all tests (each entry is a finding dictionary).
+        """
         self.test_sql_injection_bypass()
         self.test_default_credentials()
         self.test_session_fixation()
@@ -27,7 +40,11 @@ class AuthBypassTester:
         return self.results
     
     def test_sql_injection_bypass(self):
-        """Test SQL injection in authentication"""
+        """
+        Detects authentication bypass by submitting common SQL injection payloads to the target's /session endpoint.
+        
+        When a response indicates a session was established (HTTP 200 and the response body contains "session"), a finding is appended to self.results. Each finding is a dict with keys: 'type' ("SQL Injection Bypass"), 'severity' ("critical"), 'payload', and 'description'.
+        """
         payloads = [
             "admin' OR '1'='1",
             "admin'--",
@@ -58,7 +75,11 @@ class AuthBypassTester:
                 continue
     
     def test_default_credentials(self):
-        """Test for default credentials"""
+        """
+        Check the target for active default authentication credentials.
+        
+        Attempts a set of common username/password pairs against the target's /session endpoint; if a response indicates a likely successful login (HTTP 200 and the response body does not contain the word "error"), appends a critical "Default Credentials" finding to self.results with the tested username. Checks are limited to the first two credential pairs.
+        """
         default_creds = [
             ('admin', 'admin'),
             ('admin', 'password'),
@@ -89,7 +110,11 @@ class AuthBypassTester:
                 continue
     
     def test_session_fixation(self):
-        """Test for session fixation vulnerabilities"""
+        """
+        Detect whether a session fixation vulnerability exists.
+        
+        Checks the initial session cookie named "_t", performs a login using that cookie, and if the session ID remains unchanged appends a high-severity "Session Fixation" finding to self.results. Exceptions and request failures are suppressed.
+        """
         try:
             # Get initial session
             response1 = self.scanner.make_request(self.scanner.target_url, timeout=10)
@@ -121,7 +146,11 @@ class AuthBypassTester:
             pass
     
     def test_jwt_vulnerabilities(self):
-        """Test JWT token vulnerabilities"""
+        """
+        Detects JWT-like tokens in the target's root HTTP response and records a finding if any are present.
+        
+        If one or more JWT-like tokens are found in the response body, a result with type "JWT Token Exposure", severity "medium", and the found token count is appended to self.results.
+        """
         try:
             # Check for JWT tokens in responses
             response = self.scanner.make_request(self.scanner.target_url, timeout=10)
@@ -142,7 +171,11 @@ class AuthBypassTester:
             pass
     
     def test_oauth_flaws(self):
-        """Test OAuth implementation flaws"""
+        """
+        Detects OAuth CSRF risks by checking common OAuth endpoints for a missing state parameter.
+        
+        For each common OAuth endpoint that returns status 200 or 302, appends a high-severity finding to self.results when the response does not contain a `state` parameter. Each finding is a dict with keys: `type` (set to "OAuth CSRF"), `severity` (set to "high"), `endpoint`, and `description`.
+        """
         oauth_endpoints = [
             '/auth/google_oauth2',
             '/auth/facebook',

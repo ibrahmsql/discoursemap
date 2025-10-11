@@ -11,6 +11,16 @@ class MaliciousPatternChecker:
     """Utility class for detecting malicious patterns in content"""
 
     def __init__(self):
+        """
+        Initialize MaliciousPatternChecker with compiled detection pattern lists.
+        
+        Sets three attributes used for content scanning:
+        - malicious_patterns: list of regular-expression strings targeting common server-side and shell-injection constructs (e.g., eval, exec, file operations, base64/gzinflate, superglobals, and common shell binaries).
+        - suspicious_js_patterns: list of regular-expression strings targeting JavaScript constructs that often appear in injected or dynamic script payloads (e.g., document.write, innerHTML assignments, eval, timers, XHR/fetch, location/cookie/storage access).
+        - suspicious_js_indicators: list of simple JavaScript substring indicators used for lightweight heuristic counting of suspicious snippets.
+        
+        These attributes are plain lists of strings intended for use with case-insensitive regex searches or substring checks elsewhere in the class.
+        """
         self.malicious_patterns = [
             r'eval\s*\(',
             r'exec\s*\(',
@@ -59,7 +69,15 @@ class MaliciousPatternChecker:
         ]
 
     def check_malicious_patterns(self, content):
-        """Check content for malicious patterns"""
+        """
+        Scan the given text for any configured malicious regex patterns.
+        
+        Parameters:
+        	content (str): Text to scan for malicious or risky patterns.
+        
+        Returns:
+        	found_patterns (list[str]): List of regex patterns from `self.malicious_patterns` that matched the content.
+        """
         found_patterns = []
         for pattern in self.malicious_patterns:
             if re.search(pattern, content, re.IGNORECASE):
@@ -67,7 +85,15 @@ class MaliciousPatternChecker:
         return found_patterns
 
     def check_suspicious_plugin_content(self, content):
-        """Check plugin content for suspicious patterns"""
+        """
+        Check plugin content for suspicious JavaScript patterns.
+        
+        Parameters:
+            content (str): Text to scan for suspicious JavaScript patterns.
+        
+        Returns:
+            list[str]: Regex patterns from `suspicious_js_patterns` that matched the content.
+        """
         found_patterns = []
         for pattern in self.suspicious_js_patterns:
             if re.search(pattern, content, re.IGNORECASE):
@@ -75,6 +101,14 @@ class MaliciousPatternChecker:
         return found_patterns
 
     def has_suspicious_js_content(self, content):
-        """Check if JavaScript content has suspicious characteristics"""
+        """
+        Determine whether JavaScript content contains suspicious patterns based on known indicators.
+        
+        Parameters:
+            content (str): Text to analyze for presence of suspicious JavaScript indicator substrings.
+        
+        Returns:
+            bool: `True` if more than three indicators are present, `False` otherwise.
+        """
         count = sum(1 for indicator in self.suspicious_js_indicators if indicator in content)
         return count > 3
