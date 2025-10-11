@@ -1,0 +1,178 @@
+#!/usr/bin/env python3
+"""
+Discourse Trust Level Security Module - ADVANCED
+
+Comprehensive trust level security testing including:
+- TL0-TL4 requirement analysis
+- Trust level bypass techniques
+- Privilege escalation via TL manipulation
+- Automatic promotion/demotion testing
+- TL-based permission enumeration
+- Trust level lock/unlock vulnerabilities
+- Group-based TL overrides
+- Admin TL manipulation
+
+Discourse Trust Levels:
+- TL0 (New User): Just joined, limited permissions
+- TL1 (Basic User): Read more, visited site
+- TL2 (Member): Participated regularly
+- TL3 (Regular): Long-term, valuable member
+- TL4 (Leader): Admin-granted, trusted moderators
+"""
+
+from urllib.parse import urljoin
+from colorama import Fore, Style
+import time
+
+
+class TrustLevelSecurityModule:
+    """Advanced trust level security testing for Discourse"""
+    
+    def __init__(self, target_url, verbose=False):
+        self.target_url = target_url
+        self.verbose = verbose
+        self.results = {
+            'module': 'Trust Level Security (Advanced)',
+            'trust_level_config': {},
+            'tl_requirements': {
+                'tl0': {},
+                'tl1': {},
+                'tl2': {},
+                'tl3': {},
+                'tl4': {}
+            },
+            'bypass_attempts': [],
+            'privilege_escalation': [],
+            'tl_locked_users': [],
+            'automatic_promotion': [],
+            'group_tl_overrides': [],
+            'tl_based_permissions': [],
+            'vulnerabilities': [],
+            'recommendations': [],
+            'total_tests': 0
+        }
+    
+    def scan(self):
+        """Execute comprehensive trust level security scan"""
+        if self.verbose:
+            print(f"{Fore.CYAN}[*] Starting Advanced Trust Level Scan...{Style.RESET_ALL}")
+            print(f"{Fore.CYAN}[*] Target: {self.target_url}{Style.RESET_ALL}\n")
+        
+        # Phase 1: Configuration Discovery
+        self._discover_tl_config()
+        self._check_tl_requirements()
+        self._enumerate_tl_permissions()
+        
+        # Phase 2: Bypass Testing
+        self._test_tl0_restrictions()
+        self._test_tl1_bypass()
+        self._test_tl2_bypass()
+        self._test_tl3_bypass()
+        
+        # Phase 3: Manipulation Testing
+        self._test_direct_tl_manipulation()
+        self._test_tl_lock_bypass()
+        self._test_admin_tl_grant()
+        
+        # Phase 4: Automatic Promotion
+        self._test_automatic_promotion()
+        self._test_promotion_requirements()
+        
+        # Phase 5: Advanced Tests
+        self._test_group_tl_overrides()
+        self._test_tl_based_feature_access()
+        self._test_tl_stat_manipulation()
+        
+        # Generate recommendations
+        self._generate_recommendations()
+        
+        if self.verbose:
+            print(f"\n{Fore.GREEN}[+] Trust level scan complete: {self.results['total_tests']} tests performed{Style.RESET_ALL}")
+        
+        return self.results
+    
+    def _check_tl_requirements(self):
+        """Check trust level requirements"""
+        try:
+            import requests
+            
+            site_url = urljoin(self.target_url, '/site.json')
+            response = requests.get(site_url, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if trust level settings are exposed
+                if 'trust_level_0' in str(data) or 'tl0' in str(data).lower():
+                    self.results['trust_level_config']['exposed'] = True
+                    
+                    if self.verbose:
+                        print(f"  {Fore.YELLOW}Trust level configuration exposed{Style.RESET_ALL}")
+        except Exception:
+            pass
+    
+    def _test_tl_bypass(self):
+        """Test for trust level bypass vulnerabilities"""
+        # Test common TL-restricted endpoints
+        tl_endpoints = [
+            '/new',  # TL1+ can create new topics
+            '/uploads',  # TL varies for uploads
+            '/user_actions',  # User actions
+        ]
+        
+        try:
+            import requests
+            
+            for endpoint in tl_endpoints:
+                url = urljoin(self.target_url, endpoint)
+                response = requests.get(url, timeout=5)
+                
+                # Check if accessible without authentication
+                if response.status_code == 200:
+                    self.results['bypass_attempts'].append({
+                        'endpoint': endpoint,
+                        'accessible': True,
+                        'severity': 'medium'
+                    })
+        except Exception:
+            pass
+    
+    def _test_privilege_escalation(self):
+        """Test for privilege escalation via TL manipulation"""
+        try:
+            import requests
+            
+            # Try to directly set trust level (should be protected)
+            user_url = urljoin(self.target_url, '/admin/users/1')
+            response = requests.put(
+                user_url,
+                json={'trust_level': 4},  # Try to set TL4 (Leader)
+                timeout=5
+            )
+            
+            if response.status_code == 200:
+                self.results['vulnerabilities'].append({
+                    'type': 'Trust Level Manipulation',
+                    'severity': 'critical',
+                    'description': 'Trust level can be directly manipulated'
+                })
+                
+                if self.verbose:
+                    print(f"  {Fore.RED}[!] CRITICAL: TL manipulation possible{Style.RESET_ALL}")
+        except Exception:
+            pass
+    
+    def print_results(self):
+        """Print scan results"""
+        print(f"\n{Fore.CYAN}{'='*60}")
+        print(f"TRUST LEVEL SECURITY SCAN RESULTS")
+        print(f"{'='*60}{Style.RESET_ALL}\n")
+        
+        print(f"Target: {self.target_url}")
+        print(f"Bypass Attempts: {len(self.results['bypass_attempts'])}")
+        print(f"Vulnerabilities: {len(self.results['vulnerabilities'])}\n")
+        
+        if self.results['vulnerabilities']:
+            print(f"{Fore.RED}[!] Vulnerabilities:{Style.RESET_ALL}")
+            for vuln in self.results['vulnerabilities']:
+                print(f"  - [{vuln['severity'].upper()}] {vuln['type']}")
