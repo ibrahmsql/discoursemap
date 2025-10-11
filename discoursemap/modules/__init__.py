@@ -1,24 +1,26 @@
 #!/usr/bin/env python3
-"""Discourse Security Scanner Modules
+"""Discourse Security Scanner Modules (Legacy)
 
-This package contains all security scanning modules for Discourse forums.
-Includes vulnerability testing, endpoint discovery, user enumeration, and more.
+This package is kept for backwards compatibility.
+New imports should use the reorganized structure.
 """
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __author__ = "ibrahimsql"
 
+# Import from new structure for backwards compatibility
 from ..lib.discourse_utils import (
     validate_url, normalize_url, extract_csrf_token, is_discourse_forum
 )
-from .scanner import DiscourseScanner
-from .reporter import Reporter
-from .info_module import InfoModule
-from .vulnerability_module import VulnerabilityModule
-from .endpoint_module import EndpointModule
-from .user_module import UserModule
-from .cve_exploit_module import CVEExploitModule
-from .banner import Banner
+from ..core.scanner import DiscourseScanner
+from ..core.reporter import Reporter
+from ..analysis.info import InfoModule
+from ..security.vulnerabilities import VulnerabilityModule
+from ..analysis.endpoints import EndpointModule
+from ..utilities import UserModule
+from ..security.exploits import CVEExploitModule
+from ..core.banner import Banner
+
 __all__ = [
     'validate_url', 'normalize_url', 'extract_csrf_token', 'is_discourse_forum',
     'DiscourseScanner', 'Reporter', 'InfoModule', 'VulnerabilityModule',

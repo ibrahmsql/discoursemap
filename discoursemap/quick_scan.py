@@ -15,11 +15,11 @@ from colorama import init, Fore, Style
 # Add the parent directory to path for relative imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from discoursemap.modules.scanner import DiscourseScanner
-from discoursemap.modules.reporter import Reporter
+from discoursemap.core.scanner import DiscourseScanner
+from discoursemap.core.reporter import Reporter
 from discoursemap.lib.discourse_utils import validate_url
 from discoursemap.lib.config_manager import ConfigManager
-from discoursemap.modules.banner import Banner
+from discoursemap.core.banner import Banner
 
 init(autoreset=True)
 

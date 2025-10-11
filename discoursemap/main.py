@@ -24,11 +24,11 @@ import asyncio
 import requests
 from datetime import datetime
 from colorama import init, Fore, Style
-from .modules.scanner import DiscourseScanner
-from .modules.reporter import Reporter
+from .core.scanner import DiscourseScanner
+from .core.reporter import Reporter
 from .lib.discourse_utils import validate_url
 from .lib.config_manager import ConfigManager
-from .modules.banner import Banner
+from .core.banner import Banner
 
 init(autoreset=False)
 
