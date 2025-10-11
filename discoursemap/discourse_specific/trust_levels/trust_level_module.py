@@ -385,7 +385,9 @@ class TrustLevelSecurityModule:
                     if self.verbose:
                         print(f"    {Fore.RED}✗ Stat manipulation: {stat}{Style.RESET_ALL}")
                     break
-            except:
+            except Exception as e:
+                if self.verbose:
+                    print(f"    {Fore.YELLOW}⚠{Style.RESET_ALL} Error: {str(e)[:30]}")
                 continue
     
     def _test_group_tl_overrides(self):

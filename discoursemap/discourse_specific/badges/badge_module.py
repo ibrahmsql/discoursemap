@@ -189,7 +189,9 @@ class BadgeSecurityModule:
                                 'badge_name': badge_data.get('name'),
                                 'description': 'Unlisted badge accessible via direct ID'
                             })
-                except:
+                except Exception as e:
+                    if self.verbose:
+                        print(f"    {Fore.YELLOW}⚠{Style.RESET_ALL} Error checking badge {badge_id}: {str(e)[:30]}")
                     continue
             
             if self.verbose:

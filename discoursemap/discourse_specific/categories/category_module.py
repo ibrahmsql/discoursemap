@@ -171,7 +171,9 @@ class CategorySecurityModule:
                                 'category_name': category.get('name'),
                                 'description': f'Hidden category accessible via direct ID: {cat_id}'
                             })
-                except:
+                except Exception as e:
+                    if self.verbose:
+                        print(f"    {Fore.YELLOW}⚠{Style.RESET_ALL} Error checking category {cat_id}: {str(e)[:30]}")
                     continue
             
             if self.verbose:
