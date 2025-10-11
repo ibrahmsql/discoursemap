@@ -450,7 +450,7 @@ def main():
         from discoursemap.lib.discourse_utils import is_discourse_site
         
         print(f"{Fore.CYAN}[*] Verifying target is a Discourse forum...{Style.RESET_ALL}")
-        if not is_discourse_site(args.url, timeout=10):
+        if not is_discourse_site(args.url):
             print(f"{Fore.RED}[!] Error: Target is not a Discourse forum!{Style.RESET_ALL}")
             print(f"{Fore.RED}[!] This tool is specifically designed for Discourse forums only.{Style.RESET_ALL}")
             print(f"{Fore.YELLOW}[!] Please ensure the target URL points to a valid Discourse installation.{Style.RESET_ALL}")
