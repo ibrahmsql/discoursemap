@@ -19,7 +19,7 @@ New in v2.0:
 - Comprehensive security coverage
 """
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 __author__ = "ibrahimsql"
 __email__ = "ibrahimsql@proton.me"
 __description__ = "Discourse forum security scanner. Written for security professionals and forum administrators."
