@@ -14,6 +14,14 @@ class PrivacyComplianceTests:
     """GDPR and CCPA compliance testing"""
     
     def __init__(self, scanner):
+        """
+        Initialize the PrivacyComplianceTests instance and prepare results storage.
+        
+        Initializes the instance with a scanner used to perform HTTP requests and creates a results dictionary containing two keys, 'gdpr' and 'ccpa', each initialized to an empty list for accumulating findings.
+        
+        Parameters:
+            scanner: An object providing a make_request(target_url, timeout=...) method used by the compliance checks to fetch page content.
+        """
         self.scanner = scanner
         self.results = {
             'gdpr': [],
@@ -21,7 +29,12 @@ class PrivacyComplianceTests:
         }
     
     def test_gdpr_compliance(self):
-        """Test GDPR compliance requirements"""
+        """
+        Run GDPR-related checks (cookie consent, data subject rights, DPO contact, privacy policy) and record findings.
+        
+        @returns
+        A list of GDPR result entries (dicts) describing detected issues or informational findings and their severities.
+        """
         self._check_cookie_consent()
         self._check_data_subject_rights()
         self._check_dpo_contact()
@@ -30,7 +43,14 @@ class PrivacyComplianceTests:
         return self.results['gdpr']
     
     def test_ccpa_compliance(self):
-        """Test CCPA compliance requirements"""
+        """
+        Scan the target site's content for common CCPA indicators and append a result entry to the GDPR/CCPA results.
+        
+        Searches the fetched page content for phrases such as "do not sell", "ccpa", "california privacy", and "opt-out". If any indicators are found, an info-level entry including the matched indicators is appended to self.results['ccpa']; otherwise a medium-severity entry indicating no indicators found is appended.
+        
+        Returns:
+            list: The list of CCPA result entries stored in self.results['ccpa'].
+        """
         try:
             # Check for "Do Not Sell My Personal Information" link
             response = self.scanner.make_request(self.scanner.target_url, timeout=10)
@@ -65,7 +85,11 @@ class PrivacyComplianceTests:
         return self.results['ccpa']
     
     def _check_cookie_consent(self):
-        """Check for cookie consent mechanism"""
+        """
+        Detect whether the target site exposes a cookie consent mechanism and record the finding.
+        
+        Appends a result entry to self.results['gdpr']: an info entry with type "Cookie Consent" when a consent mechanism is detected, or a high-severity entry with type "Missing Cookie Consent" when none is found. Any exceptions raised while fetching or inspecting the page are suppressed.
+        """
         try:
             response = self.scanner.make_request(self.scanner.target_url, timeout=10)
             if response:
@@ -94,7 +118,11 @@ class PrivacyComplianceTests:
             pass
     
     def _check_data_subject_rights(self):
-        """Check for data subject rights information"""
+        """
+        Detects documented data subject rights on the target site and records the finding.
+        
+        If any rights phrases (e.g., "right to access", "right to erasure", "data portability", "right to rectification", "data subject rights") are present in the fetched page content, appends an info entry to self.results['gdpr'] listing the found rights; otherwise appends a medium-severity entry indicating data subject rights are not clearly documented.
+        """
         try:
             response = self.scanner.make_request(self.scanner.target_url, timeout=10)
             if response:
@@ -124,7 +152,11 @@ class PrivacyComplianceTests:
             pass
     
     def _check_dpo_contact(self):
-        """Check for Data Protection Officer contact"""
+        """
+        Check for Data Protection Officer (DPO) or privacy contact information and record a GDPR result.
+        
+        Fetches the scanner's target URL, searches the page content for DPO-related keywords, and appends an entry to self.results['gdpr']: an `info` entry when contact information is found, or a `medium`-severity entry when none is found. Exceptions raised while fetching or processing the page are suppressed.
+        """
         try:
             response = self.scanner.make_request(self.scanner.target_url, timeout=10)
             if response:
@@ -153,7 +185,11 @@ class PrivacyComplianceTests:
             pass
     
     def _check_privacy_policy(self):
-        """Check for privacy policy"""
+        """
+        Check common privacy policy endpoints and record a GDPR result entry.
+        
+        Attempts the common privacy policy paths for the current target and stops at the first endpoint that returns an HTTP 200. If a policy is found, appends an info result to self.results['gdpr'] containing 'type' = 'Privacy Policy', 'severity' = 'info', 'endpoint' = the matched path, and a brief 'description'. If none of the endpoints respond with 200, appends a high-severity result with 'type' = 'Missing Privacy Policy', 'severity' = 'high', and 'description' = 'No privacy policy found'.
+        """
         privacy_endpoints = ['/privacy', '/privacy-policy', '/legal/privacy']
         
         for endpoint in privacy_endpoints:

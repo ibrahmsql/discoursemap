@@ -21,6 +21,14 @@ class PluginDetectionModule:
     """Modular plugin and technology detection module"""
     
     def __init__(self, scanner):
+        """
+        Initialize the plugin detection module state and load detection signatures.
+        
+        Sets the scanner instance, prepares the results dictionary used to collect detection outputs (keys include: module_name, target, detected_plugins, detected_themes, technology_stack, javascript_libraries, css_frameworks, server_info, meta_information, fingerprints, vulnerability_plugins, plugin_endpoints), and loads plugin signatures, vulnerability data, and technology pattern data into instance attributes for use by detection methods.
+        
+        Parameters:
+            scanner: An object that provides the target_url attribute representing the site to scan.
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'Plugin Detection',
@@ -43,7 +51,26 @@ class PluginDetectionModule:
         self.tech_patterns = get_technology_patterns()
     
     def run(self):
-        """Execute plugin detection scan"""
+        """
+        Orchestrate a full plugin and technology detection workflow for the configured scanner and return aggregated results.
+        
+        Performs HTML-, API- and path-based plugin detection; identifies JavaScript libraries, CSS frameworks, and server technologies; checks detected plugins for known vulnerabilities; and collects site meta information.
+        
+        Returns:
+            results (dict): Aggregated scan results containing at least the following keys:
+                - module_name
+                - target
+                - detected_plugins
+                - detected_themes
+                - technology_stack
+                - javascript_libraries
+                - css_frameworks
+                - server_info
+                - meta_information
+                - fingerprints
+                - vulnerability_plugins
+                - plugin_endpoints
+        """
         print(f"{Fore.CYAN}[*] Starting Plugin Detection Scan...{Style.RESET_ALL}")
         
         # Step 1: Detect plugins
@@ -69,7 +96,12 @@ class PluginDetectionModule:
         return self.results
     
     def _detect_plugins_from_html(self):
-        """Detect plugins from HTML source"""
+        """
+        Identify Discourse plugins by scanning the page HTML for configured signature markers.
+        
+        Appends a record to self.results['detected_plugins'] for each matched plugin containing:
+        name, detection_method ('html_marker'), marker, category, and risk_level. If the HTTP request yields no response, the method exits without modifying results.
+        """
         try:
             response = make_request(self.scanner.target_url, timeout=10)
             if not response:
@@ -94,7 +126,17 @@ class PluginDetectionModule:
             print(f"{Fore.RED}[!] Error detecting plugins from HTML: {e}{Style.RESET_ALL}")
     
     def _detect_plugins_from_api(self):
-        """Detect plugins using Discourse API"""
+        """
+        Detect plugins advertised by the site's /site.json API and record them in results.
+        
+        If the API response is a JSON object containing a "plugins" list, appends for each plugin a dictionary to self.results['detected_plugins'] with keys:
+        - 'name' (defaults to 'Unknown')
+        - 'version' (defaults to 'Unknown')
+        - 'detection_method' set to 'api'
+        - 'enabled' (defaults to True)
+        
+        On network errors, non-200 responses, invalid JSON, or other exceptions, no detections are added and a warning message is printed.
+        """
         try:
             # Try to get site info
             site_url = urljoin(self.scanner.target_url, '/site.json')
@@ -135,7 +177,19 @@ class PluginDetectionModule:
                     continue
     
     def _detect_javascript_libraries(self):
-        """Detect JavaScript libraries"""
+        """
+        Scan the target site's HTML for JavaScript libraries and frameworks using configured regex patterns.
+        
+        Parses the HTML fetched from self.scanner.target_url and, for each entry in self.tech_patterns whose category is
+        'javascript-library' or 'javascript-framework', searches the page with the entry's 'js_patterns'. On the first matching
+        pattern for a library, appends a detection record to self.results['javascript_libraries'] containing:
+        - 'name': library name
+        - 'detection_method': 'pattern_match'
+        - 'pattern': the matched pattern
+        
+        If the HTTP request returns no response the method returns without modifying results. On exception the method prints a
+        warning and returns.
+        """
         try:
             response = make_request(self.scanner.target_url, timeout=10)
             if not response:
@@ -158,7 +212,11 @@ class PluginDetectionModule:
             print(f"{Fore.YELLOW}[!] Error detecting JS libraries: {e}{Style.RESET_ALL}")
     
     def _detect_css_frameworks(self):
-        """Detect CSS frameworks"""
+        """
+        Scan the target site's HTML for known CSS framework signatures and record any matches.
+        
+        Performs an HTTP request to the scanner's target URL, searches the returned HTML for patterns categorized as 'css-framework' in the loaded technology patterns, and appends detection records to self.results['css_frameworks'] when a pattern matches. Each recorded entry contains: 'name' (framework name), 'detection_method' set to 'pattern_match', and the matching 'pattern'.
+        """
         try:
             response = make_request(self.scanner.target_url, timeout=10)
             if not response:
@@ -180,7 +238,11 @@ class PluginDetectionModule:
             print(f"{Fore.YELLOW}[!] Error detecting CSS frameworks: {e}{Style.RESET_ALL}")
     
     def _detect_server_technologies(self):
-        """Detect server-side technologies from headers"""
+        """
+        Collect server-side technology information by requesting the target URL and inspecting HTTP response headers.
+        
+        Performs a request to the module's target URL and, if a response is received, stores header-derived information in self.results['server_info']: the 'Server' header under the 'server' key, the 'X-Powered-By' header under the 'powered_by' key, and any headers whose name contains 'discourse' (case-insensitive) under their original header names.
+        """
         try:
             response = make_request(self.scanner.target_url, timeout=10)
             if not response:
@@ -221,7 +283,11 @@ class PluginDetectionModule:
                 })
     
     def _gather_meta_information(self):
-        """Gather meta information about the site"""
+        """
+        Collect meta tag name/property and content pairs from the target page and store them in self.results['meta_information'].
+        
+        Makes an HTTP request to the module's target URL, parses the HTML, and for each <meta> tag with a `name` or `property` attribute and a `content` value, stores an entry mapping that name/property to its content. Existing entries for the same name/property are overwritten. The method returns early if the page cannot be retrieved.
+        """
         try:
             response = make_request(self.scanner.target_url, timeout=10)
             if not response:

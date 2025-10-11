@@ -24,6 +24,28 @@ class CategorySecurityModule:
     """Advanced category permission security testing - 500+ lines"""
     
     def __init__(self, target_url, verbose=False):
+        """
+        Initialize the CategorySecurityModule with a target URL and verbosity setting and prepare the results container.
+        
+        Parameters:
+            target_url (str): Base URL of the Discourse instance to test (e.g., "https://example.com").
+            verbose (bool): If True, emit progress and diagnostic messages during the scan.
+        
+        The instance attribute `results` is initialized to collect scan data and findings and contains these keys:
+            - module: module name string
+            - categories_found: list of discovered category metadata
+            - category_tree: hierarchical mapping of categories by parent/child relationships
+            - hidden_categories: categories discovered via direct ID/slug probing
+            - restricted_categories: categories marked as read-restricted
+            - permission_bypass: detected permission bypass cases
+            - group_permissions: group-related permission findings
+            - subcategory_issues: problems with permission inheritance between parents and children
+            - visibility_issues: findings related to unauthorized visibility changes
+            - ownership_bypass: findings related to unauthorized ownership/administrative actions
+            - vulnerabilities: recorded vulnerability entries with severity and description
+            - recommendations: generated remediation suggestions
+            - total_tests: counter for the number of tests executed
+        """
         self.target_url = target_url
         self.verbose = verbose
         self.results = {
@@ -43,7 +65,14 @@ class CategorySecurityModule:
         }
     
     def scan(self):
-        """Execute comprehensive category security scan"""
+        """
+        Run the full advanced category security assessment workflow against the configured target.
+        
+        Executes category discovery, permission checks, bypass attempts, advanced integrity tests, and recommendation generation, accumulating findings in the instance results structure.
+        
+        Returns:
+            dict: Results dictionary containing discovered categories, test counts, vulnerabilities, and recommendations.
+        """
         if self.verbose:
             print(f"{Fore.CYAN}[*] Starting Advanced Category Security Scan...{Style.RESET_ALL}")
             print(f"{Fore.CYAN}[*] Target: {self.target_url}{Style.RESET_ALL}\n")
@@ -79,7 +108,11 @@ class CategorySecurityModule:
         return self.results
     
     def _enumerate_categories(self):
-        """Comprehensive category enumeration"""
+        """
+        Enumerate categories from the target and record their metadata and access state.
+        
+        Populates self.results with discovered category entries under 'categories_found', adds categories with read restrictions to 'restricted_categories', and increments 'total_tests'. On failure the method records no categories and, when verbose is enabled, prints an error message instead of raising.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -129,7 +162,11 @@ class CategorySecurityModule:
                 print(f"    {Fore.RED}✗{Style.RESET_ALL} Category enumeration failed: {str(e)}")
     
     def _discover_hidden_categories(self):
-        """Discover hidden categories via ID enumeration"""
+        """
+        Discover categories accessible by direct numeric ID access and record findings.
+        
+        Probes category endpoints for numeric IDs in the range 1–50 that are not already present in results['categories_found']. Increments results['total_tests']; for each accessible category found, appends a structured entry to results['hidden_categories'] and a medium-severity vulnerability to results['vulnerabilities']. If verbose is enabled, prints progress and summary messages.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -187,7 +224,11 @@ class CategorySecurityModule:
                 print(f"    {Fore.RED}✗{Style.RESET_ALL} Hidden category discovery failed")
     
     def _build_category_tree(self):
-        """Build category hierarchy tree"""
+        """
+        Builds a hierarchical tree of discovered categories and stores it in the results.
+        
+        Increments the module test counter and populates self.results['category_tree'] with root categories keyed by their id; each entry contains a 'category' (the category dict) and a 'children' list of direct child category dicts.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -215,7 +256,15 @@ class CategorySecurityModule:
             print(f"    {Fore.GREEN}✓{Style.RESET_ALL} Built tree: {root_count} root categories")
     
     def _test_read_permissions(self):
-        """Test read permission enforcement"""
+        """
+        Check whether read-restricted categories are accessible without authentication.
+        
+        Increments the module's test counter and, for each entry in results['restricted_categories'],
+        attempts to access the category's JSON endpoint. If a restricted category is reachable,
+        appends a high-severity entry to results['permission_bypass'] and a corresponding
+        vulnerability record to results['vulnerabilities']. When verbose is enabled, prints
+        progress and any bypass findings. Exceptions raised during checks are suppressed.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -253,7 +302,12 @@ class CategorySecurityModule:
             pass
     
     def _test_write_permissions(self):
-        """Test write permission enforcement"""
+        """
+        Attempt to create topics in discovered categories to detect unauthorized write access.
+        
+        If a topic can be created in any of the first discovered categories, records a critical
+        write-permission bypass entry in self.results['permission_bypass'] and stops further checks.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -290,7 +344,11 @@ class CategorySecurityModule:
             pass
     
     def _test_create_permissions(self):
-        """Test category creation permissions"""
+        """
+        Attempt to create a forum category and record an unauthorized-creation vulnerability if the operation succeeds.
+        
+        Attempts a POST to the instance's /categories endpoint; on an HTTP 200 or 201 response, appends a critical "Unauthorized Category Creation" entry to self.results['vulnerabilities'] and may print verbose output. Increments self.results['total_tests'] and updates results only (no return value).
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -327,7 +385,11 @@ class CategorySecurityModule:
             pass
     
     def _test_permission_bypass(self):
-        """Test various permission bypass techniques"""
+        """
+        Check whether restricted categories are accessible via alternate endpoints and record any bypasses.
+        
+        For up to the first three categories in self.results['restricted_categories'], tries multiple alternate category endpoints; if any endpoint returns HTTP 200, appends a finding to self.results['permission_bypass'] containing the category name, the bypass_method used, a severity of 'high', and a description. Increments self.results['total_tests']. Network and other runtime errors are ignored.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -363,7 +425,11 @@ class CategorySecurityModule:
             pass
     
     def _test_group_bypass(self):
-        """Test group-based permission bypass"""
+        """
+        Attempt to detect unauthorized group membership manipulation.
+        
+        Iterates up to five discovered groups and attempts to join each; if a join request succeeds, an entry describing the unauthorized group join is appended to self.results['group_permissions'] with severity 'critical'. Also increments self.results['total_tests'] as part of the test.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -400,7 +466,11 @@ class CategorySecurityModule:
             pass
     
     def _test_api_permission_bypass(self):
-        """Test API-based permission bypass"""
+        """
+        Checks whether restricted categories are accessible via the category "show" API endpoint and records a vulnerability when access is allowed.
+        
+        If a restricted category can be accessed via the API, appends a high-severity vulnerability entry to self.results['vulnerabilities'] describing the category and the API URL. Tests up to the first two restricted categories and emits progress output when verbose.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -428,7 +498,11 @@ class CategorySecurityModule:
             pass
     
     def _test_subcategory_security(self):
-        """Test subcategory permission inheritance"""
+        """
+        Identify subcategories whose read permissions do not match their restricted parent categories.
+        
+        Scans the constructed category tree in self.results['category_tree'] and for any parent category with read_restricted=True records a high-severity entry in self.results['subcategory_issues'] when a child category is not read_restricted. Increments self.results['total_tests'] and may emit progress/output when self.verbose is True.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -454,7 +528,11 @@ class CategorySecurityModule:
                             print(f"    {Fore.YELLOW}⚠{Style.RESET_ALL} Inheritance issue: {child['name']}")
     
     def _test_category_visibility(self):
-        """Test category visibility manipulation"""
+        """
+        Check whether category visibility can be changed without authorization.
+        
+        Attempts to update the `read_restricted` flag on up to the first three discovered categories; if an update succeeds (HTTP 200 or 201), records a critical visibility issue in `self.results['visibility_issues']`.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -488,7 +566,12 @@ class CategorySecurityModule:
             pass
     
     def _test_category_archiving(self):
-        """Test category archiving vulnerabilities"""
+        """
+        Check whether categories can be archived without proper authorization.
+        
+        If an unauthorized archive action succeeds, record a high-severity "Unauthorized Category Archiving"
+        vulnerability in self.results['vulnerabilities'].
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -514,7 +597,11 @@ class CategorySecurityModule:
             pass
     
     def _test_ownership_bypass(self):
-        """Test category ownership bypass"""
+        """
+        Attempt to detect unauthorized ownership actions by trying to delete discovered categories.
+        
+        Attempts to delete up to two categories from results['categories_found']; if a delete request succeeds (indicating a non-owner can remove a category), a critical ownership bypass finding is appended to self.results['ownership_bypass'] and the test stops after the first success. Increments self.results['total_tests'] and may print progress when verbose.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -544,7 +631,11 @@ class CategorySecurityModule:
             pass
     
     def _test_permission_inheritance(self):
-        """Test permission inheritance flaws"""
+        """
+        Check whether any subcategory permission inheritance issues have been detected.
+        
+        Increments the module's total test count and notes the presence of subcategory inheritance issues by inspecting the module's results (specifically `results['subcategory_issues']`). When verbose mode is enabled, prints a summary of the number of inheritance issues found.
+        """
         self.results['total_tests'] += 1
         
         if self.verbose:
@@ -560,7 +651,17 @@ class CategorySecurityModule:
                 print(f"    {Fore.GREEN}✓{Style.RESET_ALL} Permission inheritance correct")
     
     def _generate_recommendations(self):
-        """Generate security recommendations"""
+        """
+        Builds and appends security recommendations to self.results based on discovered findings.
+        
+        Adds recommendation entries when:
+        - hidden categories were discovered: a medium-priority recommendation to enforce access controls;
+        - permission bypasses exist: a critical recommendation if any bypass has severity "critical";
+        - subcategory inheritance issues exist: a high-priority recommendation to fix permission inheritance;
+        - more than 70% of discovered categories are restricted: an informational recommendation to review necessity.
+        
+        Each recommendation is appended to self.results['recommendations'] as a dict with keys 'priority', 'issue', and 'recommendation'.
+        """
         
         if self.results['hidden_categories']:
             self.results['recommendations'].append({

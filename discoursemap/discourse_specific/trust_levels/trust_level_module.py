@@ -15,6 +15,16 @@ class TrustLevelSecurityModule:
     """Advanced trust level security testing - 500+ lines of comprehensive checks"""
     
     def __init__(self, target_url, verbose=False):
+        """
+        Initialize the TrustLevelSecurityModule with a target site and verbosity control.
+        
+        Parameters:
+            target_url (str): Base URL of the Discourse site to scan (e.g., "https://forum.example.com").
+            verbose (bool): Enable detailed console output during scanning.
+        
+        Description:
+            Sets up the internal results dictionary used to aggregate findings across the module's checks, including placeholders for trust level configuration, requirements, bypass attempts, privilege escalations, locked users, automatic promotions, group overrides, TL-based permissions, discovered vulnerabilities, recommendations, and a running total of tests executed.
+        """
         self.target_url = target_url
         self.verbose = verbose
         self.results = {
@@ -33,7 +43,14 @@ class TrustLevelSecurityModule:
         }
     
     def scan(self):
-        """Execute 15+ comprehensive trust level tests"""
+        """
+        Orchestrates the full trust-level test suite and returns the aggregated scan results.
+        
+        Runs the module's sequence of trust level discovery, requirement checks, permission enumeration, bypass and privilege escalation tests, and recommendation generation. Updates the module's internal results state (self.results) with findings and increments the total test counter; may print progress when verbose is enabled.
+        
+        Returns:
+            results (dict): Aggregated results containing module metadata, discovered trust level configuration, TL requirements, bypass attempts, privilege escalations, locked TLs, automatic promotions, group TL overrides, TL-based permissions, vulnerabilities, recommendations, and the total_tests counter.
+        """
         if self.verbose:
             print(f"{Fore.CYAN}[*] Advanced Trust Level Scan...{Style.RESET_ALL}\n")
         
@@ -60,7 +77,11 @@ class TrustLevelSecurityModule:
         return self.results
     
     def _discover_tl_config(self):
-        """Discover TL configuration from site settings"""
+        """
+        Check whether the site's Trust Level (TL) configuration is publicly exposed.
+        
+        Attempts to fetch the site's /site.json and inspects the response for Trust Level-related settings; if TL-related keys are present the function sets self.results['trust_level_config']['exposed'] to True and increments the internal test counter.
+        """
         self.results['total_tests'] += 1
         if self.verbose:
             print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Discovering TL configuration...")
@@ -84,7 +105,11 @@ class TrustLevelSecurityModule:
             pass
     
     def _check_tl_requirements(self):
-        """Check TL promotion requirements"""
+        """
+        Populate the module's results with a canonical set of Discourse trust-level promotion requirements for TL1–TL3.
+        
+        Adds a standard requirements mapping (e.g., topics_entered, read_posts, time_period, received_likes, given_likes, posts_read, days_visited) into results['tl_requirements'] so subsequent tests and reporting can reference expected promotion criteria.
+        """
         self.results['total_tests'] += 1
         if self.verbose:
             print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Checking TL requirements...")
@@ -127,7 +152,11 @@ class TrustLevelSecurityModule:
             print(f"    {Fore.GREEN}✓{Style.RESET_ALL} Mapped {sum(len(p) for p in permissions_map.values())} permissions")
     
     def _test_tl0_restrictions(self):
-        """Test TL0 (New User) restrictions"""
+        """
+        Check whether a new (TL0) user can create forum topics and record findings.
+        
+        Attempts to POST a new topic to the target instance; on a successful (200/201) response it appends a TL0 bypass entry to `self.results['bypass_attempts']` and a corresponding vulnerability to `self.results['vulnerabilities']`. Also increments `self.results['total_tests']`. Produces optional verbose console output when `self.verbose` is True. Exceptions raised during the check are suppressed.
+        """
         self.results['total_tests'] += 1
         if self.verbose:
             print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing TL0 restrictions...")
@@ -192,7 +221,12 @@ class TrustLevelSecurityModule:
             pass
     
     def _test_tl2_bypass(self):
-        """Test TL2 (Member) permission bypass"""
+        """
+        Check whether non-members can access the invitation endpoint and create user invitations.
+        
+        If POSTing to the invites endpoint succeeds (HTTP 200 or 201), this records a TL2 bypass entry in `self.results['bypass_attempts']`
+        and a corresponding vulnerability in `self.results['vulnerabilities']`.
+        """
         self.results['total_tests'] += 1
         if self.verbose:
             print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing TL2 bypass...")
@@ -224,7 +258,11 @@ class TrustLevelSecurityModule:
             pass
     
     def _test_tl3_bypass(self):
-        """Test TL3 (Regular) permission bypass"""
+        """
+        Check whether topic recategorization is allowed without TL3 privileges.
+        
+        Attempts to recategorize a topic and, on success, appends a critical bypass entry to self.results['bypass_attempts'] and increments the total test counter.
+        """
         self.results['total_tests'] += 1
         if self.verbose:
             print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing TL3 bypass...")
@@ -286,7 +324,11 @@ class TrustLevelSecurityModule:
             pass
     
     def _test_tl_lock_bypass(self):
-        """Test TL lock bypass vulnerabilities"""
+        """
+        Check whether a user's trust-level lock can be removed without proper authorization.
+        
+        If an unauthenticated or improperly authorized request successfully unlocks a user's trust level, this method appends a vulnerability entry with type "TL Lock Bypass" and severity "high" to self.results['vulnerabilities'].
+        """
         self.results['total_tests'] += 1
         if self.verbose:
             print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing TL lock bypass...")
@@ -311,7 +353,11 @@ class TrustLevelSecurityModule:
             pass
     
     def _test_admin_tl_grant(self):
-        """Test admin TL4 granting"""
+        """
+        Check whether the site exposes an unauthenticated endpoint that grants TL4 (leader/admin) privileges.
+        
+        If the admin grant endpoint responds with a success status (200 or 201), a 'Unauthorized TL4 Grant' vulnerability with severity 'critical' is appended to self.results['vulnerabilities']. This method also increments self.results['total_tests'] as part of its side effects.
+        """
         self.results['total_tests'] += 1
         if self.verbose:
             print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing TL4 (Leader) granting...")
@@ -336,7 +382,11 @@ class TrustLevelSecurityModule:
             pass
     
     def _test_automatic_promotion(self):
-        """Test automatic TL promotion system"""
+        """
+        Checks whether the site allows triggering the trust-level automatic promotion job.
+        
+        If the promotion endpoint accepts a POST request (HTTP 200 or 202), records a medium-severity finding by appending an entry to self.results['automatic_promotion'] with an issue description indicating the promotion job is triggerable.
+        """
         self.results['total_tests'] += 1
         if self.verbose:
             print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing automatic promotion...")
@@ -361,7 +411,11 @@ class TrustLevelSecurityModule:
             pass
     
     def _test_promotion_requirements(self):
-        """Test if promotion requirements can be bypassed"""
+        """
+        Check whether promotion-related user stats can be modified to bypass trust-level promotion requirements.
+        
+        Attempts to update promotion stat fields (`posts_read_count`, `topics_entered`, `time_read`) for a sample user; on the first successful modification it appends a high-severity `'TL Stat Manipulation'` entry to `self.results['vulnerabilities']` and stops further checks. The method updates `self.results` with its findings.
+        """
         self.results['total_tests'] += 1
         if self.verbose:
             print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing promotion requirements...")
@@ -391,7 +445,11 @@ class TrustLevelSecurityModule:
                 continue
     
     def _test_group_tl_overrides(self):
-        """Test group-based TL overrides"""
+        """
+        Record whether site groups expose trust-level overrides by fetching /groups.json and inspecting group entries.
+        
+        Appends up to five findings to self.results['group_tl_overrides'], each containing the group's name, a boolean `has_tl_override` set to True when a trust level indicator is present, and a severity of 'info'. Increments the module's test counter. Exceptions are suppressed and do not raise.
+        """
         self.results['total_tests'] += 1
         if self.verbose:
             print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing group TL overrides...")
@@ -418,7 +476,14 @@ class TrustLevelSecurityModule:
             pass
     
     def _test_tl_based_feature_access(self):
-        """Test TL-based feature access"""
+        """
+        Check selected endpoints for missing trust-level restrictions.
+        
+        Performs HTTP GET requests against a small set of endpoints that are expected to require specific trust levels.
+        When an endpoint is reachable (HTTP 200) despite the expected restriction, an entry is appended to
+        self.results['bypass_attempts'] with keys: 'endpoint', 'required_tl', 'accessible' (True), and 'severity' ('medium').
+        Network or request errors are ignored.
+        """
         self.results['total_tests'] += 1
         if self.verbose:
             print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing TL feature access...")
@@ -447,7 +512,11 @@ class TrustLevelSecurityModule:
             pass
     
     def _test_tl_stat_manipulation(self):
-        """Test TL stat manipulation"""
+        """
+        Run tests for manipulating user statistics that affect trust-level promotions and record the test execution.
+        
+        Increments the module's total test counter and, when verbose, prints progress and completion messages indicating the stat manipulation checks have finished.
+        """
         self.results['total_tests'] += 1
         if self.verbose:
             print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing stat manipulation...")
@@ -457,7 +526,16 @@ class TrustLevelSecurityModule:
             print(f"    {Fore.GREEN}✓{Style.RESET_ALL} Stat manipulation tests complete")
     
     def _generate_recommendations(self):
-        """Generate security recommendations"""
+        """
+        Generate prioritized remediation recommendations from collected scan findings.
+        
+        Appends recommendation objects into self.results['recommendations'] based on the current scan state:
+        - Adds a CRITICAL-priority recommendation when one or more vulnerabilities with severity 'critical' are present.
+        - Adds a HIGH-priority recommendation when any TL bypass attempts were recorded.
+        - Adds a CRITICAL-priority recommendation when privilege escalation via TL manipulation was detected.
+        
+        Each recommendation is appended as a dict containing at least 'priority', 'issue', and 'recommendation'.
+        """
         
         if self.results['vulnerabilities']:
             critical = len([v for v in self.results['vulnerabilities'] if v['severity'] == 'critical'])
@@ -483,7 +561,11 @@ class TrustLevelSecurityModule:
             })
     
     def print_results(self):
-        """Print comprehensive scan results"""
+        """
+        Prints a formatted summary of the scan results to stdout.
+        
+        Displays the target URL, total tests performed, counts of bypass attempts and vulnerabilities, and, if present, a list of vulnerabilities (severity, type, description) and recommendations (priority, issue, recommended action).
+        """
         print(f"\n{Fore.CYAN}{'='*60}")
         print(f"TRUST LEVEL SECURITY SCAN RESULTS")
         print(f"{'='*60}{Style.RESET_ALL}\n")

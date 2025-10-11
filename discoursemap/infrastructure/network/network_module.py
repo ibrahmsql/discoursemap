@@ -16,6 +16,12 @@ class NetworkModule:
     """Network security module (Refactored)"""
     
     def __init__(self, scanner):
+        """
+        Initialize the NetworkModule with a scanner and prepare the initial results structure.
+        
+        Parameters:
+            scanner: An object representing the scan controller; must provide a `target_url` attribute used to populate the results' `target` field.
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'Network Security',
@@ -27,7 +33,16 @@ class NetworkModule:
         }
     
     def run(self) -> Dict[str, Any]:
-        """Execute network security tests"""
+        """
+        Run the network security checks for the configured scanner.
+        
+        Runs the module's common port checks and DNS lookup, updating the internal results store.
+        Individual test failures are ignored and tests_performed is incremented for each attempted test.
+        
+        Returns:
+            results (Dict[str, Any]): Result dictionary with keys `module_name`, `target`, `open_ports`,
+            `dns_info`, `network_vulns`, and `tests_performed`.
+        """
         print(f"{Fore.CYAN}[*] Starting Network Security Scan...{Style.RESET_ALL}")
         
         # Test ports
@@ -42,7 +57,11 @@ class NetworkModule:
         return self.results
     
     def _test_common_ports(self):
-        """Test common ports"""
+        """
+        Check a subset of common TCP ports on the module's target hostname and record any that are open.
+        
+        This method parses the scanner's target URL to obtain the hostname, tests the first four ports from a predefined common-ports list, appends any open ports to `self.results['open_ports']`, and increments `self.results['tests_performed']` by 1.
+        """
         parsed = urlparse(self.scanner.target_url)
         hostname = parsed.hostname
         
@@ -63,7 +82,11 @@ class NetworkModule:
         self.results['tests_performed'] += 1
     
     def _test_dns(self):
-        """Test DNS configuration"""
+        """
+        Resolve the target URL's hostname to an IP address and record DNS information.
+        
+        Parses the scanner's target_url to obtain the hostname, attempts DNS resolution, and stores a dictionary {'hostname': <hostname>, 'ip': <ip>} in self.results['dns_info'] if successful. If resolution fails, dns_info is left unchanged. In all cases, increments self.results['tests_performed'] by 1.
+        """
         try:
             parsed = urlparse(self.scanner.target_url)
             hostname = parsed.hostname
