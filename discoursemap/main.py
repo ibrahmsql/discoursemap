@@ -89,7 +89,7 @@ def save_partial_results(results, filename=None):
 def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description="DiscourseMap v2.0.1 - Comprehensive Discourse security assessment tool",
+        description="DiscourseMap v2.0.2 - Comprehensive Discourse security assessment tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
