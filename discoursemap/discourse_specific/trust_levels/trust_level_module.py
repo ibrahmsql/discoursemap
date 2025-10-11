@@ -18,7 +18,9 @@ class TrustLevelSecurityModule:
         self.target_url = target_url
         self.verbose = verbose
         self.results = {
-            'module': 'Trust Level Security (Advanced)',
+            'module': 'Trust Level Security',
+            'module_name': 'Trust Level Security',
+            'target': target_url,
             'trust_level_config': {},
             'tl_requirements': {'tl0': {}, 'tl1': {}, 'tl2': {}, 'tl3': {}, 'tl4': {}},
             'bypass_attempts': [],

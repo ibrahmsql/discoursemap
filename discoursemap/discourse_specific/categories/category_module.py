@@ -27,7 +27,9 @@ class CategorySecurityModule:
         self.target_url = target_url
         self.verbose = verbose
         self.results = {
-            'module': 'Category Security (Advanced)',
+            'module': 'Category Security',
+            'module_name': 'Category Security',
+            'target': target_url,
             'categories_found': [],
             'category_tree': {},
             'hidden_categories': [],
