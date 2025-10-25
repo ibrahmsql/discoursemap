@@ -14,6 +14,15 @@ class PassiveScannerModule:
     """Passive scanning (Refactored)"""
     
     def __init__(self, scanner):
+        """
+        Initialize the PassiveScannerModule and prepare the results structure for a given scanner.
+        
+        Parameters:
+            scanner: An object representing the scanner; must expose a `target_url` attribute used as the scan target.
+        
+        Notes:
+            Initializes `self.results` with keys: `module_name`, `target`, `headers`, `meta_info`, `technologies`, and `findings`.
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'Passive Scanner',
@@ -25,7 +34,18 @@ class PassiveScannerModule:
         }
     
     def run(self) -> Dict[str, Any]:
-        """Execute passive scan"""
+        """
+        Perform a passive scan of the configured target by analyzing HTTP headers and collecting site metadata.
+        
+        Returns:
+            results (Dict[str, Any]): Aggregated scan results containing:
+                - module_name: Name of the module.
+                - target: The scanned target URL.
+                - headers: Retrieved response headers (dict).
+                - meta_info: Site metadata such as title, version, and description (dict).
+                - technologies: Detected technologies (list).
+                - findings: Identified issues and observations (list).
+        """
         print(f"{Fore.CYAN}[*] Starting Passive Scan...{Style.RESET_ALL}")
         
         self._analyze_headers()
@@ -35,7 +55,11 @@ class PassiveScannerModule:
         return self.results
     
     def _analyze_headers(self):
-        """Analyze HTTP headers"""
+        """
+        Analyze the target's HTTP response headers and record any missing standard security headers.
+        
+        Stores the response headers in self.results['headers'] and appends a finding to self.results['findings'] for each missing header among: 'strict-transport-security', 'content-security-policy', and 'x-frame-options'. Each appended finding includes a 'type' of 'Missing Security Header', the 'header' name, and a 'severity' of 'medium'. Network or other errors during retrieval are ignored.
+        """
         try:
             import requests
             response = requests.get(self.scanner.target_url, timeout=10)
@@ -61,7 +85,11 @@ class PassiveScannerModule:
             pass
     
     def _gather_meta_info(self):
-        """Gather metadata"""
+        """
+        Gather basic site metadata from the target's /site.json and store it in self.results['meta_info'].
+        
+        If a GET request to '<target>/site.json' returns a 200 status and valid JSON, sets self.results['meta_info'] to a dict with keys 'title', 'version', and 'description' populated from the JSON (values will be None if the fields are missing).
+        """
         try:
             import requests
             site_url = urljoin(self.scanner.target_url, '/site.json')

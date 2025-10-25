@@ -12,11 +12,27 @@ class ConfigSecurityTester:
     """Configuration security testing"""
     
     def __init__(self, scanner):
+        """
+        Initializes the ConfigSecurityTester with a scanner and prepares an empty list to collect discovered vulnerabilities.
+        
+        Parameters:
+            scanner: An object providing `target_url` and `make_request(url, timeout)` used to perform HTTP requests against the target for security checks.
+        """
         self.scanner = scanner
         self.vulnerabilities = []
     
     def test_all_security(self):
-        """Run all configuration security tests"""
+        """
+        Execute all configuration security checks and return collected findings.
+        
+        This runs the module's configured tests for exposed configuration files, insecure default settings,
+        enabled debug indicators, and potential sensitive information exposure, accumulating any discovered
+        vulnerabilities.
+        
+        Returns:
+            list: A list of vulnerability dictionaries, each describing a discovered issue (type, severity,
+            identifier, and description).
+        """
         self.test_exposed_configs()
         self.test_default_settings()
         self.test_debug_mode()
@@ -25,7 +41,11 @@ class ConfigSecurityTester:
         return self.vulnerabilities
     
     def test_exposed_configs(self):
-        """Test for exposed configuration files"""
+        """
+        Check common configuration file paths on the scanner target and record any exposed files.
+        
+        For each known config path, performs an HTTP request to the combined target URL and, when a successful (HTTP 200) response is returned, appends a vulnerability entry to self.vulnerabilities with keys: 'type' set to 'Exposed Configuration', 'severity' set to 'critical', 'path' set to the checked path, and a descriptive 'description'.
+        """
         config_paths = [
             '/config/database.yml',
             '/config/secrets.yml',
@@ -50,7 +70,15 @@ class ConfigSecurityTester:
                 continue
     
     def test_default_settings(self):
-        """Test for insecure default settings"""
+        """
+        Check the site's /site.json for insecure default settings and record findings.
+        
+        Fetches the site's /site.json and, if available, detects:
+        - an unchanged default site title (e.g., "discourse", "my discourse", "new site"), recording a "Default Configuration" low-severity finding for the "title" setting;
+        - a permissive `allow_anonymous_posting` set to true, recording a "Permissive Configuration" medium-severity finding for that setting.
+        
+        Findings are appended as dicts to `self.vulnerabilities` (keys include `type`, `severity`, `setting`, and `description`). Exceptions raised while fetching or parsing the response are ignored.
+        """
         try:
             site_url = urljoin(self.scanner.target_url, '/site.json')
             response = self.scanner.make_request(site_url, timeout=10)
@@ -80,7 +108,11 @@ class ConfigSecurityTester:
             pass
     
     def test_debug_mode(self):
-        """Test if debug mode is enabled"""
+        """
+        Detect whether the target application exposes debug information and record a corresponding vulnerability.
+        
+        If a debug indicator is found in the HTTP response body or headers, append a vulnerability dictionary to self.vulnerabilities with keys 'type' (set to "Debug Mode Enabled"), 'severity' (set to "high"), 'indicator' (the matched indicator), and 'description'. The method stops after the first match. Exceptions raised while making the request are suppressed.
+        """
         try:
             response = self.scanner.make_request(self.scanner.target_url, timeout=10)
             if response:
@@ -107,7 +139,11 @@ class ConfigSecurityTester:
             pass
     
     def test_sensitive_info(self):
-        """Test for sensitive information in configuration"""
+        """
+        Scan the scanner's target response for exposed sensitive configuration values and record findings.
+        
+        Checks the response body for common sensitive patterns (`password`, `api_key`, `secret_key`, `access_token`, `private_key`) and, when a pattern appears together with `value=`, appends a high-severity vulnerability entry to `self.vulnerabilities` describing the pattern. Exceptions raised during the check are ignored.
+        """
         try:
             response = self.scanner.make_request(self.scanner.target_url, timeout=10)
             if response:

@@ -17,7 +17,15 @@ class EmailSecurityModule:
     
     def __init__(self, target_url: str, session: Optional[requests.Session] = None,
                  verbose: bool = False):
-        """Initialize email security module"""
+        """
+                 Create an EmailSecurityModule configured for a target URL.
+                 
+                 Normalizes the provided target URL by removing a trailing slash, derives the target domain from the URL, uses the provided requests session or creates a new one, and initializes the results structure used by subsequent checks.
+                 
+                 Parameters:
+                     target_url (str): The base URL of the Discourse instance to scan; used to derive the domain.
+                     verbose (bool): When True, enables verbose status output during scanning.
+                 """
         self.target_url = target_url.rstrip('/')
         self.session = session or requests.Session()
         self.verbose = verbose
@@ -32,7 +40,15 @@ class EmailSecurityModule:
         }
     
     def scan(self) -> Dict[str, Any]:
-        """Perform email security scan"""
+        """
+        Run a sequence of email-related security checks against the configured target and collect findings.
+        
+        Executes SPF, DKIM, DMARC checks, email enumeration and bounce-handling probes, and basic email injection tests, then generates remediation recommendations and aggregates all findings.
+        
+        Returns:
+            results (Dict[str, Any]): Aggregate scan results including keys such as `spf_record`, `dkim_record`,
+            `dmarc_record`, `email_endpoints`, `vulnerabilities`, `recommendations`, `bounce_handling`, and `email_injection`.
+        """
         if self.verbose:
             print(f"{Fore.CYAN}[*] Starting email security scan...{Style.RESET_ALL}")
         
@@ -47,7 +63,18 @@ class EmailSecurityModule:
         return self.results
     
     def _check_spf_record(self):
-        """Check SPF record"""
+        """
+        Detects and records the domain's SPF TXT record.
+        
+        Updates the instance's results dictionary with SPF information and any related vulnerabilities. Specifically:
+        - Sets self.results['spf_record'] to include:
+          - 'exists' (bool)
+          - when found: 'record' (str) and 'valid' (bool)
+          - on lookup error: 'error' (str)
+        - Appends a vulnerability entry to self.results['vulnerabilities'] for missing SPF or weak policies (e.g., containing '+all' or '?all').
+        
+        May print a status line when the instance was created with verbose enabled.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Checking SPF record...{Style.RESET_ALL}")
         
@@ -86,7 +113,11 @@ class EmailSecurityModule:
             self.results['spf_record'] = {'exists': False, 'error': str(e)}
     
     def _check_dkim_record(self):
-        """Check DKIM record"""
+        """
+        Locate a DKIM DNS TXT record for the module's domain and record the first valid selector and record found.
+        
+        Searches common DKIM selectors for a TXT record containing a `p=` public key. On success, sets `self.results['dkim_record']` to include `exists: True`, the `selector`, and the `record`. If no DKIM record is found, sets `self.results['dkim_record']` to `{'exists': False}` and appends a medium-severity "Missing DKIM Record" entry to `self.results['vulnerabilities']`. DNS lookup errors for individual selectors are ignored so the scan continues to other selectors.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Checking DKIM record...{Style.RESET_ALL}")
         
@@ -125,7 +156,11 @@ class EmailSecurityModule:
             })
     
     def _check_dmarc_record(self):
-        """Check DMARC record"""
+        """
+        Check whether a DMARC DNS TXT record exists for the module's domain and record findings in the module results.
+        
+        Updates self.results['dmarc_record'] with {'exists': True, 'record': <record>} when a DMARC record is found, or {'exists': False} when not found or on error. Appends a low-severity 'Weak DMARC Policy' vulnerability if the policy contains `p=none`, and appends a medium-severity 'Missing DMARC Record' vulnerability when no DMARC record is present.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Checking DMARC record...{Style.RESET_ALL}")
         
@@ -159,7 +194,16 @@ class EmailSecurityModule:
             })
     
     def _test_email_enumeration(self):
-        """Test email enumeration"""
+        """
+        Check whether the Discourse username-check endpoint is accessible and likely allows user enumeration.
+        
+        If the endpoint returns HTTP 200 for a probe username, appends an entry to self.results['email_endpoints'] with keys:
+        - 'endpoint': the tested path ('/u/check_username')
+        - 'accessible': True
+        - 'enumeration_possible': True
+        
+        Errors and non-200 responses are ignored and leave results unchanged.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing email enumeration...{Style.RESET_ALL}")
         
@@ -178,7 +222,11 @@ class EmailSecurityModule:
             pass
     
     def _check_email_bounce_handling(self):
-        """Check email bounce handling"""
+        """
+        Record whether bounce handling was checked and note the Discourse bounce endpoint.
+        
+        This method sets results['bounce_handling'] to indicate the check was performed and documents that Discourse handles bounces via /admin/email/bounced. It does not perform network requests.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Checking email bounce handling...{Style.RESET_ALL}")
         
@@ -188,7 +236,11 @@ class EmailSecurityModule:
         }
     
     def _test_email_injection(self):
-        """Test email injection vulnerabilities"""
+        """
+        Prepare and record a partial email header injection test for the target application.
+        
+        Builds a small set of common email header injection payloads and records that injection testing was attempted but only partially performed because sending email is required for a full test. The method sets results['email_injection'] to indicate the test status and a brief note about the limitation.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing email injection...{Style.RESET_ALL}")
         
@@ -205,7 +257,11 @@ class EmailSecurityModule:
         }
     
     def _generate_recommendations(self):
-        """Generate security recommendations"""
+        """
+        Populate the scan results with actionable security recommendations based on missing email authentication records.
+        
+        Checks the collected results for SPF, DKIM, and DMARC presence and appends corresponding recommendations with severity and guidance into self.results['recommendations'].
+        """
         recommendations = []
         
         if not self.results['spf_record'].get('exists'):
@@ -232,7 +288,11 @@ class EmailSecurityModule:
         self.results['recommendations'] = recommendations
     
     def print_results(self):
-        """Print formatted results"""
+        """
+        Prints a formatted, human-readable summary of the email security scan results.
+        
+        Displays the presence status for SPF, DKIM, and DMARC records, then lists any discovered vulnerabilities (showing severity and type) and any generated recommendations (showing severity, issue, and recommended remediation). The output is derived from the object's `self.results` structure.
+        """
         print(f"\n{Fore.CYAN}{'='*60}")
         print(f"Discourse Email Security Scan Results")
         print(f"{'='*60}{Style.RESET_ALL}\n")

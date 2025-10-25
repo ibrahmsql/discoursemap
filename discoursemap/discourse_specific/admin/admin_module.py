@@ -16,7 +16,13 @@ class AdminPanelModule:
     
     def __init__(self, target_url: str, session: Optional[requests.Session] = None,
                  verbose: bool = False):
-        """Initialize admin panel module"""
+        """
+                 Create an AdminPanelModule for scanning a Discourse target for admin-panel exposures and related security issues.
+                 
+                 Parameters:
+                     target_url (str): Base URL of the target; trailing slash will be removed.
+                     verbose (bool): When True, print progress and diagnostic messages during scanning.
+                 """
         self.target_url = target_url.rstrip('/')
         self.session = session or requests.Session()
         self.verbose = verbose
@@ -29,7 +35,15 @@ class AdminPanelModule:
         }
     
     def scan(self) -> Dict[str, Any]:
-        """Perform admin panel security scan"""
+        """
+        Run the module's full admin panel security scan and populate the instance results.
+        
+        Performs the configured set of admin-panel checks and updates self.results with findings.
+        
+        Returns:
+            Dict[str, Any]: Results dictionary containing keys `admin_endpoints`, `accessible_endpoints`,
+            `exposed_information`, `vulnerabilities`, and `recommendations`.
+        """
         if self.verbose:
             print(f"{Fore.CYAN}[*] Starting admin panel security scan...{Style.RESET_ALL}")
         
@@ -44,7 +58,11 @@ class AdminPanelModule:
         return self.results
     
     def _discover_admin_endpoints(self):
-        """Discover admin panel endpoints"""
+        """
+        Discover and record candidate Discourse admin endpoints for the configured target.
+        
+        Checks a predefined list of admin-related paths by issuing GET requests and appends per-endpoint dictionaries to self.results['admin_endpoints'] with keys: 'path', 'status_code', 'accessible' (true for 200/301/302), 'redirect' (true for 301/302), and 'redirect_location'. For endpoints that return status 200, adds the path to self.results['accessible_endpoints'] and records a HIGH-severity 'Exposed Admin Endpoint' entry in self.results['vulnerabilities']. Network or request exceptions are swallowed; when the module is verbose, errors are printed.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Discovering admin endpoints...{Style.RESET_ALL}")
         
@@ -101,7 +119,11 @@ class AdminPanelModule:
                     print(f"{Fore.RED}[!] Error checking {path}: {e}{Style.RESET_ALL}")
     
     def _test_admin_access(self):
-        """Test admin access controls"""
+        """
+        Verify whether the admin panel at /admin is accessible without authentication.
+        
+        If the admin page returns a 200 response whose body does not indicate a login prompt, records a CRITICAL vulnerability entry `'Missing Access Control'` with description `'Admin panel accessible without authentication'` into self.results['vulnerabilities'].
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing admin access controls...{Style.RESET_ALL}")
         
@@ -122,7 +144,11 @@ class AdminPanelModule:
             pass
     
     def _check_admin_api(self):
-        """Check admin API endpoints"""
+        """
+        Scan a set of known admin API endpoints for public accessibility.
+        
+        Performs GET requests to several admin API paths; for any endpoint that returns HTTP 200, appends a discovery entry to self.results['exposed_information'] with keys: 'endpoint' (the path), 'status' set to 'accessible', and 'severity' set to 'HIGH'. Network errors and other exceptions are ignored.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Checking admin API...{Style.RESET_ALL}")
         
@@ -149,7 +175,11 @@ class AdminPanelModule:
                 pass
     
     def _test_privilege_escalation(self):
-        """Test for privilege escalation vulnerabilities"""
+        """
+        Checks admin-related endpoints for privilege escalation via parameter tampering.
+        
+        This method attempts PUT requests against a predefined set of admin user endpoints. If an endpoint responds with a status code other than 401, 403, or 404, it records a CRITICAL "Privilege Escalation" vulnerability entry containing the endpoint and the response status code.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing privilege escalation...{Style.RESET_ALL}")
         
@@ -177,7 +207,11 @@ class AdminPanelModule:
                 pass
     
     def _check_default_credentials(self):
-        """Check for default admin credentials"""
+        """
+        Attempts common default admin credential pairs against the application's session endpoint.
+        
+        For each credential pair (e.g., "admin"/"admin"), sends a POST to /session with JSON payload {'login': username, 'password': password}. If a response has HTTP status 200 and the response body does not contain the word "error" (case-insensitive), records a CRITICAL "Default Credentials" vulnerability entry containing the username and a short description. Network and other exceptions are swallowed and do not raise.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Checking default credentials...{Style.RESET_ALL}")
         
@@ -209,7 +243,11 @@ class AdminPanelModule:
                 pass
     
     def _check_admin_logs(self):
-        """Check admin log exposure"""
+        """
+        Check whether common Discourse admin log endpoints are publicly accessible and record any exposures.
+        
+        For each known admin log path, if an HTTP 200 response is received this method appends a dictionary to self.results['exposed_information'] with keys: 'type' (set to 'Admin Logs'), 'endpoint', and 'accessible' (True). Network errors and non-200 responses are ignored.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Checking admin logs...{Style.RESET_ALL}")
         
@@ -235,7 +273,11 @@ class AdminPanelModule:
                 pass
     
     def _generate_recommendations(self):
-        """Generate security recommendations"""
+        """
+        Compile remediation recommendations based on collected scan findings and store them in self.results['recommendations'].
+        
+        The method examines discovered accessible endpoints, exposed information, and recorded vulnerabilities to produce a list of recommendation entries. Each entry includes a severity level, a short issue summary, and a remediation suggestion; when applicable, affected endpoints are included. The resulting list is written to self.results['recommendations'].
+        """
         recommendations = []
         
         if self.results['accessible_endpoints']:
@@ -263,7 +305,11 @@ class AdminPanelModule:
         self.results['recommendations'] = recommendations
     
     def print_results(self):
-        """Print formatted results"""
+        """
+        Print a formatted summary of the scan results to the console.
+        
+        Displays counts of discovered admin endpoints and accessible endpoints, lists each accessible endpoint, enumerates found vulnerabilities with severity and optional descriptions, and lists generated recommendations with severity, issue, and recommendation text.
+        """
         print(f"\n{Fore.CYAN}{'='*60}")
         print(f"Discourse Admin Panel Security Scan Results")
         print(f"{'='*60}{Style.RESET_ALL}\n")

@@ -639,13 +639,14 @@ class DiscourseScanner:
             return None
     
     def generate_html_report(self, output_file: Optional[str] = None) -> str:
-        """Generate HTML report
+        """
+        Generate an HTML report for the current scan.
         
-        Args:
-            output_file: Output file path. If None, uses default naming
-            
+        Parameters:
+            output_file (str | None): Destination file path. If None, a default filename and location will be used.
+        
         Returns:
-            Path to generated report file
+            report_file (str | None): Path to the generated HTML report, or `None` if report generation failed.
         """
         try:
             report_file = self.reporter.generate_html_report(output_file)
@@ -659,14 +660,17 @@ class DiscourseScanner:
             return None
     
     def _run_module_safe(self, module, module_name: str) -> Dict[str, Any]:
-        """Safely run a module and handle exceptions
+        """
+        Execute a scanner module and return its results while converting runtime failures into a structured error payload.
         
-        Args:
-            module: Module instance to run
-            module_name: Name of the module
-            
+        Parameters:
+            module: The module instance to execute.
+            module_name (str): Human-readable name of the module used to identify failures.
+        
         Returns:
-            Module results or error dict
+            dict: The module's result dictionary on success. On failure returns a dictionary with:
+                - 'error' (str): The error message.
+                - 'error_type' (str): Either 'module_error' for ImportError/AttributeError/TypeError, or 'unexpected' for other exceptions.
         """
         try:
             self.log(f"Executing {module_name} module...", 'info')
@@ -680,20 +684,14 @@ class DiscourseScanner:
             return {'error': str(e), 'error_type': 'unexpected'}
     
     async def run_async_scan(self, modules_to_run: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Run async security scan with true parallelism using ThreadPoolExecutor
+        """
+        Execute security modules in parallel using a thread pool and collect their results.
         
-        This method runs multiple security modules concurrently for improved performance.
-        Modules are executed in parallel threads, with results collected as they complete.
+        Parameters:
+            modules_to_run (Optional[List[str]]): Module names to execute. If None, a predefined set of modules is run.
         
-        Args:
-            modules_to_run: List of module names to run. If None, runs all modules.
-            
         Returns:
-            Dictionary containing scan results from all modules
-            
-        Example:
-            scanner = DiscourseScanner(url)
-            results = await scanner.run_async_scan(['info', 'vuln', 'endpoint'])
+            Dict[str, Any]: Mapping of module name to its result object or an error dictionary; includes top-level keys `scan_time` (float, total elapsed seconds) and `async_mode` (True).
         """
         if modules_to_run is None:
             modules_to_run = ['info', 'vuln', 'endpoint', 'user', 'cve', 'plugin_detection', 'plugin_bruteforce', 

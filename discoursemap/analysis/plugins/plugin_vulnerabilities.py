@@ -6,7 +6,26 @@ Contains known vulnerabilities for Discourse plugins.
 """
 
 def get_plugin_vulnerabilities():
-    """Return plugin vulnerability database"""
+    """
+    Provide a static database of known Discourse plugin vulnerabilities.
+    
+    Returns:
+        dict: A dictionary with a single key `'plugins'` mapping to a list of plugin entries. Each plugin entry contains:
+            - name (str): Plugin name.
+            - category (str): Category label.
+            - risk_score (int): Integer risk rating.
+            - vulnerabilities (list): List of vulnerability records. Each vulnerability record contains:
+                - cve_id (str)
+                - severity (str)
+                - cvss_score (float)
+                - type (str)
+                - description (str)
+                - affected_versions (list[str])
+                - fixed_versions (list[str])
+                - exploit_available (bool)
+                - payload_examples (list[str], optional)
+                - impact (str)
+    """
     return {
         'plugins': [
             {
@@ -52,14 +71,14 @@ def get_plugin_vulnerabilities():
 
 def check_plugin_vulnerabilities(plugin_name: str, version: str = None):
     """
-    Check if a plugin has known vulnerabilities
+    Retrieve known vulnerability records for a given plugin.
     
-    Args:
-        plugin_name: Name of the plugin
-        version: Version of the plugin (optional)
-        
+    Parameters:
+        plugin_name (str): Name of the plugin to look up.
+        version (str, optional): Version string (accepted but not used by this lookup).
+    
     Returns:
-        List of vulnerabilities
+        list: A list of vulnerability record dictionaries for the matched plugin (each record contains fields like `cve_id`, `severity`, `cvss_score`, `type`, `description`, `affected_versions`, `fixed_versions`, `exploit_available`, `payload_examples`, and `impact`). Returns an empty list if the plugin is not found or has no recorded vulnerabilities.
     """
     vulns_db = get_plugin_vulnerabilities()
     

@@ -16,6 +16,16 @@ class ComplianceModule:
     """Compliance testing module (Refactored)"""
     
     def __init__(self, scanner):
+        """
+        Initialize the ComplianceModule with a scanner, prepare the results structure, and create sub-testers.
+        
+        Parameters:
+            scanner: An injected scanner object that performs HTTP requests and exposes `target_url`; used by sub-test modules.
+        
+        Details:
+            - Initializes `self.results` with keys: 'module_name', 'target', 'owasp_compliance', 'gdpr_compliance', 'ccpa_compliance', 'security_headers', 'privacy_policies', and 'recommendations'.
+            - Instantiates `OWASPTests` and `PrivacyComplianceTests` with the provided scanner and assigns them to `self.owasp_tester` and `self.privacy_tester`.
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'Compliance Testing',
@@ -33,11 +43,31 @@ class ComplianceModule:
         self.privacy_tester = PrivacyComplianceTests(scanner)
     
     def run(self):
-        """Execute compliance tests"""
+        """
+        Run the full compliance testing workflow for the configured target.
+        
+        Returns:
+            dict: Aggregated results containing module metadata and lists for `owasp_compliance`, `gdpr_compliance`, `ccpa_compliance`, `security_headers`, `privacy_policies`, and `recommendations`.
+        """
         return self.run_scan()
     
     def run_scan(self):
-        """Execute all compliance scans"""
+        """
+        Orchestrates all compliance tests for the configured target and returns the aggregated results.
+        
+        Runs OWASP, GDPR, and CCPA checks, evaluates security headers, generates remediation recommendations, and prints a summary; results are stored on the instance and returned.
+        
+        Returns:
+            results (dict): Aggregated findings and metadata with keys including:
+                - module_name: Name of the module
+                - target: Target URL or identifier
+                - owasp_compliance: List of OWASP test findings
+                - gdpr_compliance: List of GDPR-related findings
+                - ccpa_compliance: List of CCPA-related findings
+                - security_headers: List of security header findings
+                - privacy_policies: List of detected privacy policy items
+                - recommendations: List of generated remediation recommendations
+        """
         print(f"{Fore.CYAN}[*] Starting Compliance Scan...{Style.RESET_ALL}")
         
         # OWASP Top 10 2021
@@ -64,7 +94,11 @@ class ComplianceModule:
         return self.results
     
     def _test_security_headers(self):
-        """Test security headers compliance"""
+        """
+        Evaluate common security headers on the module's target and record findings.
+        
+        Performs one HTTP request to the scanner's target URL, checks for a set of expected security headers, and appends a finding for each header into self.results['security_headers']. Each finding indicates whether the header is present or missing and includes a severity ('info' for present, 'high' for critical missing headers, otherwise 'medium'). Exceptions during the request are caught and reported via a printed message.
+        """
         print(f"{Fore.CYAN}[*] Testing security headers...{Style.RESET_ALL}")
         
         security_headers = {
@@ -102,7 +136,14 @@ class ComplianceModule:
             print(f"[!] Error testing security headers: {str(e)}")
     
     def _generate_recommendations(self):
-        """Generate compliance recommendations"""
+        """
+        Create summary remediation recommendations from collected findings and store them in self.results['recommendations'].
+        
+        Aggregates OWASP, GDPR, CCPA, and security header findings, counts issues by severity (critical, high, medium), and builds a prioritized list of recommendation objects when counts are greater than zero. Each recommendation object contains:
+        - 'severity': severity label ('CRITICAL', 'HIGH', 'MEDIUM')
+        - 'issue': brief summary of the count and severity
+        - 'recommendation': suggested action for that severity level
+        """
         recommendations = []
         
         # Count issues by severity
@@ -141,7 +182,11 @@ class ComplianceModule:
         self.results['recommendations'] = recommendations
     
     def _print_summary(self):
-        """Print scan summary"""
+        """
+        Display a concise summary of compliance findings to standard output.
+        
+        Prints counts for OWASP findings, GDPR findings, CCPA findings, and the number of missing security headers.
+        """
         print(f"\n{Fore.GREEN}[+] Compliance scan complete!{Style.RESET_ALL}")
         
         owasp_count = len(self.results['owasp_compliance'])

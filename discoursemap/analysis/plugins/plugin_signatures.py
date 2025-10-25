@@ -6,7 +6,19 @@ Contains fingerprints and detection patterns for Discourse plugins.
 """
 
 def get_plugin_signatures():
-    """Return comprehensive plugin signatures for detection"""
+    """
+    Provide a mapping of Discourse plugin fingerprints and metadata used for detection.
+    
+    Each top-level key is a plugin identifier and its value is a dictionary with the following fields:
+    - paths: list of URL path patterns associated with the plugin
+    - markers: list of string markers used to detect the plugin in HTML or assets
+    - files: list of file paths commonly present when the plugin is installed
+    - category: categorical classification (e.g., 'core', 'community', 'spam-protection', 'formatting')
+    - risk_level: qualitative risk assessment (e.g., 'low', 'medium')
+    
+    Returns:
+        dict: Mapping of plugin identifier -> metadata dictionary described above.
+    """
     return {
         # Core Discourse Plugins
         'discourse-poll': {
@@ -48,7 +60,16 @@ def get_plugin_signatures():
     }
 
 def get_technology_patterns():
-    """Return technology detection patterns"""
+    """
+    Provide detection patterns and associated file hints for known frontend technologies.
+    
+    Returns:
+        patterns (dict): Mapping of technology names to metadata dictionaries. Each metadata dictionary may contain:
+            - `js_patterns` (list[str]): Regular-expression strings used to detect the technology in JavaScript.
+            - `css_patterns` (list[str]): Regular-expression strings used to detect the technology in CSS.
+            - `files` (list[str]): File path hints where the technology is commonly present.
+            - `category` (str): Classification such as "javascript-library", "javascript-framework", "template-engine", "css-framework", "icon-font", or "date-library".
+    """
     return {
         'jQuery': {
             'js_patterns': [r'jQuery', r'\$\.fn\.jquery'],

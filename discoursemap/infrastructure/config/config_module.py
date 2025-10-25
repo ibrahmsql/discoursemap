@@ -16,6 +16,12 @@ class ConfigModule:
     """Configuration security module (Refactored)"""
     
     def __init__(self, scanner):
+        """
+        Initialize the configuration security module with a scanner, prepare results storage, and create parser and tester submodules.
+        
+        Parameters:
+            scanner: An object representing the scanning context; must provide `target_url` and be suitable for use by ConfigParser and ConfigSecurityTester.
+        """
         self.scanner = scanner
         self.results = {
             'module_name': 'Configuration Security',
@@ -33,7 +39,22 @@ class ConfigModule:
         self.security_tester = ConfigSecurityTester(scanner)
     
     def run(self) -> Dict[str, Any]:
-        """Execute configuration security tests"""
+        """
+        Run the configuration security workflow and collect scan results.
+        
+        Performs parsing of site settings, about JSON, plugin detection, and HTML configuration, runs security tests to identify vulnerabilities, generates remediation recommendations, and prints a concise summary to the console.
+        
+        Returns:
+            results (Dict[str, Any]): Aggregated scan results with the following keys:
+                - module_name (str): Human-readable module name ("Configuration Security").
+                - target (str): Target URL under test.
+                - site_settings (dict): Parsed site configuration values.
+                - about_info (dict): Parsed about.json information.
+                - plugins (list): Detected plugin metadata.
+                - html_config (dict): Configuration extracted from HTML.
+                - vulnerabilities (list): Detected security issues; each item includes at least a `severity` field.
+                - recommendations (list): Generated remediation and hardening recommendations.
+        """
         print(f"{Fore.CYAN}[*] Starting Configuration Security Scan...{Style.RESET_ALL}")
         
         # Parse configurations
@@ -56,7 +77,16 @@ class ConfigModule:
         return self.results
     
     def _generate_recommendations(self):
-        """Generate configuration recommendations"""
+        """
+        Assemble configuration recommendations based on discovered vulnerabilities and installed plugins.
+        
+        Counts vulnerabilities by severity and adds recommendation entries:
+        - Adds a 'CRITICAL' entry if one or more vulnerabilities have severity 'critical'.
+        - Adds a 'HIGH' entry if one or more vulnerabilities have severity 'high'.
+        - Adds a 'MEDIUM' entry if more than 20 plugins are installed.
+        
+        Each recommendation is a dict with keys 'severity', 'issue', and 'recommendation'. The resulting list is stored in self.results['recommendations'].
+        """
         recommendations = []
         
         # Count by severity
@@ -88,7 +118,11 @@ class ConfigModule:
         self.results['recommendations'] = recommendations
     
     def _print_summary(self):
-        """Print scan summary"""
+        """
+        Print a concise summary of the configuration scan results.
+        
+        Displays the detected site version (defaults to "Unknown" if absent), the number of plugins found, and the total number of vulnerabilities. If any vulnerabilities have a severity of "critical", prints a highlighted critical-issues warning with the critical count.
+        """
         print(f"\n{Fore.GREEN}[+] Configuration scan complete!{Style.RESET_ALL}")
         
         print(f"    Site version: {self.results['site_settings'].get('version', 'Unknown')}")

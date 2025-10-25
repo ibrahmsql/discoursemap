@@ -16,7 +16,18 @@ class CacheSecurityModule:
     
     def __init__(self, target_url: str, session: Optional[requests.Session] = None,
                  verbose: bool = False):
-        """Initialize cache security module"""
+        """
+                 Create a CacheSecurityModule for scanning cache-related security issues against a target URL.
+                 
+                 Parameters:
+                     target_url (str): Base URL of the target; trailing slash is removed.
+                     session (Optional[requests.Session]): HTTP session to use for requests. If omitted, a new session is created.
+                     verbose (bool): Enable verbose logging.
+                 
+                 Initializes:
+                     target_url (str), session (requests.Session), verbose (bool), and a `results` dictionary with keys:
+                     'cache_headers', 'cache_poisoning', 'cdn_detection', 'vulnerabilities', and 'recommendations'.
+                 """
         self.target_url = target_url.rstrip('/')
         self.session = session or requests.Session()
         self.verbose = verbose
@@ -29,7 +40,14 @@ class CacheSecurityModule:
         }
     
     def scan(self) -> Dict[str, Any]:
-        """Perform cache security scan"""
+        """
+        Orchestrates the cache security scan for the target and aggregates findings into the instance results.
+        
+        Populates the instance `results` dictionary by running header checks, cache-poisoning tests, CDN detection, cache-key tests, and then generates recommendations.
+        
+        Returns:
+            results (Dict[str, Any]): Aggregated scan findings including `cache_headers`, `cache_poisoning`, `cdn_detection`, `vulnerabilities`, and `recommendations`.
+        """
         if self.verbose:
             print(f"{Fore.CYAN}[*] Starting cache security scan...{Style.RESET_ALL}")
         
@@ -42,7 +60,11 @@ class CacheSecurityModule:
         return self.results
     
     def _check_cache_headers(self):
-        """Check cache-related headers"""
+        """
+        Retrieve cache-related HTTP headers from the target URL and record them in the module results.
+        
+        Collects a predefined set of cache-related response headers (e.g., Cache-Control, ETag, Vary, CF-Cache-Status) and stores any found values in self.results['cache_headers']. If the Cache-Control header indicates public caching (contains "public" and does not contain "private"), appends a LOW-severity vulnerability entry of type "Public Caching" to self.results['vulnerabilities']. Network or request errors are caught; when verbose is enabled an error message is printed.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Checking cache headers...{Style.RESET_ALL}")
         
@@ -76,7 +98,11 @@ class CacheSecurityModule:
                 print(f"{Fore.RED}[!] Error checking cache headers: {e}{Style.RESET_ALL}")
     
     def _test_cache_poisoning(self):
-        """Test cache poisoning vulnerabilities"""
+        """
+        Assess whether certain forwarded or rewrite HTTP headers are reflected in responses, indicating a cache poisoning risk.
+        
+        Sends requests with common forwarding/rewrite header manipulations and, when a header value is observed in the response body, appends a HIGH-severity finding to self.results['cache_poisoning']. Each finding is a dict with keys: 'header' (header name), 'value' (injected value), 'reflected' (True), and 'severity' ('HIGH'). Network errors are suppressed; a progress message is printed when verbose mode is enabled.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing cache poisoning...{Style.RESET_ALL}")
         
@@ -107,7 +133,13 @@ class CacheSecurityModule:
                 pass
     
     def _detect_cdn(self):
-        """Detect CDN usage"""
+        """
+        Detects CDN providers used by the target and records the findings.
+        
+        Performs an HTTP request to the configured target and checks response headers and cookies for known CDN indicators. Updates self.results['cdn_detection'] with:
+            - 'detected' (bool): True if any CDN indicators were found.
+            - 'cdns' (list): Unique names of detected CDNs.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Detecting CDN...{Style.RESET_ALL}")
         
@@ -138,7 +170,13 @@ class CacheSecurityModule:
             pass
     
     def _test_cache_keys(self):
-        """Test cache key manipulation"""
+        """
+        Check whether specific query parameters affect caching behavior for the target URL.
+        
+        Sends GET requests to the target URL with a set of test query parameters (callback, utm_source, ref, _).
+        For each parameter that returns HTTP 200, records an entry in self.results['cache_headers'] with key
+        `test_param_<param>` and value `'tested'`.
+        """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Testing cache keys...{Style.RESET_ALL}")
         
@@ -158,7 +196,16 @@ class CacheSecurityModule:
                 pass
     
     def _generate_recommendations(self):
-        """Generate security recommendations"""
+        """
+        Populate self.results['recommendations'] with remediation suggestions derived from collected findings.
+        
+        Adds:
+        - A HIGH-severity recommendation to mitigate cache poisoning if any cache-poisoning findings exist.
+        - A MEDIUM-severity recommendation to add Cache-Control directives if no Cache-Control header was observed.
+        - An INFO-severity recommendation listing detected CDNs and advising secure CDN configuration if any CDNs were detected.
+        
+        The assembled list is stored in self.results['recommendations'].
+        """
         recommendations = []
         
         if self.results['cache_poisoning']:
@@ -185,7 +232,11 @@ class CacheSecurityModule:
         self.results['recommendations'] = recommendations
     
     def print_results(self):
-        """Print formatted results"""
+        """
+        Print a concise, formatted summary of the accumulated scan results to standard output.
+        
+        Displays detected CDNs (if any); the total number of cache-related headers and up to five header samples; a list of detected cache-poisoning findings showing each finding's severity and header; and any generated recommendations showing their severity, the issue title, and the recommended action.
+        """
         print(f"\n{Fore.CYAN}{'='*60}")
         print(f"Discourse Cache Security Scan Results")
         print(f"{'='*60}{Style.RESET_ALL}\n")
