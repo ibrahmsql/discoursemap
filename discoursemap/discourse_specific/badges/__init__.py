@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Badge System Security Module
+"""
+Badge Security Module
 
-Discourse-specific badge system security testing.
+Discourse badge security testing components.
 """
 
 from .badge_module import BadgeSecurityModule

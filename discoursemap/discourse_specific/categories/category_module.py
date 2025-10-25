@@ -2,50 +2,20 @@
 """
 Discourse Category Security Module - ADVANCED
 
-Comprehensive category permission and security testing including:
-- Category enumeration and discovery
-- Permission bypass testing
-- Hidden category discovery
-- Category group permissions
-- Read/Write/Create access control
-- Subcategory security
-- Category visibility manipulation
-- Permission inheritance flaws
-- Category archiving vulnerabilities
-- Category ownership bypass
+Comprehensive category permission and security testing.
 """
 
-from urllib.parse import urljoin
 from colorama import Fore, Style
-import re
+from .category_discovery import CategoryDiscovery
+from .permission_tester import CategoryPermissionTester
+from .advanced_tests import AdvancedCategoryTests
 
 
 class CategorySecurityModule:
-    """Advanced category permission security testing - 500+ lines"""
+    """Advanced category permission security testing"""
     
     def __init__(self, target_url, verbose=False):
-        """
-        Initialize the CategorySecurityModule with a target URL and verbosity setting and prepare the results container.
-        
-        Parameters:
-            target_url (str): Base URL of the Discourse instance to test (e.g., "https://example.com").
-            verbose (bool): If True, emit progress and diagnostic messages during the scan.
-        
-        The instance attribute `results` is initialized to collect scan data and findings and contains these keys:
-            - module: module name string
-            - categories_found: list of discovered category metadata
-            - category_tree: hierarchical mapping of categories by parent/child relationships
-            - hidden_categories: categories discovered via direct ID/slug probing
-            - restricted_categories: categories marked as read-restricted
-            - permission_bypass: detected permission bypass cases
-            - group_permissions: group-related permission findings
-            - subcategory_issues: problems with permission inheritance between parents and children
-            - visibility_issues: findings related to unauthorized visibility changes
-            - ownership_bypass: findings related to unauthorized ownership/administrative actions
-            - vulnerabilities: recorded vulnerability entries with severity and description
-            - recommendations: generated remediation suggestions
-            - total_tests: counter for the number of tests executed
-        """
+        """Initialize the CategorySecurityModule"""
         self.target_url = target_url
         self.verbose = verbose
         self.results = {
@@ -65,657 +35,83 @@ class CategorySecurityModule:
             'recommendations': [],
             'total_tests': 0
         }
+        
+        # Initialize sub-modules
+        self.discovery = CategoryDiscovery(target_url, verbose)
+        self.permission_tester = CategoryPermissionTester(target_url, verbose)
+        self.advanced_tests = AdvancedCategoryTests(target_url, verbose)
     
-    def scan(self):
-        """
-        Run the full advanced category security assessment workflow against the configured target.
-        
-        Executes category discovery, permission checks, bypass attempts, advanced integrity tests, and recommendation generation, accumulating findings in the instance results structure.
-        
-        Returns:
-            dict: Results dictionary containing discovered categories, test counts, vulnerabilities, and recommendations.
-        """
+    def run(self):
+        """Run the full category security assessment"""
         if self.verbose:
             print(f"{Fore.CYAN}[*] Starting Advanced Category Security Scan...{Style.RESET_ALL}")
             print(f"{Fore.CYAN}[*] Target: {self.target_url}{Style.RESET_ALL}\n")
         
         # Phase 1: Category Discovery
-        self._enumerate_categories()
-        self._discover_hidden_categories()
-        self._build_category_tree()
+        self.results['categories_found'] = self.discovery.enumerate_categories()
+        self.results['hidden_categories'] = self.discovery.discover_hidden_categories()
+        self.results['category_tree'] = self.discovery.build_category_tree(self.results['categories_found'])
         
         # Phase 2: Permission Testing
-        self._test_read_permissions()
-        self._test_write_permissions()
-        self._test_create_permissions()
+        self.results['permission_bypass'].extend(
+            self.permission_tester.test_read_permissions(self.results['categories_found'])
+        )
+        self.results['permission_bypass'].extend(
+            self.permission_tester.test_write_permissions(self.results['categories_found'])
+        )
+        self.results['permission_bypass'].extend(
+            self.permission_tester.test_permission_bypass(self.results['categories_found'])
+        )
+        self.results['group_permissions'] = self.permission_tester.test_group_bypass(self.results['categories_found'])
         
-        # Phase 3: Bypass Testing
-        self._test_permission_bypass()
-        self._test_group_bypass()
-        self._test_api_permission_bypass()
+        # Phase 3: Advanced Tests
+        self.results['subcategory_issues'] = self.advanced_tests.test_subcategory_security(
+            self.results['categories_found'], self.results['category_tree']
+        )
+        self.results['visibility_issues'] = self.advanced_tests.test_category_visibility(self.results['categories_found'])
+        self.results['ownership_bypass'] = self.advanced_tests.test_ownership_bypass(self.results['categories_found'])
         
-        # Phase 4: Advanced Tests
-        self._test_subcategory_security()
-        self._test_category_visibility()
-        self._test_category_archiving()
-        self._test_ownership_bypass()
-        self._test_permission_inheritance()
-        
-        # Generate recommendations
+        # Generate vulnerabilities and recommendations
+        self._generate_vulnerabilities()
         self._generate_recommendations()
-        
-        if self.verbose:
-            print(f"\n{Fore.GREEN}[+] Category scan complete: {self.results['total_tests']} tests performed{Style.RESET_ALL}")
         
         return self.results
     
-    def _enumerate_categories(self):
-        """
-        Enumerate categories from the target and record their metadata and access state.
+    def _generate_vulnerabilities(self):
+        """Generate vulnerability entries from findings"""
+        # Convert findings to vulnerability format
+        for issue in self.results['permission_bypass']:
+            vuln = {
+                'title': f"Category Permission Issue: {issue.get('issue', 'Unknown')}",
+                'severity': issue.get('severity', 'medium'),
+                'description': f"Category {issue.get('category_name', 'Unknown')} has permission issues",
+                'category_id': issue.get('category_id')
+            }
+            self.results['vulnerabilities'].append(vuln)
         
-        Populates self.results with discovered category entries under 'categories_found', adds categories with read restrictions to 'restricted_categories', and increments 'total_tests'. On failure the method records no categories and, when verbose is enabled, prints an error message instead of raising.
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Enumerating categories...")
-        
-        try:
-            import requests
-            
-            categories_url = urljoin(self.target_url, '/categories.json')
-            response = requests.get(categories_url, timeout=10)
-            
-            if response.status_code == 200:
-                data = response.json()
-                category_list = data.get('category_list', {})
-                categories = category_list.get('categories', [])
-                
-                for cat in categories:
-                    cat_info = {
-                        'id': cat.get('id'),
-                        'name': cat.get('name'),
-                        'slug': cat.get('slug'),
-                        'color': cat.get('color'),
-                        'text_color': cat.get('text_color'),
-                        'description': cat.get('description'),
-                        'topic_count': cat.get('topic_count', 0),
-                        'post_count': cat.get('post_count', 0),
-                        'read_restricted': cat.get('read_restricted', False),
-                        'parent_category_id': cat.get('parent_category_id'),
-                        'permission_type': cat.get('permission', 'everyone'),
-                        'has_children': cat.get('has_children', False),
-                        'subcategory_count': len(cat.get('subcategory_list', []))
-                    }
-                    
-                    self.results['categories_found'].append(cat_info)
-                    
-                    # Flag restricted categories
-                    if cat.get('read_restricted'):
-                        self.results['restricted_categories'].append(cat_info)
-                
-                if self.verbose:
-                    print(f"    {Fore.GREEN}✓{Style.RESET_ALL} Found {len(categories)} categories")
-                    print(f"      - Restricted: {len(self.results['restricted_categories'])}")
-                    print(f"      - Public: {len(categories) - len(self.results['restricted_categories'])}")
-                    
-        except Exception as e:
-            if self.verbose:
-                print(f"    {Fore.RED}✗{Style.RESET_ALL} Category enumeration failed: {str(e)}")
-    
-    def _discover_hidden_categories(self):
-        """
-        Discover categories accessible by direct numeric ID access and record findings.
-        
-        Probes category endpoints for numeric IDs in the range 1–50 that are not already present in results['categories_found']. Increments results['total_tests']; for each accessible category found, appends a structured entry to results['hidden_categories'] and a medium-severity vulnerability to results['vulnerabilities']. If verbose is enabled, prints progress and summary messages.
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Discovering hidden categories...")
-        
-        try:
-            import requests
-            known_ids = {c['id'] for c in self.results['categories_found']}
-            hidden_found = 0
-            
-            # Test category IDs 1-50
-            for cat_id in range(1, 51):
-                if cat_id in known_ids:
-                    continue
-                
-                try:
-                    # Try both slug and ID-based access
-                    cat_url = urljoin(self.target_url, f'/c/{cat_id}.json')
-                    response = requests.get(cat_url, timeout=3)
-                    
-                    if response.status_code == 200:
-                        data = response.json()
-                        category = data.get('category', {})
-                        
-                        if category and category.get('id'):
-                            hidden_found += 1
-                            self.results['hidden_categories'].append({
-                                'id': cat_id,
-                                'name': category.get('name'),
-                                'slug': category.get('slug'),
-                                'read_restricted': category.get('read_restricted', False),
-                                'discovery_method': 'ID enumeration'
-                            })
-                            
-                            self.results['vulnerabilities'].append({
-                                'type': 'Hidden Category Discovery',
-                                'severity': 'medium',
-                                'category_id': cat_id,
-                                'category_name': category.get('name'),
-                                'description': f'Hidden category accessible via direct ID: {cat_id}'
-                            })
-                except Exception as e:
-                    if self.verbose:
-                        print(f"    {Fore.YELLOW}⚠{Style.RESET_ALL} Error checking category {cat_id}: {str(e)[:30]}")
-                    continue
-            
-            if self.verbose:
-                if hidden_found > 0:
-                    print(f"    {Fore.YELLOW}⚠{Style.RESET_ALL} Found {hidden_found} hidden categories")
-                else:
-                    print(f"    {Fore.GREEN}✓{Style.RESET_ALL} No hidden categories found")
-                    
-        except Exception:
-            if self.verbose:
-                print(f"    {Fore.RED}✗{Style.RESET_ALL} Hidden category discovery failed")
-    
-    def _build_category_tree(self):
-        """
-        Builds a hierarchical tree of discovered categories and stores it in the results.
-        
-        Increments the module test counter and populates self.results['category_tree'] with root categories keyed by their id; each entry contains a 'category' (the category dict) and a 'children' list of direct child category dicts.
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Building category tree...")
-        
-        # Build parent-child relationships
-        for cat in self.results['categories_found']:
-            parent_id = cat.get('parent_category_id')
-            
-            if not parent_id:
-                # Root category
-                self.results['category_tree'][cat['id']] = {
-                    'category': cat,
-                    'children': []
-                }
-        
-        # Add children
-        for cat in self.results['categories_found']:
-            parent_id = cat.get('parent_category_id')
-            if parent_id and parent_id in self.results['category_tree']:
-                self.results['category_tree'][parent_id]['children'].append(cat)
-        
-        if self.verbose:
-            root_count = len(self.results['category_tree'])
-            print(f"    {Fore.GREEN}✓{Style.RESET_ALL} Built tree: {root_count} root categories")
-    
-    def _test_read_permissions(self):
-        """
-        Check whether read-restricted categories are accessible without authentication.
-        
-        Increments the module's test counter and, for each entry in results['restricted_categories'],
-        attempts to access the category's JSON endpoint. If a restricted category is reachable,
-        appends a high-severity entry to results['permission_bypass'] and a corresponding
-        vulnerability record to results['vulnerabilities']. When verbose is enabled, prints
-        progress and any bypass findings. Exceptions raised during checks are suppressed.
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing read permissions...")
-        
-        try:
-            import requests
-            
-            for cat in self.results['restricted_categories']:
-                cat_url = urljoin(self.target_url, f"/c/{cat['slug']}.json")
-                response = requests.get(cat_url, timeout=5)
-                
-                if response.status_code == 200:
-                    self.results['permission_bypass'].append({
-                        'category': cat['name'],
-                        'bypass_type': 'Read permission',
-                        'severity': 'high',
-                        'description': f'Restricted category "{cat["name"]}" readable without authentication'
-                    })
-                    
-                    self.results['vulnerabilities'].append({
-                        'type': 'Read Permission Bypass',
-                        'severity': 'high',
-                        'category': cat['name'],
-                        'description': 'Read-restricted category accessible'
-                    })
-                    
-                    if self.verbose:
-                        print(f"    {Fore.RED}✗ Read bypass: {cat['name']}{Style.RESET_ALL}")
-            
-            if self.verbose and not self.results['permission_bypass']:
-                print(f"    {Fore.GREEN}✓{Style.RESET_ALL} Read permissions enforced")
-                
-        except Exception:
-            pass
-    
-    def _test_write_permissions(self):
-        """
-        Attempt to create topics in discovered categories to detect unauthorized write access.
-        
-        If a topic can be created in any of the first discovered categories, records a critical
-        write-permission bypass entry in self.results['permission_bypass'] and stops further checks.
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing write permissions...")
-        
-        try:
-            import requests
-            
-            for cat in self.results['categories_found'][:5]:
-                # Try to create a topic in category
-                create_url = urljoin(self.target_url, '/posts')
-                response = requests.post(
-                    create_url,
-                    json={
-                        'title': 'Test Topic',
-                        'raw': 'Test content',
-                        'category': cat['id']
-                    },
-                    timeout=5
-                )
-                
-                if response.status_code in [200, 201]:
-                    self.results['permission_bypass'].append({
-                        'category': cat['name'],
-                        'bypass_type': 'Write permission',
-                        'severity': 'critical',
-                        'description': f'Can create topics in "{cat["name"]}" without authorization'
-                    })
-                    
-                    if self.verbose:
-                        print(f"    {Fore.RED}✗ CRITICAL: Write bypass in {cat['name']}{Style.RESET_ALL}")
-                    break
-        except:
-            pass
-    
-    def _test_create_permissions(self):
-        """
-        Attempt to create a forum category and record an unauthorized-creation vulnerability if the operation succeeds.
-        
-        Attempts a POST to the instance's /categories endpoint; on an HTTP 200 or 201 response, appends a critical "Unauthorized Category Creation" entry to self.results['vulnerabilities'] and may print verbose output. Increments self.results['total_tests'] and updates results only (no return value).
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing category creation...")
-        
-        try:
-            import requests
-            
-            # Try to create a category (admin only)
-            create_cat_url = urljoin(self.target_url, '/categories')
-            response = requests.post(
-                create_cat_url,
-                json={
-                    'name': 'Test Category',
-                    'color': '0088CC',
-                    'text_color': 'FFFFFF'
-                },
-                timeout=5
-            )
-            
-            if response.status_code in [200, 201]:
-                self.results['vulnerabilities'].append({
-                    'type': 'Unauthorized Category Creation',
-                    'severity': 'critical',
-                    'description': 'Categories can be created without admin privileges'
-                })
-                
-                if self.verbose:
-                    print(f"    {Fore.RED}✗ CRITICAL: Category creation accessible!{Style.RESET_ALL}")
-            else:
-                if self.verbose:
-                    print(f"    {Fore.GREEN}✓{Style.RESET_ALL} Category creation protected")
-        except:
-            pass
-    
-    def _test_permission_bypass(self):
-        """
-        Check whether restricted categories are accessible via alternate endpoints and record any bypasses.
-        
-        For up to the first three categories in self.results['restricted_categories'], tries multiple alternate category endpoints; if any endpoint returns HTTP 200, appends a finding to self.results['permission_bypass'] containing the category name, the bypass_method used, a severity of 'high', and a description. Increments self.results['total_tests']. Network and other runtime errors are ignored.
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing permission bypass techniques...")
-        
-        try:
-            import requests
-            
-            for cat in self.results['restricted_categories'][:3]:
-                # Try different access methods
-                bypass_attempts = [
-                    f"/c/{cat['id']}/l/latest.json",
-                    f"/c/{cat['slug']}/l/top.json",
-                    f"/category/{cat['id']}.json"
-                ]
-                
-                for attempt in bypass_attempts:
-                    url = urljoin(self.target_url, attempt)
-                    response = requests.get(url, timeout=5)
-                    
-                    if response.status_code == 200:
-                        self.results['permission_bypass'].append({
-                            'category': cat['name'],
-                            'bypass_method': attempt,
-                            'severity': 'high',
-                            'description': f'Bypass via alternate endpoint: {attempt}'
-                        })
-                        
-                        if self.verbose:
-                            print(f"    {Fore.RED}✗ Bypass found: {attempt}{Style.RESET_ALL}")
-                        break
-        except:
-            pass
-    
-    def _test_group_bypass(self):
-        """
-        Attempt to detect unauthorized group membership manipulation.
-        
-        Iterates up to five discovered groups and attempts to join each; if a join request succeeds, an entry describing the unauthorized group join is appended to self.results['group_permissions'] with severity 'critical'. Also increments self.results['total_tests'] as part of the test.
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing group permissions...")
-        
-        try:
-            import requests
-            
-            # Check if group membership can be manipulated for access
-            groups_url = urljoin(self.target_url, '/groups.json')
-            response = requests.get(groups_url, timeout=10)
-            
-            if response.status_code == 200:
-                data = response.json()
-                groups = data.get('groups', [])
-                
-                for group in groups[:5]:
-                    # Try to join group (should be restricted)
-                    join_url = urljoin(self.target_url, f"/groups/{group.get('id')}/members")
-                    response = requests.post(join_url, json={'usernames': 'test'}, timeout=5)
-                    
-                    if response.status_code in [200, 201]:
-                        self.results['group_permissions'].append({
-                            'group': group.get('name'),
-                            'issue': 'Unauthorized group join',
-                            'severity': 'critical',
-                            'description': f'Can join group "{group.get("name")}" without authorization'
-                        })
-                        
-                        if self.verbose:
-                            print(f"    {Fore.RED}✗ Group join bypass: {group.get('name')}{Style.RESET_ALL}")
-                        break
-        except:
-            pass
-    
-    def _test_api_permission_bypass(self):
-        """
-        Checks whether restricted categories are accessible via the category "show" API endpoint and records a vulnerability when access is allowed.
-        
-        If a restricted category can be accessed via the API, appends a high-severity vulnerability entry to self.results['vulnerabilities'] describing the category and the API URL. Tests up to the first two restricted categories and emits progress output when verbose.
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing API permission bypass...")
-        
-        try:
-            import requests
-            
-            # Test if API allows bypassing web permissions
-            for cat in self.results['restricted_categories'][:2]:
-                api_url = urljoin(self.target_url, f"/c/{cat['id']}/show.json")
-                response = requests.get(api_url, timeout=5)
-                
-                if response.status_code == 200:
-                    self.results['vulnerabilities'].append({
-                        'type': 'API Permission Bypass',
-                        'severity': 'high',
-                        'category': cat['name'],
-                        'description': f'Restricted category accessible via API: {api_url}'
-                    })
-                    
-                    if self.verbose:
-                        print(f"    {Fore.RED}✗ API bypass: {cat['name']}{Style.RESET_ALL}")
-        except:
-            pass
-    
-    def _test_subcategory_security(self):
-        """
-        Identify subcategories whose read permissions do not match their restricted parent categories.
-        
-        Scans the constructed category tree in self.results['category_tree'] and for any parent category with read_restricted=True records a high-severity entry in self.results['subcategory_issues'] when a child category is not read_restricted. Increments self.results['total_tests'] and may emit progress/output when self.verbose is True.
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing subcategory security...")
-        
-        # Check if subcategories properly inherit permissions
-        for root_id, tree in self.results['category_tree'].items():
-            root = tree['category']
-            children = tree['children']
-            
-            if root.get('read_restricted') and children:
-                for child in children:
-                    if not child.get('read_restricted'):
-                        self.results['subcategory_issues'].append({
-                            'parent': root['name'],
-                            'child': child['name'],
-                            'issue': 'Permission inheritance broken',
-                            'severity': 'high',
-                            'description': f'Subcategory "{child["name"]}" not restricted despite restricted parent'
-                        })
-                        
-                        if self.verbose:
-                            print(f"    {Fore.YELLOW}⚠{Style.RESET_ALL} Inheritance issue: {child['name']}")
-    
-    def _test_category_visibility(self):
-        """
-        Check whether category visibility can be changed without authorization.
-        
-        Attempts to update the `read_restricted` flag on up to the first three discovered categories; if an update succeeds (HTTP 200 or 201), records a critical visibility issue in `self.results['visibility_issues']`.
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing category visibility...")
-        
-        # Check if visibility can be manipulated
-        try:
-            import requests
-            
-            for cat in self.results['categories_found'][:3]:
-                # Try to change visibility (admin only)
-                update_url = urljoin(self.target_url, f"/categories/{cat['id']}")
-                response = requests.put(
-                    update_url,
-                    json={'read_restricted': False},
-                    timeout=5
-                )
-                
-                if response.status_code in [200, 201]:
-                    self.results['visibility_issues'].append({
-                        'category': cat['name'],
-                        'issue': 'Visibility manipulation',
-                        'severity': 'critical',
-                        'description': 'Category visibility can be changed without authorization'
-                    })
-                    
-                    if self.verbose:
-                        print(f"    {Fore.RED}✗ CRITICAL: Visibility manipulation possible{Style.RESET_ALL}")
-                    break
-        except:
-            pass
-    
-    def _test_category_archiving(self):
-        """
-        Check whether categories can be archived without proper authorization.
-        
-        If an unauthorized archive action succeeds, record a high-severity "Unauthorized Category Archiving"
-        vulnerability in self.results['vulnerabilities'].
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing category archiving...")
-        
-        # Check if categories can be archived without proper permissions
-        try:
-            import requests
-            
-            archive_url = urljoin(self.target_url, '/categories/1/archive')
-            response = requests.put(archive_url, timeout=5)
-            
-            if response.status_code in [200, 201]:
-                self.results['vulnerabilities'].append({
-                    'type': 'Unauthorized Category Archiving',
-                    'severity': 'high',
-                    'description': 'Categories can be archived without proper authorization'
-                })
-                
-                if self.verbose:
-                    print(f"    {Fore.RED}✗ Archive bypass detected{Style.RESET_ALL}")
-        except:
-            pass
-    
-    def _test_ownership_bypass(self):
-        """
-        Attempt to detect unauthorized ownership actions by trying to delete discovered categories.
-        
-        Attempts to delete up to two categories from results['categories_found']; if a delete request succeeds (indicating a non-owner can remove a category), a critical ownership bypass finding is appended to self.results['ownership_bypass'] and the test stops after the first success. Increments self.results['total_tests'] and may print progress when verbose.
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing ownership bypass...")
-        
-        # Test if non-owners can modify categories
-        try:
-            import requests
-            
-            for cat in self.results['categories_found'][:2]:
-                # Try to delete category (owner/admin only)
-                delete_url = urljoin(self.target_url, f"/categories/{cat['id']}")
-                response = requests.delete(delete_url, timeout=5)
-                
-                if response.status_code in [200, 204]:
-                    self.results['ownership_bypass'].append({
-                        'category': cat['name'],
-                        'action': 'delete',
-                        'severity': 'critical',
-                        'description': f'Category "{cat["name"]}" can be deleted without ownership'
-                    })
-                    
-                    if self.verbose:
-                        print(f"    {Fore.RED}✗ CRITICAL: Ownership bypass{Style.RESET_ALL}")
-                    break
-        except:
-            pass
-    
-    def _test_permission_inheritance(self):
-        """
-        Check whether any subcategory permission inheritance issues have been detected.
-        
-        Increments the module's total test count and notes the presence of subcategory inheritance issues by inspecting the module's results (specifically `results['subcategory_issues']`). When verbose mode is enabled, prints a summary of the number of inheritance issues found.
-        """
-        self.results['total_tests'] += 1
-        
-        if self.verbose:
-            print(f"  {Fore.YELLOW}[*]{Style.RESET_ALL} Testing permission inheritance...")
-        
-        # Final check for inheritance issues
-        inheritance_issues = len(self.results['subcategory_issues'])
-        
-        if self.verbose:
-            if inheritance_issues > 0:
-                print(f"    {Fore.YELLOW}⚠{Style.RESET_ALL} {inheritance_issues} inheritance issues found")
-            else:
-                print(f"    {Fore.GREEN}✓{Style.RESET_ALL} Permission inheritance correct")
+        for issue in self.results['ownership_bypass']:
+            vuln = {
+                'title': f"Category Ownership Bypass: {issue.get('issue', 'Unknown')}",
+                'severity': issue.get('severity', 'high'),
+                'description': f"Unauthorized access to category {issue.get('category_name', 'Unknown')}",
+                'category_id': issue.get('category_id')
+            }
+            self.results['vulnerabilities'].append(vuln)
     
     def _generate_recommendations(self):
-        """
-        Builds and appends security recommendations to self.results based on discovered findings.
-        
-        Adds recommendation entries when:
-        - hidden categories were discovered: a medium-priority recommendation to enforce access controls;
-        - permission bypasses exist: a critical recommendation if any bypass has severity "critical";
-        - subcategory inheritance issues exist: a high-priority recommendation to fix permission inheritance;
-        - more than 70% of discovered categories are restricted: an informational recommendation to review necessity.
-        
-        Each recommendation is appended to self.results['recommendations'] as a dict with keys 'priority', 'issue', and 'recommendation'.
-        """
+        """Generate security recommendations"""
+        recommendations = [
+            "Review category permissions regularly",
+            "Implement proper access controls for restricted categories",
+            "Monitor category creation and modification activities",
+            "Use group-based permissions instead of individual user permissions",
+            "Regularly audit subcategory permission inheritance"
+        ]
         
         if self.results['hidden_categories']:
-            self.results['recommendations'].append({
-                'priority': 'MEDIUM',
-                'issue': f"{len(self.results['hidden_categories'])} hidden categories discoverable",
-                'recommendation': 'Implement proper access control on all category endpoints'
-            })
+            recommendations.append("Review hidden categories for proper access controls")
         
         if self.results['permission_bypass']:
-            critical_bypasses = len([b for b in self.results['permission_bypass'] if b['severity'] == 'critical'])
-            if critical_bypasses > 0:
-                self.results['recommendations'].append({
-                    'priority': 'CRITICAL',
-                    'issue': f'{critical_bypasses} critical permission bypass vulnerabilities',
-                    'recommendation': 'Immediately review and fix category permission checks'
-                })
+            recommendations.append("Fix identified permission bypass vulnerabilities immediately")
         
-        if self.results['subcategory_issues']:
-            self.results['recommendations'].append({
-                'priority': 'HIGH',
-                'issue': 'Permission inheritance issues in subcategories',
-                'recommendation': 'Ensure subcategories inherit parent category permissions correctly'
-            })
-        
-        if len(self.results['restricted_categories']) > len(self.results['categories_found']) * 0.7:
-            self.results['recommendations'].append({
-                'priority': 'INFO',
-                'issue': 'High percentage of restricted categories',
-                'recommendation': 'Review if so many restricted categories are necessary'
-            })
-    
-    def print_results(self):
-        """Print comprehensive scan results"""
-        print(f"\n{Fore.CYAN}{'='*60}")
-        print(f"CATEGORY SECURITY SCAN RESULTS")
-        print(f"{'='*60}{Style.RESET_ALL}\n")
-        
-        print(f"Target: {self.target_url}")
-        print(f"Categories Found: {len(self.results['categories_found'])}")
-        print(f"  - Restricted: {len(self.results['restricted_categories'])}")
-        print(f"  - Hidden: {len(self.results['hidden_categories'])}")
-        print(f"Tests Performed: {self.results['total_tests']}")
-        print(f"Vulnerabilities: {len(self.results['vulnerabilities'])}\n")
-        
-        if self.results['vulnerabilities']:
-            print(f"{Fore.RED}[!] Vulnerabilities:{Style.RESET_ALL}")
-            for vuln in self.results['vulnerabilities']:
-                print(f"  - [{vuln['severity'].upper()}] {vuln['type']}")
-                print(f"    {vuln['description']}")
-        
-        if self.results['recommendations']:
-            print(f"\n{Fore.YELLOW}[!] Recommendations:{Style.RESET_ALL}")
-            for rec in self.results['recommendations']:
-                print(f"  - [{rec['priority']}] {rec['issue']}")
-                print(f"    → {rec['recommendation']}")
+        self.results['recommendations'] = recommendations

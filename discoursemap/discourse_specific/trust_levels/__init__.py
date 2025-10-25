@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Trust Level Security Module
+"""
+Trust Level Security Module
 
-Discourse-specific trust level security testing.
+Discourse trust level security testing components.
 """
 
 from .trust_level_module import TrustLevelSecurityModule

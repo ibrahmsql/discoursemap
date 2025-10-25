@@ -1,78 +1,44 @@
 version: '3.8'
 
 services:
-  # Main scanner service with optimizations
   discoursemap:
     build: .
     container_name: discoursemap-scanner
+    environment:
+      - DISCOURSEMAP_VERSION=2.1.0
+      - PYTHONPATH=/app
     volumes:
       - ./reports:/app/reports
-      - ./data:/app/data
-      - ./config.yaml:/app/config.yaml:ro
-      - ./targets.txt:/app/targets.txt:ro
-      - /tmp:/tmp  # Temporary files optimization
-    environment:
-      - PYTHONUNBUFFERED=1
-      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
-      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
-      - PERFORMANCE_MODE=${PERFORMANCE_MODE:-balanced}  # fast, balanced, safe
-      - MAX_THREADS=${MAX_THREADS:-20}
-      - SCAN_DELAY=${SCAN_DELAY:-0.05}
-    networks:
-      - scanner-network
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 2G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
-    # Example usage:
-    # docker-compose run --rm discoursemap python3 main.py -u https://forum.example.com --fast
-    # docker-compose run --rm discoursemap python3 main.py -u https://forum.example.com --balanced
-    
-  # Automated scanner with cron-like scheduling
-  auto-scanner:
-    build: .
-    container_name: discoursemap-auto
-    volumes:
-      - ./reports:/app/reports
-      - ./data:/app/data
-      - ./config.yaml:/app/config.yaml:ro
-      - ./targets.txt:/app/targets.txt:ro
-      - /tmp:/tmp
-    environment:
-      - PYTHONUNBUFFERED=1
-      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
-      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
-      - SCAN_INTERVAL=${SCAN_INTERVAL:-3600}  # Default: 1 hour
-      - PERFORMANCE_MODE=${PERFORMANCE_MODE:-balanced}
-      - AUTO_UPDATE=${AUTO_UPDATE:-true}
-    command: python3 auto_scanner.py
+      - ./config:/app/config
     networks:
       - scanner-network
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '1.5'
-          memory: 1.5G
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-
-
+    
+  # Optional: Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: discoursemap-redis
+    networks:
+      - scanner-network
+    restart: unless-stopped
+    
+  # Optional: PostgreSQL for result storage
+  postgres:
+    image: postgres:15-alpine
+    container_name: discoursemap-db
+    environment:
+      POSTGRES_DB: discoursemap
+      POSTGRES_USER: scanner
+      POSTGRES_PASSWORD: scanner_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - scanner-network
+    restart: unless-stopped
 
 networks:
   scanner-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
 
 volumes:
-  reports:
-    driver: local
-  data:
-    driver: local
+  postgres_data:

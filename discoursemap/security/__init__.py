@@ -5,4 +5,8 @@ This package contains all security-related scanning modules including
 authentication, cryptography, vulnerabilities, and exploits.
 """
 
-__all__ = []
+from . import testing
+
+__all__ = [
+    'testing'
+]

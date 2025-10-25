@@ -9,17 +9,19 @@ Author: ibrahimsql
 Email: ibrahimsql@proton.me
 GitHub: https://github.com/ibrahmsql/discoursemap
 
-New in v2.0:
-- Completely reorganized modular structure
-- Categorized modules by functionality
-- Improved maintainability and scalability
-- Better IDE support and code navigation
-- Added 20+ Discourse-specific security modules
-- Enhanced testing and validation capabilities
-- Comprehensive security coverage
+New in v2.1:
+- Advanced modular architecture with 50+ specialized modules
+- Rate limiting testing with bypass techniques
+- Comprehensive security testing (injection, file upload, auth)
+- Performance monitoring and load testing
+- Health checking and uptime monitoring
+- Multiple report formats (JSON, HTML, CSV, XML)
+- External integrations (Slack, Webhooks)
+- Advanced configuration management
+- Network utilities and data processing tools
 """
 
-__version__ = "2.0.5"
+__version__ = "2.1.0"
 __author__ = "ibrahimsql"
 __email__ = "ibrahimsql@proton.me"
 __description__ = "Discourse forum security scanner. Written for security professionals and forum administrators."
