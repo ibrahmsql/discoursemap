@@ -24,7 +24,7 @@ class CategoryPermissionTester:
         if self.verbose:
             print(f"{Fore.CYAN}[*] Testing read permissions...{Style.RESET_ALL}")
         
-        for category in categories:
+        for category in categories[:3]:  # Limit to first 3 categories for performance
             cat_id = category.get('id')
             cat_name = category.get('name')
             
@@ -69,7 +69,7 @@ class CategoryPermissionTester:
         if self.verbose:
             print(f"{Fore.CYAN}[*] Testing write permissions...{Style.RESET_ALL}")
         
-        for category in categories:
+        for category in categories[:3]:  # Limit to first 3 categories for performance
             cat_id = category.get('id')
             cat_name = category.get('name')
             
@@ -107,7 +107,7 @@ class CategoryPermissionTester:
         if self.verbose:
             print(f"{Fore.CYAN}[*] Testing permission bypass techniques...{Style.RESET_ALL}")
         
-        for category in categories:
+        for category in categories[:3]:  # Limit to first 3 categories for performance
             cat_id = category.get('id')
             cat_name = category.get('name')
             
@@ -153,7 +153,7 @@ class CategoryPermissionTester:
         # Test common group manipulation
         test_groups = ['admin', 'moderators', 'staff', 'trust_level_4']
         
-        for category in categories:
+        for category in categories[:3]:  # Limit to first 3 categories for performance
             cat_id = category.get('id')
             cat_name = category.get('name')
             

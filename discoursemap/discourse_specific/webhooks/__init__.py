@@ -16,6 +16,10 @@ class WebhookSecurityModule:
         self.session = session
         self.verbose = verbose
     
+    def run(self) -> Dict[str, Any]:
+        """Run webhook security scan"""
+        return self.scan()
+    
     def scan(self) -> Dict[str, Any]:
         """Scan webhook security"""
         return {

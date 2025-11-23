@@ -16,6 +16,10 @@ class CacheSecurityModule:
         self.session = session
         self.verbose = verbose
     
+    def run(self) -> Dict[str, Any]:
+        """Run cache security scan"""
+        return self.scan()
+    
     def scan(self) -> Dict[str, Any]:
         """Scan cache security"""
         return {

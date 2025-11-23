@@ -64,10 +64,10 @@ class CategoryDiscovery:
             print(f"{Fore.CYAN}[*] Discovering hidden categories...{Style.RESET_ALL}")
         
         # Test common category IDs
-        for cat_id in range(1, 101):
+        for cat_id in range(1, 31):
             try:
                 api_url = urljoin(self.target_url, f'/c/{cat_id}.json')
-                response = requests.get(api_url, timeout=5)
+                response = requests.get(api_url, timeout=2)
                 
                 if response.status_code == 200:
                     data = response.json()

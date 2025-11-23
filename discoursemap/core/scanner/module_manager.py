@@ -101,7 +101,7 @@ class ModuleManager:
             elif module_name == 'admin':
                 return AdminPanelModule(self.scanner.target_url, verbose=self.scanner.verbose)
             elif module_name == 'webhook':
-                return WebhookModule(self.scanner.target_url, verbose=self.scanner.verbose)
+                return WebhookSecurityModule(self.scanner.target_url, verbose=self.scanner.verbose)
             elif module_name == 'email':
                 return EmailSecurityModule(self.scanner.target_url, verbose=self.scanner.verbose)
             elif module_name == 'search':

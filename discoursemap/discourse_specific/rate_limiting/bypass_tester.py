@@ -62,7 +62,7 @@ class BypassTester:
         endpoint = urljoin(self.target_url, '/session')
         successful_requests = 0
         
-        for i in range(20):
+        for i in range(8):  # Reduced from 20 for performance
             try:
                 headers = {'User-Agent': random.choice(user_agents)}
                 response = self.session.post(
@@ -79,7 +79,7 @@ class BypassTester:
             except Exception:
                 break
         
-        if successful_requests > 15:  # If most requests succeeded
+        if successful_requests > 5:  # Reduced threshold
             return {
                 'method': 'User-Agent Rotation',
                 'successful': True,
@@ -109,7 +109,7 @@ class BypassTester:
         for header in ip_headers:
             successful_requests = 0
             
-            for i in range(10):
+            for i in range(5):  # Reduced from 10 for performance
                 try:
                     fake_ip = f"192.168.{random.randint(1,254)}.{random.randint(1,254)}"
                     headers = {header: fake_ip}
@@ -128,7 +128,7 @@ class BypassTester:
                 except Exception:
                     break
             
-            if successful_requests > 7:
+            if successful_requests > 3:  # Reduced threshold
                 successful_bypasses.append(header)
         
         if successful_bypasses:
@@ -158,7 +158,7 @@ class BypassTester:
         endpoint = urljoin(self.target_url, '/session')
         successful_requests = 0
         
-        for i in range(15):
+        for i in range(8):  # Reduced from 15 for performance
             try:
                 headers = {'Referer': random.choice(referers)}
                 response = self.session.post(
@@ -175,7 +175,7 @@ class BypassTester:
             except Exception:
                 break
         
-        if successful_requests > 10:
+        if successful_requests > 5:  # Reduced threshold
             return {
                 'method': 'Referer Bypass',
                 'successful': True,
@@ -201,7 +201,7 @@ class BypassTester:
         for headers in override_headers:
             successful_requests = 0
             
-            for i in range(10):
+            for i in range(5):  # Reduced from 10 for performance
                 try:
                     response = self.session.post(
                         endpoint,
@@ -217,7 +217,7 @@ class BypassTester:
                 except Exception:
                     break
             
-            if successful_requests > 7:
+            if successful_requests > 3:  # Reduced threshold
                 return {
                     'method': 'HTTP Method Override',
                     'successful': True,
@@ -259,7 +259,7 @@ class BypassTester:
                 except Exception:
                     break
             
-            if successful_requests > 3:
+            if successful_requests > 2:  # Reduced threshold
                 successful_bypasses.append(endpoint)
         
         if successful_bypasses:
@@ -288,7 +288,7 @@ class BypassTester:
         for payload in pollution_payloads:
             successful_requests = 0
             
-            for i in range(8):
+            for i in range(5):  # Reduced from 8 for performance
                 try:
                     response = self.session.post(
                         endpoint,
@@ -303,7 +303,7 @@ class BypassTester:
                 except Exception:
                     break
             
-            if successful_requests > 5:
+            if successful_requests > 3:  # Reduced threshold
                 return {
                     'method': 'Parameter Pollution',
                     'successful': True,

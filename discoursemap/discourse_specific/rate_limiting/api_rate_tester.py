@@ -23,11 +23,8 @@ class APIRateTester:
         self.api_endpoints = [
             '/categories.json',
             '/latest.json',
-            '/posts.json',
-            '/users.json',
-            '/topics.json',
-            '/search.json'
-        ]
+            '/posts.json'
+        ]  # Limited to 3 endpoints for performance
     
     def test_all_endpoints(self) -> List[Dict[str, Any]]:
         """Test rate limiting on all API endpoints"""
@@ -50,7 +47,7 @@ class APIRateTester:
         attempts = 0
         rate_limited = False
         
-        for i in range(50):  # Rapid requests
+        for i in range(10):  # Reduced from 50 for performance
             try:
                 response = self.session.get(url, timeout=5)
                 attempts += 1
@@ -99,7 +96,7 @@ class APIRateTester:
             attempts = 0
             rate_limited = False
             
-            for i in range(30):
+            for i in range(10):  # Reduced from 30 for performance
                 try:
                     response = self.session.post(
                         url,
