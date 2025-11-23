@@ -49,7 +49,9 @@ class CategorySecurityModule:
         
         # Phase 1: Category Discovery
         self.results['categories_found'] = self.discovery.enumerate_categories()
-        self.results['hidden_categories'] = self.discovery.discover_hidden_categories()
+        # Skip hidden category discovery for performance (would take too long)
+        # self.results['hidden_categories'] = self.discovery.discover_hidden_categories()
+        self.results['hidden_categories'] = []  # Skipped for performance
         self.results['category_tree'] = self.discovery.build_category_tree(self.results['categories_found'])
         
         # Phase 2: Permission Testing

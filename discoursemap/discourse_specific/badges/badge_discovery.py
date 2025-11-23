@@ -67,10 +67,10 @@ class BadgeDiscovery:
             print(f"{Fore.CYAN}[*] Discovering hidden badges...{Style.RESET_ALL}")
         
         # Test common badge IDs
-        for badge_id in range(1, 201):
+        for badge_id in range(1, 51):
             try:
                 api_url = urljoin(self.target_url, f'/badges/{badge_id}.json')
-                response = requests.get(api_url, timeout=5)
+                response = requests.get(api_url, timeout=2)
                 
                 if response.status_code == 200:
                     data = response.json()

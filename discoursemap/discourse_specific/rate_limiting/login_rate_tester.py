@@ -32,7 +32,7 @@ class LoginRateTester:
         rate_limited = False
         result = {}
         
-        for i in range(15):
+        for i in range(10):
             try:
                 response = self.session.post(
                     endpoint,
@@ -53,7 +53,7 @@ class LoginRateTester:
                     }
                     break
                     
-                time.sleep(0.5)
+                time.sleep(0.3)
             except Exception as e:
                 if self.verbose:
                     print(f"{Fore.RED}[!] Error testing login rate limit: {e}{Style.RESET_ALL}")
@@ -81,7 +81,7 @@ class LoginRateTester:
         rate_limited = False
         result = {}
         
-        for i in range(10):
+        for i in range(5):
             try:
                 response = self.session.post(
                     endpoint,
@@ -102,7 +102,7 @@ class LoginRateTester:
                     }
                     break
                     
-                time.sleep(1)
+                time.sleep(0.5)
             except Exception as e:
                 if self.verbose:
                     print(f"{Fore.RED}[!] Error testing password reset rate limit: {e}{Style.RESET_ALL}")

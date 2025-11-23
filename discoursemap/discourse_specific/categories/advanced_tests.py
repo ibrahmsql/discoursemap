@@ -61,7 +61,7 @@ class AdvancedCategoryTests:
         if self.verbose:
             print(f"{Fore.CYAN}[*] Testing category visibility...{Style.RESET_ALL}")
         
-        for category in categories:
+        for category in categories[:3]:  # Limit to first 3 categories for performance
             cat_id = category.get('id')
             cat_name = category.get('name')
             
@@ -102,7 +102,7 @@ class AdvancedCategoryTests:
         if self.verbose:
             print(f"{Fore.CYAN}[*] Testing category archiving...{Style.RESET_ALL}")
         
-        for category in categories:
+        for category in categories[:3]:  # Limit to first 3 categories for performance
             cat_id = category.get('id')
             cat_name = category.get('name')
             
@@ -146,7 +146,7 @@ class AdvancedCategoryTests:
         if self.verbose:
             print(f"{Fore.CYAN}[*] Testing ownership bypass...{Style.RESET_ALL}")
         
-        for category in categories:
+        for category in categories[:3]:  # Limit to first 3 categories for performance
             cat_id = category.get('id')
             cat_name = category.get('name')
             
