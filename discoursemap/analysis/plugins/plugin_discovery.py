@@ -54,7 +54,7 @@ class PluginDiscovery:
                                 'description': plugin.get('description', '')
                             }
                             plugins.append(plugin_info)
-                except:
+                except (ValueError, KeyError, TypeError):
                     pass
             
         except Exception as e:
@@ -100,7 +100,7 @@ class PluginDiscovery:
                                 'remote_theme': theme.get('remote_theme', {})
                             }
                             themes.append(theme_info)
-                except:
+                except (ValueError, KeyError, TypeError):
                     pass
             
         except Exception as e:

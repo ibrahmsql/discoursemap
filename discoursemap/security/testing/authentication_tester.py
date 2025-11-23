@@ -239,13 +239,27 @@ class AuthenticationTester:
             for session in [session2, session3]:
                 session.get(self.target_url, timeout=10)
             
-            # This is a basic test - in practice you'd need valid credentials
-            vulnerabilities.append({
-                'type': 'concurrent_sessions',
-                'severity': 'MEDIUM',
-                'description': 'Multiple concurrent sessions may be allowed',
-                'note': 'Requires valid credentials for full test'
-            })
+            # Test for concurrent session allowance
+            # Check if multiple sessions can be established simultaneously
+            session_ids = []
+            for session in [session2, session3]:
+                try:
+                    response = session.get(self.target_url, timeout=10)
+                    # Extract session cookie if exists
+                    for cookie in session.cookies:
+                        if 'session' in cookie.name.lower() or '_t' in cookie.name:
+                            session_ids.append(cookie.value)
+                except Exception:
+                    pass
+            
+            # If we got different session IDs, concurrent sessions are allowed
+            if len(set(session_ids)) > 1:
+                vulnerabilities.append({
+                    'type': 'concurrent_sessions',
+                    'severity': 'MEDIUM',
+                    'description': f'Multiple concurrent sessions detected ({len(set(session_ids))} unique)',
+                    'session_count': len(set(session_ids))
+                })
         
         except Exception as e:
             if self.verbose:

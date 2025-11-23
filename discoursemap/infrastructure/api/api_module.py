@@ -85,7 +85,7 @@ class APIModule:
                         'endpoint': endpoint,
                         'accessible': True
                     })
-        except:
+        except (requests.RequestException, ConnectionError, TimeoutError):
             pass
     
     def _test_api_keys(self):

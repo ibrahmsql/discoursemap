@@ -87,7 +87,7 @@ class DiscourseValidator:
                         data = response.json()
                         if any(key in data for key in ['categories', 'topic_list', 'about']):
                             self.results['indicators'].append(f'Valid Discourse API: {endpoint}')
-                    except:
+                    except (ValueError, KeyError, TypeError):
                         pass
                         
             except Exception:

@@ -12,7 +12,7 @@ import requests
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from colorama import Fore, Style
-from ...lib.discourse_utils import make_request
+# from ...lib.discourse_utils import make_request # Removed incorrect import
 from .plugin_signatures import get_plugin_signatures, get_technology_patterns
 from .plugin_vulnerabilities import get_plugin_vulnerabilities, check_plugin_vulnerabilities
 
@@ -103,7 +103,7 @@ class PluginDetectionModule:
         name, detection_method ('html_marker'), marker, category, and risk_level. If the HTTP request yields no response, the method exits without modifying results.
         """
         try:
-            response = make_request(self.scanner.target_url, timeout=10)
+            response = self.scanner.make_request(self.scanner.target_url, timeout=10)
             if not response:
                 return
             
@@ -140,7 +140,7 @@ class PluginDetectionModule:
         try:
             # Try to get site info
             site_url = urljoin(self.scanner.target_url, '/site.json')
-            response = make_request(site_url, timeout=10)
+            response = self.scanner.make_request(site_url, timeout=10)
             
             if response and response.status_code == 200:
                 site_data = response.json()
@@ -163,7 +163,7 @@ class PluginDetectionModule:
             for path in signature.get('paths', []):
                 try:
                     url = urljoin(self.scanner.target_url, path)
-                    response = make_request(url, timeout=5)
+                    response = self.scanner.make_request(url, timeout=5)
                     
                     if response and response.status_code == 200:
                         self.results['detected_plugins'].append({
@@ -191,7 +191,7 @@ class PluginDetectionModule:
         warning and returns.
         """
         try:
-            response = make_request(self.scanner.target_url, timeout=10)
+            response = self.scanner.make_request(self.scanner.target_url, timeout=10)
             if not response:
                 return
             
@@ -218,7 +218,7 @@ class PluginDetectionModule:
         Performs an HTTP request to the scanner's target URL, searches the returned HTML for patterns categorized as 'css-framework' in the loaded technology patterns, and appends detection records to self.results['css_frameworks'] when a pattern matches. Each recorded entry contains: 'name' (framework name), 'detection_method' set to 'pattern_match', and the matching 'pattern'.
         """
         try:
-            response = make_request(self.scanner.target_url, timeout=10)
+            response = self.scanner.make_request(self.scanner.target_url, timeout=10)
             if not response:
                 return
             
@@ -244,7 +244,7 @@ class PluginDetectionModule:
         Performs a request to the module's target URL and, if a response is received, stores header-derived information in self.results['server_info']: the 'Server' header under the 'server' key, the 'X-Powered-By' header under the 'powered_by' key, and any headers whose name contains 'discourse' (case-insensitive) under their original header names.
         """
         try:
-            response = make_request(self.scanner.target_url, timeout=10)
+            response = self.scanner.make_request(self.scanner.target_url, timeout=10)
             if not response:
                 return
             
@@ -289,7 +289,7 @@ class PluginDetectionModule:
         Makes an HTTP request to the module's target URL, parses the HTML, and for each <meta> tag with a `name` or `property` attribute and a `content` value, stores an entry mapping that name/property to its content. Existing entries for the same name/property are overwritten. The method returns early if the page cannot be retrieved.
         """
         try:
-            response = make_request(self.scanner.target_url, timeout=10)
+            response = self.scanner.make_request(self.scanner.target_url, timeout=10)
             if not response:
                 return
             

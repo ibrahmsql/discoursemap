@@ -30,7 +30,7 @@ __description__ = "Discourse forum security scanner. Written for security profes
 from .core import DiscourseScanner, Reporter, Banner
 
 # Main utility functions
-from .lib.discourse_utils import validate_url, normalize_url
+from .lib.discourse_utils import validate_url, clean_url
 
 # Discourse-specific modules
 from .discourse_specific import (
@@ -53,7 +53,7 @@ __all__ = [
     'Banner',
     # Utils
     'validate_url',
-    'normalize_url',
+    'clean_url',
     # Discourse-specific
     'RateLimitModule',
     'SessionSecurityModule',

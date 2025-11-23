@@ -8,6 +8,7 @@ Network utilities and connectivity testing tools.
 import socket
 import requests
 import time
+import re
 from typing import Dict, List, Optional, Any, Tuple
 from colorama import Fore, Style
 import subprocess
@@ -113,7 +114,7 @@ class NetworkTools:
                 host_info = socket.gethostbyaddr(ip_address)
                 canonical_name = host_info[0]
                 aliases = host_info[1]
-            except:
+            except (socket.herror, socket.gaierror, OSError):
                 canonical_name = None
                 aliases = []
             
@@ -180,9 +181,6 @@ class NetworkTools:
             while time.time() - start_time < test_duration:
                 response = session.get(url, timeout=5)
                 total_bytes += len(response.content)
-                
-                if time.time() - start_time >= test_duration:
-                    break
             
             actual_duration = time.time() - start_time
             
@@ -228,13 +226,64 @@ class NetworkTools:
                 timeout=30
             )
             
-            # Parse ping results (basic parsing)
+            
+            # Parse ping results with advanced regex
             output_lines = result.stdout.split('\n')
+            
+            # Initialize stats
+            stats = {
+                'packets_sent': count,
+                'packets_received': 0,
+                'packet_loss_percent': 100.0,
+                'latency_min': None,
+                'latency_avg': None,
+                'latency_max': None,
+                'latency_stddev': None
+            }
+            
+            # Platform-specific parsing
+            if platform.system() == 'Windows':
+                # Windows ping format
+                for line in output_lines:
+                    # Packet statistics: Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)
+                    if 'Received' in line and 'Lost' in line:
+                        match = re.search(r'Received\s*=\s*(\d+).*\((\d+)%', line)
+                        if match:
+                            stats['packets_received'] = int(match.group(1))
+                            stats['packet_loss_percent'] = float(match.group(2))
+                    
+                    # Minimum = 1ms, Maximum = 2ms, Average = 1ms
+                    if 'Minimum' in line and 'Average' in line:
+                        match = re.search(r'Minimum\s*=\s*(\d+)ms.*Maximum\s*=\s*(\d+)ms.*Average\s*=\s*(\d+)ms', line)
+                        if match:
+                            stats['latency_min'] = float(match.group(1))
+                            stats['latency_max'] = float(match.group(2))
+                            stats['latency_avg'] = float(match.group(3))
+            else:
+                # macOS/Linux ping format
+                for line in output_lines:
+                    # 4 packets transmitted, 4 packets received, 0.0% packet loss
+                    if 'packets transmitted' in line:
+                        match = re.search(r'(\d+) packets transmitted, (\d+).*received.*?([\d.]+)% packet loss', line)
+                        if match:
+                            stats['packets_sent'] = int(match.group(1))
+                            stats['packets_received'] = int(match.group(2))
+                            stats['packet_loss_percent'] = float(match.group(3))
+                    
+                    # round-trip min/avg/max/stddev = 1.234/2.345/3.456/0.789 ms
+                    if 'round-trip' in line or 'rtt' in line:
+                        match = re.search(r'=\s*([\d.]+)/([\d.]+)/([\d.]+)/([\d.]+)', line)
+                        if match:
+                            stats['latency_min'] = float(match.group(1))
+                            stats['latency_avg'] = float(match.group(2))
+                            stats['latency_max'] = float(match.group(3))
+                            stats['latency_stddev'] = float(match.group(4))
             
             return {
                 'host': host,
                 'count': count,
-                'success': result.returncode == 0,
+                'success': result.returncode == 0 and stats['packets_received'] > 0,
+                'statistics': stats,
                 'output': result.stdout,
                 'raw_output': output_lines
             }

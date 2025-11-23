@@ -1,44 +1,32 @@
-# Core dependencies
-requests>=2.28.0
+# Core dependencies (synchronized with pyproject.toml)
+requests>=2.32.0
 colorama>=0.4.6
-urllib3>=1.26.0
+urllib3>=2.5.0
+certifi>=2025.7.14
+chardet>=5.2.0
+idna>=3.10
+pysocks>=1.7.1
 
 # Configuration management
-PyYAML>=6.0
+PyYAML>=6.0.3
 
 # Performance and monitoring
 psutil>=5.9.0
+tqdm>=4.67.0
 
 # Data processing
-lxml>=4.9.0
+lxml>=6.0.0
+beautifulsoup4>=4.13.0
 
-# Optional: Enhanced features
-# Uncomment as needed
-
-# For advanced SSL/TLS testing
-# cryptography>=3.4.8
-# pyOpenSSL>=22.0.0
-
-# For database connectivity testing
-# psycopg2-binary>=2.9.0
-# pymongo>=4.0.0
-
-# For advanced network testing
-# scapy>=2.4.5
-# python-nmap>=0.7.1
-
-# For enhanced reporting
-# jinja2>=3.1.0
-# matplotlib>=3.5.0
-# plotly>=5.0.0
-
-# For webhook integrations
-# discord-webhook>=1.0.0
-# slack-sdk>=3.19.0
+# Required for core features
+jinja2>=3.1.6
+cryptography>=45.0.0
+pyopenssl>=25.1.0
+typing-extensions>=4.0.0
 
 # Development dependencies (for contributors)
 # pytest>=7.0.0
 # pytest-cov>=4.0.0
-# black>=22.0.0
-# flake8>=5.0.0
-# mypy>=0.991
+# black>=23.0.0
+# flake8>=6.0.0
+# mypy>=1.0.0

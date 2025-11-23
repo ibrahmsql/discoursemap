@@ -12,13 +12,20 @@ from .report_generator import ReportGenerator
 class Reporter:
     """Report generation (Refactored)"""
     
-    def __init__(self):
+    def __init__(self, target_url=None):
         """
         Initialize the Reporter and create a ReportGenerator instance.
         
+        Args:
+            target_url: Optional target URL for the report
+        
         Creates and assigns a ReportGenerator to the `generator` attribute on the instance.
         """
+        self.target_url = target_url
         self.generator = ReportGenerator()
+        self.scan_start_time = None
+        self.scan_end_time = None
+        self.module_results = {}
     
     def generate_report(self, results, format='text'):
         """
@@ -37,6 +44,14 @@ class Reporter:
             return self.generator.generate_summary(results)
         else:
             return str(results)
+    
+    def add_module_results(self, module_name, results):
+        """Add results from a module"""
+        self.module_results[module_name] = results
+    
+    def finalize_scan(self):
+        """Finalize the scan (placeholder for future functionality)"""
+        pass
     
     def print_summary(self, results):
         """
@@ -63,3 +78,21 @@ class Reporter:
                 print(f"\n{Fore.RED}Found vulnerabilities:{Style.RESET_ALL}")
                 for vuln in results['vulnerabilities'][:5]:
                     print(f"  - {vuln.get('type', 'Unknown')}")
+    
+    def generate_json_report(self, results, output_file):
+        """Generate JSON report and save to file"""
+        import json
+        with open(output_file, 'w') as f:
+            json.dump(results, f, indent=2)
+    
+    def generate_html_report(self, results, output_file):
+        """Generate HTML report and save to file"""
+        html_content = self.generator.generate_html(results)
+        with open(output_file, 'w') as f:
+            f.write(html_content)
+    
+    def generate_csv_report(self, results, output_file):
+        """Generate CSV report and save to file"""
+        csv_content = self.generator.generate_csv(results)
+        with open(output_file, 'w') as f:
+            f.write(csv_content)

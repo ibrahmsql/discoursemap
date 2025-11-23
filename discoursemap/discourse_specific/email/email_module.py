@@ -6,7 +6,11 @@ Tests email configuration, SPF, DKIM, DMARC, and email-related vulnerabilities.
 """
 
 import requests
-import dns.resolver
+try:
+    import dns.resolver
+    DNS_AVAILABLE = True
+except ImportError:
+    DNS_AVAILABLE = False
 from typing import Dict, List, Optional, Any
 from colorama import Fore, Style
 from urllib.parse import urljoin, urlparse
@@ -38,6 +42,10 @@ class EmailSecurityModule:
             'vulnerabilities': [],
             'recommendations': []
         }
+    
+    def run(self) -> Dict[str, Any]:
+        """Run the email security scan (wrapper for scan method)"""
+        return self.scan()
     
     def scan(self) -> Dict[str, Any]:
         """
@@ -77,6 +85,14 @@ class EmailSecurityModule:
         """
         if self.verbose:
             print(f"{Fore.YELLOW}[*] Checking SPF record...{Style.RESET_ALL}")
+        
+        if not DNS_AVAILABLE:
+            self.results['spf_record'] = {
+                'found': False,
+                'record': None,
+                'note': 'dnspython not installed - DNS checks skipped'
+            }
+            return
         
         try:
             answers = dns.resolver.resolve(self.domain, 'TXT')

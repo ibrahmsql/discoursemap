@@ -75,6 +75,6 @@ def get_json(url: str, timeout: int = 10) -> Optional[Dict[str, Any]]:
     if response and response.status_code == 200:
         try:
             return response.json()
-        except:
+        except (ValueError, TypeError):
             return None
     return None

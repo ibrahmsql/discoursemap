@@ -8,20 +8,21 @@ Command line argument parsing for DiscourseMap.
 import argparse
 
 
-def parse_arguments():
-    """Parse command line arguments"""
+def create_parser():
+    """Create and configure the argument parser."""
     parser = argparse.ArgumentParser(
-        description="DiscourseMap v2.0.2 - Comprehensive Discourse security assessment tool",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+        description='DiscourseMap v2.1.0 - Comprehensive Discourse security assessment tool',
+        epilog='''
 Examples:
-  python3 main.py -u https://forum.example.com -m info vuln
-  python3 main.py -u https://forum.example.com -o json -f report.json
-  python3 main.py -u https://forum.example.com -v -t 10
-  python3 main.py -u https://forum.example.com -m cve -p http://127.0.0.1:8080
-  python3 main.py -u https://forum.example.com -q  # Quick scan (maximum speed)
-  python3 main.py -q -u https://forum.example.com -o json  # Quick scan with JSON output
-        """
+  discoursemap -u https://forum.example.com -m info vuln
+  discoursemap -u https://forum.example.com -o json -f report.json
+  discoursemap -u https://forum.example.com -v -t 10 --safe
+  discoursemap -u https://forum.example.com -m cve -p http://127.0.0.1:8080
+  discoursemap -u https://forum.example.com --quick  # Quick scan (maximum speed)
+  discoursemap -u https://forum.example.com --quick -o json  # Quick scan with JSON output
+        ''',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        prog='discoursemap'
     )
     
     # Required arguments
@@ -86,7 +87,7 @@ Examples:
     parser.add_argument('--update', action='store_true',
                        help='Update scan data and signatures')
     
-    return parser.parse_args()
+    return parser  # Return parser object, not parsed args
 
 
 def apply_performance_presets(args):
@@ -123,3 +124,9 @@ def apply_performance_presets(args):
         performance_metrics = {'threads': 30, 'delay': 0.01, 'timeout': 5}
     
     return preset_name, performance_metrics
+
+
+def parse_arguments():
+    """Parse command line arguments (wrapper for backward compatibility)"""
+    parser = create_parser()
+    return parser.parse_args()

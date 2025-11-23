@@ -2,6 +2,7 @@
 """Endpoint Scanner - Core scanning logic"""
 
 from urllib.parse import urljoin
+from typing import Dict, List, Any
 import requests
 
 
@@ -18,8 +19,10 @@ class EndpointScanner:
         """
         self.target_url = target_url
         self.timeout = timeout
+        # Create reusable session for connection pooling
+        self.session = requests.Session()
     
-    def scan_endpoint(self, endpoint):
+    def scan_endpoint(self, endpoint: str) -> Dict[str, Any]:
         """
         Scan a single endpoint path under the scanner's target URL.
         
@@ -38,7 +41,7 @@ class EndpointScanner:
         """
         try:
             url = urljoin(self.target_url, endpoint)
-            response = requests.get(url, timeout=self.timeout)
+            response = self.session.get(url, timeout=self.timeout)
             
             return {
                 'endpoint': endpoint,
@@ -55,7 +58,7 @@ class EndpointScanner:
                 'error': str(e)
             }
     
-    def scan_multiple(self, endpoints):
+    def scan_multiple(self, endpoints: List[str]) -> List[Dict[str, Any]]:
         """
         Scan a sequence of endpoint paths and return their individual scan results.
         

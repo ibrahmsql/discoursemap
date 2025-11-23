@@ -74,7 +74,7 @@ class InfoModule:
                     'description': data.get('description'),
                     'default_locale': data.get('default_locale')
                 }
-        except:
+        except (requests.RequestException, ValueError, KeyError):
             pass
     
     def _detect_version(self):
@@ -92,7 +92,7 @@ class InfoModule:
                 data = response.json()
                 about_data = data.get('about', {})
                 self.results['version'] = about_data.get('version')
-        except:
+        except (requests.RequestException, ValueError, KeyError):
             pass
     
     def _enumerate_plugins(self):
@@ -110,5 +110,5 @@ class InfoModule:
                 data = response.json()
                 plugins = data.get('plugins', [])
                 self.results['plugins'] = plugins
-        except:
+        except (requests.RequestException, ValueError, KeyError):
             pass
