@@ -4,7 +4,9 @@
 This package contains the core scanning engine, reporting, and banner components.
 """
 
-from .scanner import DiscourseScanner
+# discourse_scanner.py contains the main DiscourseScanner class
+# scanner/ directory contains BaseScanner, ModuleManager, AsyncScanner
+from .discourse_scanner import DiscourseScanner
 from .reporter import Reporter
 from .banner import Banner
 

@@ -28,6 +28,10 @@ class RateLimitModule:
         self.bypass_tester = BypassTester(target_url, session, verbose)
         self.header_analyzer = HeaderAnalyzer(target_url, session, verbose)
     
+    def run(self) -> Dict[str, Any]:
+        """Run comprehensive rate limiting tests (wrapper for scan method)"""
+        return self.scan()
+    
     def scan(self) -> Dict[str, Any]:
         """Run comprehensive rate limiting tests"""
         if self.verbose:

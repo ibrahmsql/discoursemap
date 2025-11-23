@@ -41,6 +41,10 @@ class SearchSecurityModule:
             'recommendations': []
         }
     
+    def run(self) -> Dict[str, Any]:
+        """Run the search security scan (wrapper for scan method)"""
+        return self.scan()
+    
     def scan(self) -> Dict[str, Any]:
         """
         Run a comprehensive security assessment of the target's search functionality and collect findings.
@@ -195,7 +199,7 @@ class SearchSecurityModule:
                                 'severity': 'MEDIUM',
                                 'note': 'Sensitive terms found in search results'
                             })
-                    except:
+                    except (ValueError, KeyError, TypeError):
                         pass
                         
             except Exception:

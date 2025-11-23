@@ -9,7 +9,5 @@ from .base_scanner import BaseScanner
 from .module_manager import ModuleManager
 from .async_scanner import AsyncScanner
 
-# Alias for backward compatibility
-DiscourseScanner = BaseScanner
-
-__all__ = ['BaseScanner', 'ModuleManager', 'AsyncScanner', 'DiscourseScanner']
+# DiscourseScanner is now in discourse_scanner.py, not here
+__all__ = ['BaseScanner', 'ModuleManager', 'AsyncScanner']

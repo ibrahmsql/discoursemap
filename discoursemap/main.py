@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-DiscourseMap v2.0
+DiscourseMap v2.1
 Specialized Security Scanner for Discourse Forums Only
 
 This tool is specifically designed for Discourse platform security assessment.
 It is NOT a general-purpose web scanner and only works with Discourse forums.
 
 Author: ibrahimsql
-Version: 2.0
+Version: 2.1
 License: MIT
 
 WARNING: This tool should only be used on authorized Discourse systems.
@@ -17,13 +17,12 @@ Unauthorized use is prohibited and may have legal consequences.
 import sys
 import time
 import asyncio
+import traceback
 import requests
 from colorama import init, Fore, Style
 
-from .core.scanner import DiscourseScanner
-from .core.reporter import Reporter
+from .core import DiscourseScanner, Reporter, Banner
 from .lib.discourse_utils import validate_url, is_discourse_site
-from .core.banner import Banner
 from .cli import (
     parse_arguments, apply_performance_presets,
     load_config, load_resume_data, apply_config_to_args,
@@ -84,7 +83,7 @@ def main():
         
         # Discourse site validation
         print(f"{Fore.CYAN}[*] Verifying target is a Discourse forum...{Style.RESET_ALL}")
-        if not is_discourse_site(args.url):
+        if not is_discourse_site(args.url, timeout=args.timeout, verify_ssl=not args.skip_ssl_verify):
             print(f"{Fore.RED}[!] Error: Target is not a Discourse forum!{Style.RESET_ALL}")
             print(f"{Fore.RED}[!] This tool is specifically designed for Discourse forums only.{Style.RESET_ALL}")
             print(f"{Fore.YELLOW}[!] Please ensure the target URL points to a valid Discourse installation.{Style.RESET_ALL}")
@@ -136,15 +135,14 @@ def main():
         
         # Generate report
         if args.output:
-            reporter = Reporter(results)
             output_file = args.output_file or f"discourse_scan_report.{args.output}"
             
             if args.output == 'json':
-                reporter.generate_json_report(output_file)
+                scanner.reporter.generate_json_report(results, output_file)
             elif args.output == 'html':
-                reporter.generate_html_report(output_file)
+                scanner.reporter.generate_html_report(results, output_file)
             elif args.output == 'csv':
-                reporter.generate_csv_report(output_file)
+                scanner.reporter.generate_csv_report(results, output_file)
             
             print(f"{Fore.GREEN}[+] Report saved: {output_file}{Style.RESET_ALL}")
         
@@ -159,7 +157,6 @@ def main():
         duration = end_time - start_time
         print(f"{Fore.RED}[!] Network error after {duration:.2f} seconds: {str(e)}{Style.RESET_ALL}")
         if args.verbose if 'args' in locals() else False:
-            import traceback
             traceback.print_exc()
         sys.exit(1)
     except Exception as e:
@@ -167,7 +164,6 @@ def main():
         duration = end_time - start_time
         print(f"{Fore.RED}[!] Unexpected error after {duration:.2f} seconds: {str(e)}{Style.RESET_ALL}")
         if args.verbose if 'args' in locals() else False:
-            import traceback
             traceback.print_exc()
         sys.exit(1)
 

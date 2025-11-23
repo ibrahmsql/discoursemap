@@ -90,5 +90,5 @@ class PluginBruteforceModule:
                         })
                         self.results['success_count'] += 1
                         break
-        except:
+        except (requests.RequestException, ConnectionError, TimeoutError):
             pass

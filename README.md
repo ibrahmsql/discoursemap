@@ -1,57 +1,60 @@
-# DiscourseMap v2.1 🛡️
+# DiscourseMap
 
-**Advanced Modular Security Scanner for Discourse Forums**
+![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Python](https://img.shields.io/badge/python-3.8%2B-yellow.svg)
+![Docker](https://img.shields.io/badge/docker-ready-blue.svg)
 
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.1.0-orange.svg)](https://github.com/ibrahmsql/discoursemap)
-
+> **Advanced Modular Security Scanner for Discourse Forums**
+>
 > A comprehensive, modular security assessment tool specifically designed for Discourse forum platforms. Built by security professionals, for security professionals.
+
+---
 
 ## 🚀 What's New in v2.1
 
-- **50+ Specialized Modules** - Complete modular architecture
-- **Advanced Rate Limiting Tests** - Including bypass techniques
-- **Comprehensive Security Testing** - Injection, file upload, authentication
-- **Performance Monitoring** - Load testing and response analysis
-- **Health Checking** - System health and uptime monitoring
-- **Multiple Report Formats** - JSON, HTML, CSV, XML
-- **External Integrations** - Slack, Webhooks, CI/CD
-- **Advanced Configuration** - YAML/JSON configuration management
+- **50+ Specialized Modules** - Complete modular architecture re-engineered for scalability.
+- **Advanced Rate Limiting Tests** - Sophisticated analysis including bypass techniques and header inspection.
+- **Comprehensive Security Testing** - Enhanced injection (SQL, XSS), file upload, and authentication testing.
+- **Performance Monitoring** - Integrated load testing and detailed response analysis.
+- **Health & Uptime** - Real-time system health checks and availability monitoring.
+- **Multiple Report Formats** - JSON, HTML, CSV, and XML export capabilities.
+- **External Integrations** - Native support for Slack notifications, Webhooks, and CI/CD pipelines.
+- **Advanced Configuration** - Flexible YAML/JSON configuration with environment variable support.
 
 ## 📋 Features
 
 ### 🔍 **Discourse-Specific Modules**
-- **Rate Limiting Analysis** - Login, API, bypass techniques
-- **Session Security** - Cookie security, CSRF protection
-- **Category Security** - Permission testing, access controls
-- **Badge System** - Badge enumeration and security
-- **Trust Levels** - Trust level analysis and exploitation
-- **Admin Panel** - Admin interface security testing
+- **Rate Limiting Analysis**: Deep dive into login and API rate limits, including potential bypass vectors.
+- **Session Security**: Comprehensive testing of cookie security attributes and CSRF protection mechanisms.
+- **Category Security**: Enumeration of categories and rigorous permission/access control testing.
+- **Badge System Analysis**: Enumeration and security assessment of the badge awarding system.
+- **Trust Levels**: Analysis of user trust levels and potential privilege escalation paths.
+- **Admin Panel**: Targeted security testing of administrative interfaces.
 
 ### 🛡️ **Security Testing**
-- **Injection Testing** - SQL, XSS, Command injection
-- **File Upload Security** - Upload bypass techniques
-- **Authentication Testing** - Weak credentials, brute force protection
-- **Session Management** - Session fixation, concurrent sessions
+- **Injection Testing**: Automated detection of SQL Injection, XSS, and Command Injection vulnerabilities.
+- **File Upload Security**: Testing for bypass techniques in file upload restrictions.
+- **Authentication Testing**: detection of weak credentials and brute-force protection mechanisms.
+- **Session Management**: Checks for session fixation and concurrent session handling issues.
 
 ### 📊 **Performance & Monitoring**
-- **Load Testing** - Stress testing with configurable parameters
-- **Response Analysis** - Performance metrics and optimization
-- **Health Checking** - Comprehensive system health assessment
-- **Uptime Monitoring** - Availability tracking over time
+- **Load Testing**: Configurable stress testing to evaluate system resilience.
+- **Response Analysis**: Detailed metrics on response times and potential bottlenecks.
+- **Health Checking**: Automated system health verification.
+- **Uptime Monitoring**: Tracking availability over time.
 
 ### 📄 **Advanced Reporting**
-- **JSON Reports** - Machine-readable structured data
-- **HTML Reports** - Professional styled reports with charts
-- **CSV Export** - Spreadsheet-compatible vulnerability data
-- **XML Format** - Structured markup for integrations
+- **JSON Reports**: Machine-readable data for integration with other tools.
+- **HTML Reports**: Professional, styled reports with charts for stakeholders.
+- **CSV Export**: Easy-to-analyze data for spreadsheet software.
+- **XML Format**: Standardized output for enterprise systems.
 
 ### 🔗 **Integrations**
-- **Slack Notifications** - Real-time alerts to Slack channels
-- **Webhook Support** - Custom webhook integrations
-- **CI/CD Pipeline** - Automated security testing
-- **API Endpoints** - RESTful API for external tools
+- **Slack Notifications**: Instant alerts sent directly to your team's channel.
+- **Webhook Support**: Custom hooks to trigger external actions or workflows.
+- **CI/CD Pipeline**: Designed to fit into automated testing pipelines.
+- **API Endpoints**: RESTful interface for programmatic control.
 
 ## 🛠️ Installation
 
@@ -60,12 +63,16 @@
 git clone https://github.com/ibrahmsql/discoursemap.git
 cd discoursemap
 pip install -r requirements.txt
+pip install -e .
 ```
 
 ### Docker Installation
 ```bash
-docker build -t discoursemap:2.1.0 .
-docker run --rm -it discoursemap:2.1.0
+# Build the image
+make docker-build
+
+# Run the container
+make docker-run
 ```
 
 ### Development Setup
@@ -79,6 +86,7 @@ make test
 ### Basic Usage
 ```python
 from discoursemap.core import DiscourseScanner
+from discoursemap.reporting import HTMLReporter
 
 # Initialize scanner
 scanner = DiscourseScanner('https://forum.example.com')
@@ -86,8 +94,7 @@ scanner = DiscourseScanner('https://forum.example.com')
 # Run comprehensive scan
 results = scanner.scan()
 
-# Generate reports
-from discoursemap.reporting import HTMLReporter
+# Generate and save report
 reporter = HTMLReporter()
 report = reporter.generate_report(results, 'https://forum.example.com')
 reporter.save_report(report, 'security_report.html')
@@ -112,56 +119,24 @@ results = scanner.comprehensive_scan()
 ```python
 from discoursemap.discourse_specific.rate_limiting import RateLimitModule
 
-# Test rate limiting
+# Test specific module
 rate_tester = RateLimitModule('https://forum.example.com', verbose=True)
 results = rate_tester.scan()
 
-print(f"Rate limiting vulnerabilities: {len(results['vulnerabilities'])}")
-```
-
-### Performance Testing
-```python
-from discoursemap.performance import LoadTester, ResponseAnalyzer
-
-# Performance analysis
-analyzer = ResponseAnalyzer('https://forum.example.com')
-perf_results = analyzer.analyze_endpoint_performance()
-
-# Load testing (be careful with real sites)
-load_tester = LoadTester('https://forum.example.com')
-load_results = load_tester.run_load_test(concurrent_users=5, duration=30)
-```
-
-### Security Testing
-```python
-from discoursemap.security.testing import InjectionTester, AuthenticationTester
-
-# Injection testing
-injection_tester = InjectionTester('https://forum.example.com')
-injection_results = injection_tester.test_all_injections()
-
-# Authentication testing
-auth_tester = AuthenticationTester('https://forum.example.com')
-auth_results = auth_tester.test_all_auth_vulnerabilities()
+print(f"Vulnerabilities found: {len(results.get('vulnerabilities', []))}")
 ```
 
 ## 📊 Demo
 
-Run the interactive demo to see all features:
+Run the interactive demo to explore features:
 
 ```bash
-python demo.py
-```
-
-Test against a real Discourse site (ethically):
-
-```bash
-python real_test.py
+make demo
 ```
 
 ## 🏗️ Modular Architecture
 
-DiscourseMap v2.1 features a completely modular architecture:
+DiscourseMap v2.1 features a completely modular architecture designed for extensibility:
 
 ```
 discoursemap/
@@ -186,91 +161,45 @@ See [MODULAR_ARCHITECTURE.md](MODULAR_ARCHITECTURE.md) for detailed documentatio
 
 ## 🧪 Testing
 
-Run the test suite:
+Run the test suite to ensure reliability:
 
 ```bash
 # Unit tests
 python -m pytest tests/ -v
 
-# Import test
-python -c "import discoursemap; print('✓ Import successful')"
-
 # Full test suite
 make test
 ```
 
-## 🐳 Docker Support
-
-### Build and Run
-```bash
-# Build image
-make docker-build
-
-# Run container
-make docker-run
-
-# Docker Compose (with Redis and PostgreSQL)
-docker-compose up -d
-```
-
-### Docker Hub
-```bash
-docker pull ibrahimsql/discoursemap:latest
-docker run --rm -it ibrahimsql/discoursemap:latest
-```
-
 ## 📖 Documentation
 
-- **[Modular Architecture Guide](MODULAR_ARCHITECTURE.md)** - Detailed architecture documentation
-- **[API Reference](docs/api.md)** - Complete API documentation
-- **[Configuration Guide](docs/configuration.md)** - Configuration options
-- **[Integration Guide](docs/integrations.md)** - External integrations
+- **[Modular Architecture Guide](MODULAR_ARCHITECTURE.md)** - Detailed architecture documentation.
+- **[API Reference](docs/api.md)** - Complete API documentation.
+- **[Configuration Guide](docs/configuration.md)** - Configuration options.
+- **[Integration Guide](docs/integrations.md)** - External integrations.
 
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
 
-### Development Setup
-```bash
-git clone https://github.com/ibrahmsql/discoursemap.git
-cd discoursemap
-make dev-setup
-```
-
-### Code Quality
-```bash
-make lint          # Run linting
-make format        # Format code
-make security-check # Security checks
-make check-all     # All checks
-```
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. Fork the repository.
+2. Create a feature branch (`git checkout -b feature/new-feature`).
+3. Commit your changes (`git commit -m 'Add new feature'`).
+4. Push to the branch (`git push origin feature/new-feature`).
+5. Open a Pull Request.
 
 ## ⚠️ Ethical Usage
 
 **IMPORTANT**: This tool is designed for authorized security testing only. Always ensure you have proper authorization before testing any Discourse forum. Respect rate limits, terms of service, and applicable laws.
 
-### Responsible Disclosure
-If you discover vulnerabilities using DiscourseMap, please follow responsible disclosure practices and report them to the appropriate parties.
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- **Discourse Team** - For creating an amazing forum platform
-- **Security Community** - For continuous feedback and contributions
-- **Open Source Contributors** - For making this project better
-
-## 📞 Support
-
-- **GitHub Issues**: [Report bugs and request features](https://github.com/ibrahmsql/discoursemap/issues)
-- **Discussions**: [Community discussions](https://github.com/ibrahmsql/discoursemap/discussions)
-- **Email**: ibrahimsql@proton.me
-
-## 🌟 Star History
-
-If you find DiscourseMap useful, please consider giving it a star! ⭐
+- **Discourse Team** - For creating an amazing forum platform.
+- **Security Community** - For continuous feedback and contributions.
 
 ---
 

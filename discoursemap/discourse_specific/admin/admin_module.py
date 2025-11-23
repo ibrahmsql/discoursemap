@@ -34,6 +34,10 @@ class AdminPanelModule:
             'recommendations': []
         }
     
+    def run(self) -> Dict[str, Any]:
+        """Run the admin panel security scan (wrapper for scan method)"""
+        return self.scan()
+    
     def scan(self) -> Dict[str, Any]:
         """
         Run the module's full admin panel security scan and populate the instance results.
