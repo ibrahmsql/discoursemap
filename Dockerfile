@@ -1,5 +1,5 @@
 # DiscourseMap v2.1 Docker Image
-FROM python:3.14-slim
+FROM python:3.14.1-slim
 
 # Set working directory
 WORKDIR /app
